@@ -165,8 +165,23 @@ class Game {
 
         this._lastFrame = now - (elapsed % this._fpsInterval);
 
+        let player = this.world.player;
+        let space = this.world.currentSpace;
+
         let uipush = true ? 16 : 0;
         let worldOffset = [0, 0];
+
+        // follow player
+        worldOffset[0] = -Math.round(player.x - this.canvas.width/2);
+        worldOffset[1] = -Math.round(player.y - this.canvas.height/2);
+
+        // clamp world offset to space size
+        let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
+        worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
+        worldOffset[0] = Math.min(worldOffset[0], 0);
+        worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height+uipush);
+        worldOffset[1] = Math.min(worldOffset[1], 0);
+
         this.offset[0] = worldOffset[0];
         this.offset[1] = worldOffset[1] + uipush;
 
@@ -176,10 +191,9 @@ class Game {
         let c_left = this.interface.isControlHeld("left");
 
         // move player
-        let space = this.world.currentSpace;
         let collisionBoxes = space.getCollisionBoxes();
 
-        let player = this.world.player;
+        
         if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
             player.walking = false;
             if (c_up) {
@@ -319,7 +333,6 @@ class Game {
         if (false) {
             space.getCollisionBoxes().forEach(box => {
                 this.setColor("#FF000077"); // transparent red
-                this.setColor("#000");
                 this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
                 //this.setColor("#FF0000"); // red
                 //this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
@@ -398,10 +411,12 @@ class Space {
         let boxes = [];
         // add itself as a collision box, if contition is solid
         if (condition == "solid") {
-            boxes.push({x:-32, y:0, w: 16, h:this.size[1]*16}); // left wall
-            boxes.push({x:this.size[0]*16 + 16, y:0, w: 16, h:this.size[1]*16}); // right wall
-            boxes.push({x:0, y:-32, w: this.size[0]*16, h:16}); // top wall
-            boxes.push({x:0, y:this.size[1]*16 + 16, w: this.size[0]*16, h:16}); // bottom wall
+            let bw = (this.size[0]+2)*16;
+            let bh = (this.size[1]+2)*16;
+            boxes.push({x:-32, y:-16, w: 16, h: bh}); // left wall
+            boxes.push({x:bw-16, y:-16, w: 16, h: bh}); // right wall
+            boxes.push({x:-16, y:-32, w: bw, h: 16}); // top wall
+            boxes.push({x:-16, y:bh-16, w: bw, h: 16}); // bottom wall
         }
 
         // add tile collissions
