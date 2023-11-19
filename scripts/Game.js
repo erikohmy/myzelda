@@ -101,6 +101,9 @@ class Game {
         let ui = await this.loadImage("./assets/ui.png");
         this.spritesheets.ui = new SpriteSheet(ui, 8);
 
+        let player = await this.loadImage("./assets/player.png");
+        this.spritesheets.player = new SpriteSheet(player, 16);
+
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
     }
@@ -149,12 +152,13 @@ class Game {
         let c_left = this.interface.isControlHeld("left");
 
         let player = this.world.player;
-        if (c_up) {player.sy=-1;}
-        else if (c_down) {player.sy=1;}
+        player.walking = false;
+        if (c_up) {player.sy=-1;player.direction=0;player.walking=true;}
+        else if (c_down) {player.sy=1;player.direction=2;player.walking=true;}
         else {player.sy=0;}
 
-        if (c_left) {player.sx=-1;}
-        else if (c_right) {player.sx=1;}
+        if (c_left) {player.sx=-1;player.direction=3;player.walking=true;}
+        else if (c_right) {player.sx=1;player.direction=1;player.walking=true;}
         else {player.sx=0;}
 
         // move player

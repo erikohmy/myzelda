@@ -7,6 +7,7 @@ class Player {
     sy; // speed y
     size; // size of player
     direction;
+    walking = false;
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
@@ -18,7 +19,7 @@ class Player {
         this.sx = 0;
         this.sy = 0;
         this.size = 10; // 10x10 collision box
-        this.direction = 0; // right
+        this.direction = 2; // down
     }
     move(collisionBoxes) {
         // move player
@@ -81,9 +82,27 @@ class Player {
         }
     }
 
+    isColliding() {
+        return this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3];
+    }
+
     draw() {
         let ox = this.game.offset[0];
         let oy = this.game.offset[1];
+
+        let sheet = this.game.spritesheets.player;
+
+        let sox = 0; // sprite offset x
+        let soy = 0; // sprite offset y
+
+        sox += this.direction;
+        if (this.isColliding()) {
+            soy += 1;
+        }
+
+        sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox, this.y-11+oy);
+
+        /*
         this.game.setColor("#00FF00"); // green
         this.game.ctx.fillRect(this.x-(this.size/2)+ox, this.y-(this.size/2)+oy, this.size, this.size);
 
@@ -100,5 +119,6 @@ class Player {
         if(this.colliding[3]) { // colliding left
             this.game.ctx.fillRect(this.x-(this.size/2)+ox, this.y-(this.size/2)+oy, 2, this.size);
         }
+        */
     }
 }
