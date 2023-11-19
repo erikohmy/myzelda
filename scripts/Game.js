@@ -15,6 +15,8 @@ class Game {
     interface = null;
     world = null;
 
+    gametick = 0;
+
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
@@ -61,6 +63,17 @@ class Game {
         testspace.setTile(0,7,{name:"obstacle", variant:"rock"});
 
         testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
+
+        this._fpsInterval = 1000/60;
+        this._lastFrame = 0;
+        /*
+        let lastframes = 0;
+        setInterval(() => {
+            let fps = this.gametick-lastframes
+            lastframes = this.gametick;
+            console.log("fps:", fps);
+        }, 1000);
+        */
     }
 
     // helpers
@@ -141,6 +154,16 @@ class Game {
         //this.offset[0] += 1;
         //this.offset[1] -= 1;
 
+        let now = Date.now();
+        let elapsed = now - this._lastFrame;
+        if (this._lastFrame !== undefined) {
+            if (elapsed < this._fpsInterval) {
+                return;
+            }
+        }
+
+        this._lastFrame = now - (elapsed % this._fpsInterval);
+
         let uipush = true ? 16 : 0;
         let worldOffset = [0, 0];
         this.offset[0] = worldOffset[0];
@@ -151,20 +174,35 @@ class Game {
         let c_down = this.interface.isControlHeld("down");
         let c_left = this.interface.isControlHeld("left");
 
-        let player = this.world.player;
-        player.walking = false;
-        if (c_up) {player.sy=-1;player.direction=0;player.walking=true;}
-        else if (c_down) {player.sy=1;player.direction=2;player.walking=true;}
-        else {player.sy=0;}
-
-        if (c_left) {player.sx=-1;player.direction=3;player.walking=true;}
-        else if (c_right) {player.sx=1;player.direction=1;player.walking=true;}
-        else {player.sx=0;}
-
         // move player
         let space = this.world.currentSpace;
         let collisionBoxes = space.getCollisionBoxes();
-        player.move(collisionBoxes);
+
+        let player = this.world.player;
+        if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
+            player.walking = false;
+            if (c_up) {
+                player.direction=0;
+                player.walking=true;
+                player.move(0, -1, collisionBoxes);
+            } else if (c_down) {
+                player.direction=2;
+                player.walking=true;
+                player.move(0, 1, collisionBoxes);
+            }
+
+            if (c_left) {
+                player.direction=3;
+                player.walking=true;
+                player.move(-1, 0, collisionBoxes);
+            } else if (c_right) {
+                player.direction=1;
+                player.walking=true;
+                player.move(1, 0, collisionBoxes);
+            }
+        }
+
+        this.gametick++;
     }
 
     // graphics
@@ -206,12 +244,12 @@ class Game {
         this.setColor("#FFF");
         this.ctx.fillRect(0, 0, this.canvas.width, 16);
 
-        let hearts = 14;
-        let maxhealth = hearts*4;
-        let health = maxhealth/2;
+        let player = this.world.player;
+        let maxHealth = player.maxHealth;
+        let health = player.health;
         
         // for every two health, draw a heart
-        for (let i=0; i<maxhealth; i+=4) {
+        for (let i=0; i<maxHealth; i+=4) {
             let heart_num = Math.floor(i/4); // which heart, starting from 0
             let x = (heart_num%7)*8 + this.canvas.width-56;
             let y = heart_num >= 7 ? 8 : 0;

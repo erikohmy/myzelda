@@ -3,31 +3,35 @@ class Player {
 
     x; // position x
     y; // position y
-    sx; // speed x
-    sy; // speed y
     size; // size of player
     direction;
     walking = false;
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
+    health;
+    maxHealth;
+
     constructor(game, x, y) {
         this.game = game;
-
         this.x = x;
         this.y = y;
-        this.sx = 0;
-        this.sy = 0;
         this.size = 10; // 10x10 collision box
         this.direction = 2; // down
+
+        this.maxHealth = 14*4;
+        this.health = this.maxHealth;
     }
-    move(collisionBoxes) {
+    move(sx, sy, collisionBoxes) {
         // move player
         let hsize = this.size/2;
 
         this.colliding=[0,0,0,0];
+        if (Math.abs(sx) <= 0 && Math.abs(sy) <= 0) {
+            return;
+        }
 
-        this.x += this.sx;
+        this.x += sx;
         let collidingX = false;
         let collidingXbox = null;
         for (let i = 0; i < collisionBoxes.length; i++) {
@@ -46,15 +50,15 @@ class Player {
             }
         }
         if (collidingX) {
-            this.x -= this.sx;
-            if (this.sx > 0) {
+            this.x -= sx;
+            if (sx > 0) {
                 this.colliding[1] = true;
-            } else if (this.sx < 0) {
+            } else if (sx < 0) {
                 this.colliding[3] = true;
             }
         }
 
-        this.y += this.sy;
+        this.y += sy;
         let collidingY = false;
         let collidingYbox = null;
         for (let i = 0; i < collisionBoxes.length; i++) {
@@ -73,10 +77,10 @@ class Player {
             }
         }
         if (collidingY) {
-            this.y -= this.sy;
-            if (this.sy > 0) {
+            this.y -= sy;
+            if (sy > 0) {
                 this.colliding[2] = true;
-            } else if (this.sy < 0) {
+            } else if (sy < 0) {
                 this.colliding[0] = true;
             }
         }
@@ -96,8 +100,12 @@ class Player {
         let soy = 0; // sprite offset y
 
         sox += this.direction;
-        if (this.isColliding()) {
+        if (this.isColliding() && this.walking) {
             soy += 1;
+        }
+
+        if (this.walking && this.game.gametick % 30 > 15) {
+            sox += 4;
         }
 
         sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox, this.y-11+oy);
