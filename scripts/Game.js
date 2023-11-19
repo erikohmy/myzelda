@@ -276,31 +276,33 @@ class Game {
         if (false) {
             space.getCollisionBoxes().forEach(box => {
                 this.setColor("#FF000077"); // transparent red
-                this.ctx.fillRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
-                this.setColor("#FF0000"); // red
-                this.ctx.strokeRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.setColor("#000");
+                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+                //this.setColor("#FF0000"); // red
+                //this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
-
+            /*
             space.getCollisionBoxes("dig").forEach(box => {
                 this.setColor("#00FF0044"); // transparent green
-                this.ctx.fillRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
                 this.setColor("#00FF00"); // green
-                this.ctx.strokeRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
 
             space.getCollisionBoxes("wet").forEach(box => {
                 this.setColor("#0099ff66"); // transparent light blue
-                this.ctx.fillRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
                 this.setColor("#0099FF"); // light blue
-                this.ctx.strokeRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
 
             space.getCollisionBoxes("swim").forEach(box => {
                 this.setColor("#0000ff77"); // transparent blue
-                this.ctx.fillRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
                 this.setColor("#0000FF"); // blue
-                this.ctx.strokeRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
+                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
+            */
         }
 
         // draw a box representing the player

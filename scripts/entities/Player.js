@@ -31,12 +31,12 @@ class Player {
         let collidingXbox = null;
         for (let i = 0; i < collisionBoxes.length; i++) {
             let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize <= box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize <= box.y + box.h) {
+            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
+                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
                 let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
                 let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
                 let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
-                let left = this.x - hsize < box.x + box.w && this.x - hsize >= box.x;
+                let left = this.x - hsize < box.x + box.w && this.x - hsize > box.x;
                 // do nudging?
                 if (top || bottom || left || right) {
                     collidingX=true;
@@ -58,8 +58,8 @@ class Player {
         let collidingYbox = null;
         for (let i = 0; i < collisionBoxes.length; i++) {
             let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize <= box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize <= box.y + box.h) {
+            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
+                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
                 let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
                 let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
                 let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
