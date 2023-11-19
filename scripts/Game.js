@@ -12,6 +12,9 @@ class Game {
     spritesheets = {};
     tiles = {};
 
+    interface = null;
+    world = null;
+
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
@@ -31,22 +34,33 @@ class Game {
         this.events.on('tile-generated', (name, tileref) => {});
         this.events.on('tiles-generated', (tiles) => {console.info('generated '+Object.keys(tiles).length+" tiles");});
 
-        this.testspace = new Space(this, 10, 8); // one full screen (minus one row for the ui)
+        // create interface
+        this.interface = new Interface(this, document.getElementById("main"));
+
+        this.world = new World(this);
+        this.world.addLayer("overworld", 14, 14);
+
+        let testspace = new Space(this, 10, 8); // one full screen (minus one row for the ui)
+        this.world.currentLayer = this.world.layers.overworld
+        this.world.currentSpace = testspace;
+        this.world.player = new Player(this, 32, 32);
+
+        this.world.currentLayer.addSpace(testspace, 0, 0);
         // fill the testspace with sand
-        for (let y=0; y<this.testspace.size[1]; y++) {
-            for (let x=0; x<this.testspace.size[0]; x++) {
-                this.testspace.tiles[y*this.testspace.size[0]+x] = {name:"sand"};
+        for (let y=0; y<testspace.size[1]; y++) {
+            for (let x=0; x<testspace.size[0]; x++) {
+                testspace.tiles[y*testspace.size[0]+x] = {name:"sand"};
             }
         }
-        this.testspace.setTile(0,0,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,1,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,2,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,3,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,4,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,6,{name:"obstacle", variant:"rock"});
-        this.testspace.setTile(0,7,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,0,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,1,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,2,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,3,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,4,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,6,{name:"obstacle", variant:"rock"});
+        testspace.setTile(0,7,{name:"obstacle", variant:"rock"});
 
-        this.testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
+        testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
     }
 
     // helpers
@@ -128,6 +142,25 @@ class Game {
         let worldOffset = [0, 0];
         this.offset[0] = worldOffset[0];
         this.offset[1] = worldOffset[1] + uipush;
+
+        let c_up = this.interface.isControlHeld("up");
+        let c_right = this.interface.isControlHeld("right");
+        let c_down = this.interface.isControlHeld("down");
+        let c_left = this.interface.isControlHeld("left");
+
+        let player = this.world.player;
+        if (c_up) {player.sy=-1;}
+        else if (c_down) {player.sy=1;}
+        else {player.sy=0;}
+
+        if (c_left) {player.sx=-1;}
+        else if (c_right) {player.sx=1;}
+        else {player.sx=0;}
+
+        // move player
+        let space = this.world.currentSpace;
+        let collisionBoxes = space.getCollisionBoxes();
+        player.move(collisionBoxes);
     }
 
     // graphics
@@ -225,7 +258,7 @@ class Game {
         */
 
         // draw the testspace
-        let space = this.testspace;
+        let space = this.world.currentSpace;
 
         // draw tiles
         for (let y=0; y<space.size[1]; y++) {
@@ -269,7 +302,10 @@ class Game {
                 this.ctx.strokeRect(box.x*this.tilesize+this.offset[0], box.y*this.tilesize+this.offset[1], box.w, box.h);
             });
         }
-        
+
+        // draw a box representing the player
+        let player = this.world.player;
+        player.draw();
 
         this.renderUi();  
     }
@@ -296,11 +332,14 @@ class Space {
     tiles;
     entities;
 
+    options; // filter, music, etc
+
     constructor(game, sizex, sizey) {
         this.game = game;
         this.size = [sizex, sizey];
         this.tiles = new Array(sizex * sizey);
         this.entities = [];
+        this.options = {};
     }
 
     tile(x, y) {
@@ -318,7 +357,7 @@ class Space {
                 let name = this.tile(x, y).name;
                 let tile = this.game.tiles[name];
                 if (tile[condition]) {
-                    boxes.push({x:x, y:y, h:16, w:16});
+                    boxes.push({x:x*16, y:y*16, h:16, w:16});
                 }
             }
         }
