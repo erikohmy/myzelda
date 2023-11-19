@@ -63,6 +63,7 @@ class Game {
         testspace.setTile(0,7,{name:"obstacle", variant:"rock"});
 
         testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
+        testspace.setTile(4,5,{name:"obstacle", variant:"coconut"});
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -395,6 +396,14 @@ class Space {
 
     getCollisionBoxes(condition = "solid") {
         let boxes = [];
+        // add itself as a collision box, if contition is solid
+        if (condition == "solid") {
+            boxes.push({x:-32, y:0, w: 16, h:this.size[1]*16}); // left wall
+            boxes.push({x:this.size[0]*16 + 16, y:0, w: 16, h:this.size[1]*16}); // right wall
+            boxes.push({x:0, y:-32, w: this.size[0]*16, h:16}); // top wall
+            boxes.push({x:0, y:this.size[1]*16 + 16, w: this.size[0]*16, h:16}); // bottom wall
+        }
+
         // add tile collissions
         for (let y=0; y<this.size[1]; y++) {
             for (let x=0; x<this.size[0]; x++) {
