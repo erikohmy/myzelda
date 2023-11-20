@@ -4,6 +4,7 @@ class Game {
     tilesize = 16;
     gridsize = [10, 9];
     offset = [0, 0];
+    screenOffset = [0, 0];
     size = [0, 0];
 
     canvas = null;
@@ -15,11 +16,16 @@ class Game {
     interface = null;
     world = null;
 
+    ticking = false;
     gametick = 0;
+    animationtick = 0;
+
+    doGameLogic = true;
+    doAnimation = true;
 
     constructor(canvas) {
         this.canvas = canvas;
-        this.ctx = canvas.getContext("2d");
+        this.ctx = canvas.getContext("2d", { willReadFrequently: true });
 
         this.size = [this.tilesize * this.gridsize[0], this.tilesize * this.gridsize[1]];
         this.canvas.width = this.size[0];
@@ -48,12 +54,7 @@ class Game {
         this.world.player = new Player(this, 32, 32);
 
         this.world.currentLayer.addSpace(testspace, 0, 0);
-        // fill the testspace with sand
-        for (let y=0; y<testspace.size[1]; y++) {
-            for (let x=0; x<testspace.size[0]; x++) {
-                testspace.tiles[y*testspace.size[0]+x] = {name:"sand"};
-            }
-        }
+        testspace.fill({name:"sand"});
         testspace.setTile(0,0,{name:"obstacle", variant:"rock"});
         testspace.setTile(0,1,{name:"obstacle", variant:"rock"});
         testspace.setTile(0,2,{name:"obstacle", variant:"rock"});
@@ -64,6 +65,14 @@ class Game {
 
         testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
         testspace.setTile(4,5,{name:"obstacle", variant:"coconut"});
+
+        let testspace2 = new Space(this, 10, 8);
+        testspace2.fill({name:"sand"});
+        this.world.currentLayer.addSpace(testspace2, 1, 0);
+
+        let testspace3 = new Space(this, 10, 8);
+        testspace3.fill({name:"gravel"});
+        this.world.currentLayer.addSpace(testspace3, 0, 1);
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -145,12 +154,14 @@ class Game {
 
     // logic
     loop() {
-        this.tick();
-        this.render();
+        if (!this.ticking) {
+            this.tick();
+        }
         window.requestAnimationFrame(() => this.loop());
     }
 
-    tick() {
+    async tick() {
+        this.ticking = true;
         // for testing
         //this.offset[0] += 1;
         //this.offset[1] -= 1;
@@ -159,6 +170,7 @@ class Game {
         let elapsed = now - this._lastFrame;
         if (this._lastFrame !== undefined) {
             if (elapsed < this._fpsInterval) {
+                this.ticking = false;
                 return;
             }
         }
@@ -168,56 +180,141 @@ class Game {
         let player = this.world.player;
         let space = this.world.currentSpace;
 
-        let uipush = true ? 16 : 0;
-        let worldOffset = [0, 0];
+        if (this.doGameLogic && !this.world.transitioning) {
+            let worldOffset = [0, 0];
 
-        // follow player
-        worldOffset[0] = -Math.round(player.x - this.canvas.width/2);
-        worldOffset[1] = -Math.round(player.y - this.canvas.height/2);
+            // follow player
+            worldOffset[0] = -Math.round(player.x - this.canvas.width/2);
+            worldOffset[1] = -Math.round(player.y - this.canvas.height/2);
 
-        // clamp world offset to space size
-        let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
-        worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
-        worldOffset[0] = Math.min(worldOffset[0], 0);
-        worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height+uipush);
-        worldOffset[1] = Math.min(worldOffset[1], 0);
+            // clamp world offset to space size
+            let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
+            worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
+            worldOffset[0] = Math.min(worldOffset[0], 0);
+            worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height);
+            worldOffset[1] = Math.min(worldOffset[1], 0);
 
-        this.offset[0] = worldOffset[0];
-        this.offset[1] = worldOffset[1] + uipush;
+            this.offset[0] = worldOffset[0] + this.screenOffset[0];
+            this.offset[1] = worldOffset[1] + this.screenOffset[1];
 
-        let c_up = this.interface.isControlHeld("up");
-        let c_right = this.interface.isControlHeld("right");
-        let c_down = this.interface.isControlHeld("down");
-        let c_left = this.interface.isControlHeld("left");
+            let c_up = this.interface.isControlHeld("up");
+            let c_right = this.interface.isControlHeld("right");
+            let c_down = this.interface.isControlHeld("down");
+            let c_left = this.interface.isControlHeld("left");
 
-        // move player
-        let collisionBoxes = space.getCollisionBoxes();
+            // move player
+            let collisionBoxes = space.getCollisionBoxes();
 
-        
-        if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
-            player.walking = false;
-            if (c_up) {
-                player.direction=0;
-                player.walking=true;
-                player.move(0, -1, collisionBoxes);
-            } else if (c_down) {
-                player.direction=2;
-                player.walking=true;
-                player.move(0, 1, collisionBoxes);
+            
+            if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
+                player.walking = false;
+                if (c_up) {
+                    player.direction=0;
+                    player.walking=true;
+                    player.move(0, -1, collisionBoxes);
+                } else if (c_down) {
+                    player.direction=2;
+                    player.walking=true;
+                    player.move(0, 1, collisionBoxes);
+                }
+
+                if (c_left) {
+                    player.direction=3;
+                    player.walking=true;
+                    player.move(-1, 0, collisionBoxes);
+                } else if (c_right) {
+                    player.direction=1;
+                    player.walking=true;
+                    player.move(1, 0, collisionBoxes);
+                }
             }
 
-            if (c_left) {
-                player.direction=3;
-                player.walking=true;
-                player.move(-1, 0, collisionBoxes);
-            } else if (c_right) {
-                player.direction=1;
-                player.walking=true;
-                player.move(1, 0, collisionBoxes);
+            // if player is outside the space to the rigt, transition to the next space
+            if (player.x > space.size[0]*this.tilesize) {
+                let nextspace = this.world.currentLayer.getSpace(space.x+1, space.y);
+                
+                if (nextspace) {
+                    player.x = 0;
+                    await this.world.transitionTo(nextspace, "slideleft");
+                }
+            }
+            // if player is outside the space to the left, transition to the previous space
+            else if (player.x < 0) {
+                let prevspace = this.world.currentLayer.getSpace(space.x-1, space.y);
+                if (prevspace) {
+                    player.x = (prevspace.size[0]*this.tilesize);
+                    await this.world.transitionTo(prevspace, "slideright");
+                }
+            }
+            // if player is outside the space to the bottom, transition to the next space
+            if (player.y > space.size[1]*this.tilesize) {
+                let nextspace = this.world.currentLayer.getSpace(space.x, space.y+1);
+                if (nextspace) {
+                    player.y = 0;
+                    await this.world.transitionTo(nextspace, "slideup");
+                }
+            }
+            // if player is outside the space to the top, transition to the previous space
+            else if (player.y < 0) {
+                let prevspace = this.world.currentLayer.getSpace(space.x, space.y-1);
+                if (prevspace) {
+                    player.y = (prevspace.size[1]*this.tilesize);
+                    await this.world.transitionTo(prevspace, "slidedown");
+                }
+            }
+        } else if(this.world.transitioning) {
+            // stupid copy
+            let worldOffset = [0, 0];
+
+            // follow player
+            worldOffset[0] = -Math.round(player.x - this.canvas.width/2);
+            worldOffset[1] = -Math.round(player.y - this.canvas.height/2);
+
+            // clamp world offset to space size
+            let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
+            worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
+            worldOffset[0] = Math.min(worldOffset[0], 0);
+            worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height);
+            worldOffset[1] = Math.min(worldOffset[1], 0);
+
+            this.offset[0] = worldOffset[0] + this.screenOffset[0];
+            this.offset[1] = worldOffset[1] + this.screenOffset[1];
+            //
+            let transition = this.world.transition;
+            if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
+                let tick = this.gametick - this.world.transitionStart;
+                let stepsize = 8;
+                let steps = 0;
+                if (transition=="slideleft") {
+                    steps = this.canvas.width/stepsize;
+                    this.offset[0] = this.canvas.width - (tick+1)*stepsize;
+                } else if (transition=="slideright") {
+                    steps = this.canvas.width/stepsize;
+                    this.offset[0] = -this.canvas.width + (tick+1)*stepsize;
+                } else if (transition=="slideup") {
+                    steps = (this.canvas.height-16)/stepsize;
+                    this.offset[1] = (this.canvas.height-16) - (tick)*stepsize;
+                } else if (transition=="slidedown") {
+                    steps = (this.canvas.height-16)/stepsize;
+                    this.offset[1] = -(this.canvas.height-16) + (tick)*stepsize;
+                }
+                if (tick >= steps) {
+                    this.world.transitioning = false;
+                    console.log('done transitioning')
+                    this._fpsInterval = 1000/60;
+                }
+            } else {
+                this.world.transitioning = false;
+                console.log('done transitioning')
             }
         }
 
+        if (this.doAnimation && !this.world.transitioning) {
+            this.animationtick++;
+        }
+        this.render();
         this.gametick++;
+        this.ticking = false;
     }
 
     // graphics
@@ -315,6 +412,7 @@ class Game {
         */
 
         // draw the testspace
+        this.offset[1] = this.offset[1]+16; // offset for ui
         let space = this.world.currentSpace;
 
         // draw tiles
@@ -323,7 +421,7 @@ class Game {
                 let tile = space.tiles[y*space.size[0]+x];
                 if (tile) {
                     let xpos = x*this.tilesize+this.offset[0];
-                    let ypos = y*this.tilesize+this.offset[1]
+                    let ypos = y*this.tilesize+this.offset[1];
                     this.tiles[tile.name].draw(this.ctx, xpos, ypos, tile);
                 }
             }
@@ -365,7 +463,40 @@ class Game {
         let player = this.world.player;
         player.draw();
 
+        // if we are transitioning, draw that!
+        if (this.world.transitioning) {
+            let transition = this.world.transition;
+            if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
+                let snapshot = this.world.snapshot;
+                let tick = this.gametick - this.world.transitionStart;
+                if (transition=="slideleft") {
+                    this.ctx.drawImage(snapshot, -tick*8, 16);
+                } else if (transition=="slideright") {
+                    this.ctx.drawImage(snapshot, tick*8, 16);
+                } else if (transition=="slideup") {
+                    this.ctx.drawImage(snapshot, 0, -tick*8+16);
+                } else if (transition=="slidedown") {
+                    this.ctx.drawImage(snapshot, 0, tick*8+16);
+                }
+            }
+        }
+
         this.renderUi();  
+    }
+    async snapshot() {
+        // get imagedata of the canvas, excluding the ui
+        let data = this.ctx.getImageData(0, 16, this.canvas.width, this.canvas.height-16);
+        // turn this into a b64 image
+        let canvas = document.createElement("canvas");
+        canvas.width = this.canvas.width;
+        canvas.height = this.canvas.height-16;
+        let ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.putImageData(data, 0, 0);
+        let img = new Image();
+        img.src = canvas.toDataURL();
+        await img.decode();
+        return img;
     }
 
 }
@@ -386,6 +517,7 @@ class SpriteSheet {
 // a space, contains a grid of tiles and all entities in it
 class Space {
     game;
+    layer;
     size;
     tiles;
     entities;
@@ -399,12 +531,31 @@ class Space {
         this.entities = [];
         this.options = {};
     }
+    get position() {
+        return this.layer.getSpacePosition(this);
+    }
+    get x() {
+        let x,y;
+        [x, y] = this.position;
+        return x;
+    }
+
+    get y() {
+        let x,y;
+        [x, y] = this.position;
+        return y;
+    }
 
     tile(x, y) {
         return this.tiles[y*this.size[0]+x];
     }
     setTile(x, y, tileinfo) {
         return this.tiles[y*this.size[0]+x] = tileinfo;
+    }
+    fill(tileinfo) {
+        for (let i=0; i<this.tiles.length; i++) {
+            this.tiles[i] = tileinfo;
+        }
     }
 
     getCollisionBoxes(condition = "solid") {

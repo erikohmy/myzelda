@@ -4,7 +4,13 @@ class World {
     layers = {};
     currentLayer;
     currentSpace;
+    oldSpace;
     player;
+
+    transitioning = false;
+    transition = "none";
+    transitionStart = 0;
+    snapshot = null;
 
     constructor(game) {
         this.game = game;
@@ -17,6 +23,22 @@ class World {
         let layer = new WorldLayer(name, sizex, sizey);
         this.layers[name] = layer;
         return layer;
+    }
+
+    async transitionTo(space, transition="none") {
+        if (this.transitioning) {
+            return;
+        }
+        console.log('transitioning', transition);
+        //this.game._fpsInterval = 1000/10;
+        this.transitioning = true;
+        this.transition = transition;
+        this.transitionStart = this.game.gametick;
+        this.snapshot = await this.game.snapshot();
+
+        this.oldSpace = this.currentSpace;
+        this.currentSpace = space;
+        this.currentLayer = space.layer;
     }
 }
 
@@ -44,6 +66,34 @@ class WorldLayer {
 
     addSpace(space, x, y) {
         this.spaces[x][y] = space;
+        space.layer = this;
         return space;
+    }
+
+    getSpace(x, y) {
+        if (x < 0 || y < 0 || x >= this.sizex || y >= this.sizey) {
+            return null;
+        }
+        let col = this.spaces[x];
+        if (col === undefined) {
+            return null;
+        }
+        return this.spaces[x][y];
+    }
+
+    getSpacePosition(space) {
+        let x=0;
+        let y=0;
+        for (let i = 0; i < this.spaces.length; i++) {
+            let col = this.spaces[i];
+            for (let j = 0; j < col.length; j++) {
+                if (col[j] === space) {
+                    x = i;
+                    y = j;
+                    break;
+                }
+            }
+        }
+        return [x, y];
     }
 }

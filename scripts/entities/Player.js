@@ -104,7 +104,7 @@ class Player {
             soy += 1;
         }
 
-        if (this.walking && this.game.gametick % 30 > 15) {
+        if (this.walking && this.game.animationtick % 30 > 15) {
             sox += 4;
         }
 
