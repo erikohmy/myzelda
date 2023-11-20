@@ -15,6 +15,7 @@ class Game {
 
     interface = null;
     world = null;
+    animations = {};
 
     ticking = false;
     gametick = 0;
@@ -62,6 +63,38 @@ class Game {
             console.log("fps:", fps);
         }, 1000);
         */
+        this.animations.test1 = () => {
+            return new Promise((resolve) => {
+                let game = this;
+                game.everyTick(120, (t, total) => {
+                    if (t == 1) {
+                        game.cutscene = true;
+                        console.log('started cutscene of', total, "ticks");
+                    }
+                    if (t <= 30) { // walk down
+                        game.world.player.walking = true;
+                        game.world.player.move(0, 1);
+                    }
+                    if(t==31) { // wait
+                        game.world.player.walking = false;
+                    }
+                    
+                    if(t==60) { // look left
+                        game.world.player.direction = 3; // left
+                    }
+                    if(t==90) { // look right
+                        game.world.player.direction = 1; // right
+                    }
+
+                    if (t==total) {
+                        game.world.player.direction = 2; // down
+                        console.log('cutscene done');
+                        game.cutscene = false;
+                        resolve();
+                    }
+                });
+            });
+        }
     }
 
     // helpers
@@ -197,28 +230,26 @@ class Game {
             let c_left = this.interface.isControlHeld("left");
 
             // move player
-            let collisionBoxes = space.getCollisionBoxes();
-
             if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
                 player.walking = false;
                 if (c_up) {
                     player.direction=0;
                     player.walking=true;
-                    player.move(0, -1, collisionBoxes);
+                    player.move(0, -1);
                 } else if (c_down) {
                     player.direction=2;
                     player.walking=true;
-                    player.move(0, 1, collisionBoxes);
+                    player.move(0, 1);
                 }
 
                 if (c_left) {
                     player.direction=3;
                     player.walking=true;
-                    player.move(-1, 0, collisionBoxes);
+                    player.move(-1, 0);
                 } else if (c_right) {
                     player.direction=1;
                     player.walking=true;
-                    player.move(1, 0, collisionBoxes);
+                    player.move(1, 0);
                 }
             }
             this.tickEvents.forEach(event => {
@@ -226,6 +257,9 @@ class Game {
                     event.left--;
                     if (event.left <= 0) {
                         event.resolve();
+                    }
+                    if(!!event.every) {
+                        event.every(event.ticks - event.left, event.ticks);
                     }
                 }
             });
@@ -271,14 +305,6 @@ class Game {
                     entity.logic();
                 }
             }
-            this.tickEvents.forEach(event => {
-            if (event.type === "game") {
-                event.left--;
-                if (event.left <= 0) {
-                    event.resolve();
-                }
-            }
-        });
         } else if(this.world.transitioning) {
             let transition = this.world.transition;
             if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
@@ -324,6 +350,9 @@ class Game {
                     if (event.left <= 0) {
                         event.resolve();
                     }
+                    if(!!event.every) {
+                        event.every(event.ticks - event.left, event.ticks);
+                    }
                 }
             });
         }
@@ -338,6 +367,9 @@ class Game {
                 event.left--;
                 if (event.left <= 0) {
                     event.resolve();
+                }
+                if(!!event.every) {
+                    event.every(event.ticks - event.left, event.ticks);
                 }
             }
         });
@@ -358,6 +390,16 @@ class Game {
                 'type': type,
                 'resolve': resolve
             });
+        });
+    }
+    // do something for every tick for a certain amount of ticks
+    everyTick(ticks, callback, type="game") {
+        this.tickEvents.push({
+            'ticks': ticks,
+            'left': ticks,
+            'type': type,
+            'resolve': () => {},
+            'every': callback
         });
     }
 

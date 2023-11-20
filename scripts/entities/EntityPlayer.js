@@ -42,7 +42,13 @@ class EntityPlayer {
         }
     }
 
-    move(sx, sy, collisionBoxes) {
+    setPosition(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    move(sx, sy) {
+        let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes();
         // move player
         let hsize = this.size/2;
 
