@@ -25,6 +25,7 @@ class Game {
     doAnimation = true;
     cutscene = false;
     skipframe = false;
+    hideplayer = false;
 
     camFollowPlayer = true;
 
@@ -309,19 +310,31 @@ class Game {
             let transition = this.world.transition;
             if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
                 let tick = this.gametick - this.world.transitionStart;
-                let stepsize = 8;
+                let stepsize = 4;
                 let steps = 0;
                 if (transition=="slideleft") {
                     steps = this.canvas.width/stepsize;
+                    if(player.x < 8) {
+                        player.x+=0.25;
+                    }
                     this.offset[0] = this.canvas.width - tick*stepsize;
                 } else if (transition=="slideright") {
                     steps = this.canvas.width/stepsize;
+                    if(player.x > this.world.currentSpace.size[0]*this.tilesize-8) {
+                        player.x-=0.25;
+                    }
                     this.offset[0] = -this.canvas.width + tick*stepsize;
                 } else if (transition=="slideup") {
                     steps = (this.canvas.height-16)/stepsize;
+                    if(player.y < 8) {
+                        player.y+=0.25;
+                    }
                     this.offset[1] = (this.canvas.height-16) - tick*stepsize;
                 } else if (transition=="slidedown") {
                     steps = (this.canvas.height-16)/stepsize;
+                    if(player.y > this.world.currentSpace.size[1]*this.tilesize-8) {
+                        player.y-=0.25;
+                    }
                     this.offset[1] = -(this.canvas.height-16) + tick*stepsize;
                 }
                 if (tick >= steps) {
@@ -519,9 +532,10 @@ class Game {
             });
         }
 
-        // draw a box representing the player
         let player = this.world.player;
-        player.draw();
+        if (!this.hideplayer && !this.world.transitioning) {
+            player.draw();
+        }
 
         this.renderUi(); 
         // if we are transitioning, draw that!
@@ -531,18 +545,21 @@ class Game {
                 let snapshot = this.world.snapshot;
                 let tick = this.gametick - this.world.transitionStart;
                 if (transition=="slideleft") {
-                    this.ctx.drawImage(snapshot, -tick*8, 16);
+                    this.ctx.drawImage(snapshot, -tick*4, 16);
                 } else if (transition=="slideright") {
-                    this.ctx.drawImage(snapshot, tick*8, 16);
+                    this.ctx.drawImage(snapshot, tick*4, 16);
                 } else if (transition=="slideup") {
-                    this.ctx.drawImage(snapshot, 0, -tick*8+16);
-                    this.renderUi(); // render ui again to make sure it is on top
+                    this.ctx.drawImage(snapshot, 0, -tick*4+16);
                 } else if (transition=="slidedown") {
-                    this.ctx.drawImage(snapshot, 0, tick*8+16);
+                    this.ctx.drawImage(snapshot, 0, tick*4+16);
                 }
+                player.draw();
+                this.renderUi(); // render ui again to make sure it is on top
             } else if(transition == "building") { // fade out for a second, then "open" white screen for half
                 let snapshot = this.world.snapshot;
                 let tick = this.gametick - this.world.transitionStart;
+                player.draw();
+                this.renderUi(); // render ui again to make sure it is on top
                 if (tick < 30) {
                     this.ctx.drawImage(snapshot, 0, 16);
                 }
