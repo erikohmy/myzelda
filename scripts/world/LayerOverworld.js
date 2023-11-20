@@ -20,6 +20,7 @@ function LayerOverworld(game) {
     
     // 1,0
     space = new Space(game, 10, 8);
+    space.background = "#f8e010";
     layer.addSpace(space, 1, 0);
     space.setTiles({
         ' ': null,
@@ -47,9 +48,18 @@ function LayerOverworld(game) {
             game.animations.test1();
         });
     }));
+    space.setTile(1,0, {name:"roof", edges:"tl", variant:"green"});
+    space.setTile(2,0, {name:"roof", edges:"t", variant:"green"});
+    space.setTile(3,0, {name:"roof", edges:"tr", variant:"green"});
+    space.setTile(1,1, {name:"roof", edges:"bl", variant:"green"});
+    space.setTile(2,1, {name:"roof", edges:"b", variant:"green"});
+    space.setTile(3,1, {name:"roof", edges:"rb", variant:"green"});
+    space.setTile(1,2, {name:"window"});
+    space.setTile(2,2, {name:"doorway"});
+    space.setTile(3,2, {name:"window"});
 
-    space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
-    space.addEntity(new EntityTransitioner(game, 16*2, 16*1, 16, 16, (e,t) => {
+    //space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
+    space.addEntity(new EntityTransitioner(game, 16*2, 16*2, 16, 16, (e,t) => {
         let space = game.world.currentLayer.getSpace(1,1);
 
         e.setPosition(5*16, space.height)
@@ -142,8 +152,7 @@ function LayerOverworld(game) {
         e.direction = 0; // look down
         game.animations.exitDown().then(()=>{
             let space = game.world.currentLayer.getSpace(1,0);
-            console.log("exit down done");
-            e.setPosition(2*16+8, 2*16+8)
+            e.setPosition(2*16+8, 2*16+8+5)
             game.world.transitionTo(space, "building");
         });
     }));

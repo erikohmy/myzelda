@@ -128,6 +128,8 @@ class Space {
                                 boxes.push({x:x*16+8, y:y*16, h:16, w:8});
                             } else if (collision == "top") {
                                 boxes.push({x:x*16, y:y*16, h:8, w:16});
+                            } else if (collision == "top-small") {
+                                boxes.push({x:x*16, y:y*16, h:6, w:16});
                             } else if (collision == "bottom") {
                                 boxes.push({x:x*16, y:y*16+8, h:8, w:16});
                             }

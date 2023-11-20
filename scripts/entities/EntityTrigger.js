@@ -6,6 +6,7 @@ class EntityTrigger {
     w; // width
     callback; // callback function
     subject;
+    tempDisabled = false;
     
     constructor(game, x, y, w, h, callback, subject="player") {
         this.game = game;
@@ -23,7 +24,11 @@ class EntityTrigger {
             let player = this.game.world.player;
             if (player.x > this.x && player.x < this.x+this.w &&
                 player.y > this.y && player.y < this.y+this.h) {
-                this.callback(player, this);
+                if (!this.tempDisabled) {
+                    this.callback(player, this);
+                }
+            } else {
+                this.tempDisabled = false;
             }
         } else if (this.subject === "entity" || this.subject === "all"){
             let entities = this.game.world.currentSpace.entities;

@@ -195,6 +195,10 @@ class Game {
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
 
+        await this.addTile("roof", "TileRoof");
+        await this.addTile("roofShack", "TileRoofShack");
+        await this.addTile("window", "TileWindow");
+        await this.addTile("doorway", "TileDoorway");
         await this.addTile("wallWood", "TileWallWood");
         await this.addTile("floorWood", "TileFloorWood");
         await this.addTile("innerDoorway", "TileInnerDoorway");
@@ -349,6 +353,13 @@ class Game {
                 }
             }
         } else if(this.world.transitioning) {
+            // disable all triggers we are inside ( they get reenabled by not being triggered)
+            for (let i=0; i<space.entities.length; i++) {
+                let entity = space.entities[i];
+                if (entity instanceof EntityTrigger) {
+                    entity.tempDisabled = true;
+                }
+            }
             let transition = this.world.transition;
             if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
                 let tick = this.gametick - this.world.transitionStart;
@@ -571,6 +582,10 @@ class Game {
             space.entities.forEach(e => {
                 if(e instanceof EntityTrigger) {
                     this.setColor("#0000FFDD");
+                    if(e.tempDisabled) {
+                        this.setColor("#FF0000DD");
+                    }
+                    
                     this.drawHitBox(e.x+this.offset[0], e.y+this.offset[1], e.w, e.h);
                 } else if(e.hasOwnProperty("x")) {
                     this.setColor("#0000FFDD");

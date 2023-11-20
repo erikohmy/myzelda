@@ -29,7 +29,8 @@ class TileEdged extends TileBase {
 
     drawTile(ctx, x, y, options={}) {
         let sprite = this.name;
-        if (options?.edges) sprite += "-" + options?.edges;
+        if (options?.edges) sprite += "-" + options.edges;
+        if (options?.variant) sprite += "-" + options.variant;
         if (! this.sprites.hasOwnProperty(sprite)) {
             sprite = this.name;
         }
