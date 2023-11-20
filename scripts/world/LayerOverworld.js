@@ -21,12 +21,27 @@ function LayerOverworld(game) {
     // 1,0
     space = new Space(game, 10, 8);
     layer.addSpace(space, 1, 0);
-    space.fill({name:"sand"});
-    space.border({name:"obstacle", variant:"rock"});
-    space.setTile(0,4,{name:"sand"});
+    space.setTiles({
+        ' ': null,
+        's': {name:"sand"},
+        'r': {name:"obstacle", variant:"rock"},
+        'g': {name:"grass2"},
+        '2': {name:"grass2", edges:"b"},
+        '3': {name:"grass2", edges:"l"},
+        '5': {name:"grass2", edges:"bl"},
+    },[
+        'rrrrrrrrrr',
+        'rssss3gggr',
+        'rssss3gggr',
+        'rssss3gggr',
+        'sssss5222r',
+        'rssssssssr',
+        'rssssssssr',
+        'rrrrrrrrrr',
+    ]);
     
     // 0,1
-    space = new Space(game, 10, 14);
+    space = new Space(game, 10, 24);
     layer.addSpace(space, 0, 1);
     space.fill({name:"water"});
     space.border({name:"obstacle", variant:"rock"});

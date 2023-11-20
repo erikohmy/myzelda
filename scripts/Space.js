@@ -29,6 +29,17 @@ class Space {
         return y;
     }
 
+    get background() {
+        let bg = this.options.background;
+        if (bg) {
+            return bg;
+        }
+        return "#000";
+    }
+    set background(bg) {
+        this.options.background = bg;
+    }
+
     tile(x, y) {
         return this.tiles[y*this.size[0]+x];
     }
@@ -50,6 +61,17 @@ class Space {
             this.setTile(this.size[0]-1, y, tileinfo);
         }
     }
+    setTiles(tilemap, tiledata) {
+        for (let y=0; y<tiledata.length; y++) {
+            let row = tiledata[y];
+            for (let x=0; x<row.length; x++) {
+                let tile = tilemap[row[x]];
+                if (tile !== undefined) {
+                    this.setTile(x, y, tile);
+                }
+            }
+        }
+    }
 
     getCollisionBoxes(condition = "solid") {
         let boxes = [];
@@ -66,10 +88,12 @@ class Space {
         // add tile collissions
         for (let y=0; y<this.size[1]; y++) {
             for (let x=0; x<this.size[0]; x++) {
-                let name = this.tile(x, y).name;
-                let tile = this.game.tiles[name];
-                if (tile[condition]) {
-                    boxes.push({x:x*16, y:y*16, h:16, w:16});
+                let name = this.tile(x, y)?.name;
+                if (name) {
+                    let tile = this.game.tiles[name];
+                    if (tile[condition]) {
+                        boxes.push({x:x*16, y:y*16, h:16, w:16});
+                    }
                 }
             }
         }

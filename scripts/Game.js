@@ -367,39 +367,12 @@ class Game {
 
     render() {
         this.clear();
-        this.setColor("#FFF");
         //this.drawGrid();
-
-        /*
-
-        this.tiles.grass.drawTest(this.ctx, 0, 0);
-        this.tiles.grass2.drawTest(this.ctx, 64, 0);
-        this.tiles.gravel.drawTest(this.ctx, 0, 64);
-        this.tiles.sand.drawTest(this.ctx, 64, 64);
-
-        this.tiles.gravelRough.drawTest(this.ctx, 0, 128);
-
-        this.tiles.sand.draw(this.ctx, 128, 64, {edges: "t"});
-        this.tiles.sand.draw(this.ctx, 128+16, 64, {edges: "t"});
-        this.tiles.sand.draw(this.ctx, 128, 64+16);
-        this.tiles.sand.draw(this.ctx, 128, 64+32);
-        this.tiles.sand.draw(this.ctx, 128+16, 64+16);
-        this.tiles.sand.draw(this.ctx, 128+16, 64+32);
-        this.tiles.sand.draw(this.ctx, 128, 64+48, {edges: "b"});
-        this.tiles.sand.draw(this.ctx, 128+16, 64+48, {edges: "b"});
-
-        //this.tiles.obstacle.draw(this.ctx, 16, 128);
-        //this.tiles.obstacle.draw(this.ctx, 32, 128, {variant: "rock"});
-        //this.tiles.obstacle.draw(this.ctx, 48, 128, {variant: "poles1"});
-        //this.tiles.obstacle.draw(this.ctx, 64, 128, {variant: "poles2"});
-        //this.tiles.obstacle.draw(this.ctx, 80, 128, {variant: "block"});
-        //this.tiles.obstacle.draw(this.ctx, 96, 128, {variant: "coconut"});
-        this.tiles.obstacle.drawTest(this.ctx, 16, 128);
-        */
-
-        // draw the testspace
         this.offset[1] = this.offset[1]+16; // offset for ui
         let space = this.world.currentSpace;
+
+        this.setColor(space.background);
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // draw tiles
         for (let y=0; y<space.size[1]; y++) {
