@@ -199,6 +199,7 @@ class Game {
         await this.addTile("roofShack", "TileRoofShack");
         await this.addTile("window", "TileWindow");
         await this.addTile("doorway", "TileDoorway");
+        await this.addTile("chimney", "TileChimney");
         await this.addTile("wallWood", "TileWallWood");
         await this.addTile("floorWood", "TileFloorWood");
         await this.addTile("innerDoorway", "TileInnerDoorway");

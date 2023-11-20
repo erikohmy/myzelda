@@ -49,7 +49,7 @@ function LayerOverworld(game) {
         });
     }));
     space.setTile(1,0, {name:"roof", edges:"tl", variant:"green"});
-    space.setTile(2,0, {name:"roof", edges:"t", variant:"green"});
+    space.setTile(2,0, {name:"chimney"});
     space.setTile(3,0, {name:"roof", edges:"tr", variant:"green"});
     space.setTile(1,1, {name:"roof", edges:"bl", variant:"green"});
     space.setTile(2,1, {name:"roof", edges:"b", variant:"green"});
