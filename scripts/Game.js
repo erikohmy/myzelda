@@ -73,7 +73,7 @@ class Game {
         this.world.currentLayer.addSpace(testspace2, 1, 0);
         
         let testspace3 = new Space(this, 10, 8);
-        testspace3.fill({name:"gravel"});
+        testspace3.fill({name:"water"});
         testspace3.border({name:"obstacle", variant:"rock"});
         testspace3.setTile(1,0,{name:"sand"});
         testspace3.setTile(2,0,{name:"sand"});
@@ -91,8 +91,23 @@ class Game {
         testspace3.setTile(6,1,{name:"sand", edges:"b"});
         testspace3.setTile(7,1,{name:"sand", edges:"b"});
         testspace3.setTile(8,1,{name:"sand", edges:"b"});
+        testspace3.setTile(1,2,{name:"puddle"});
+        testspace3.setTile(2,2,{name:"puddle"});
+        testspace3.setTile(3,2,{name:"puddle"});
         testspace3.setTile(4,2,{name:"sand", edges:"bl"});
         testspace3.setTile(5,2,{name:"sand", edges:"rb"});
+        testspace3.setTile(6,2,{name:"puddle"});
+        testspace3.setTile(7,2,{name:"puddle"});
+        testspace3.setTile(8,2,{name:"puddle"});
+        testspace3.setTile(1,3,{name:"puddle"});
+        testspace3.setTile(2,3,{name:"puddle"});
+        testspace3.setTile(3,3,{name:"puddle"});
+        testspace3.setTile(4,3,{name:"puddle"});
+        testspace3.setTile(5,3,{name:"puddle"});
+        testspace3.setTile(6,3,{name:"puddle"});
+        testspace3.setTile(7,3,{name:"puddle"});
+        testspace3.setTile(8,3,{name:"puddle"});
+
         this.world.currentLayer.addSpace(testspace3, 0, 1);
 
         let testspace4 = new Space(this, 10, 8);
@@ -156,6 +171,9 @@ class Game {
 
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
+
+        let animated = await this.loadImage("./assets/animated.png");
+        this.spritesheets.animated = new SpriteSheet(animated, 8);
     }
 
     async addTiles() {
@@ -165,6 +183,8 @@ class Game {
         await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
         await this.addTile("obstacle", "TileObstacle");
+        await this.addTile("water", "TileWater");
+        await this.addTile("puddle", "TilePuddle");
     }
 
     async generateTiles() {
@@ -469,6 +489,7 @@ class Game {
                 this.setColor("#00FF00"); // green
                 this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
+            */
 
             space.getCollisionBoxes("wet").forEach(box => {
                 this.setColor("#0099ff66"); // transparent light blue
@@ -483,7 +504,6 @@ class Game {
                 this.setColor("#0000FF"); // blue
                 this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
-            */
         }
 
         // draw a box representing the player
