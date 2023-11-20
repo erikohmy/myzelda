@@ -4,7 +4,6 @@ class World {
     layers = {};
     currentLayer;
     currentSpace;
-    oldSpace;
     player;
 
     transitioning = false;
@@ -29,14 +28,10 @@ class World {
         if (this.transitioning) {
             return;
         }
-        console.log('transitioning', transition);
-        //this.game._fpsInterval = 1000/10;
         this.transitioning = true;
         this.transition = transition;
         this.transitionStart = this.game.gametick;
         this.snapshot = await this.game.snapshot();
-
-        this.oldSpace = this.currentSpace;
         this.currentSpace = space;
         this.currentLayer = space.layer;
     }

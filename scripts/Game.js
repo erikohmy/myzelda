@@ -46,75 +46,7 @@ class Game {
         this.interface = new Interface(this, document.getElementById("main"));
 
         this.world = new World(this);
-        this.world.addLayer("overworld", 14, 14);
-        this.world.currentLayer = this.world.layers.overworld;
         this.world.player = new Player(this, 32, 32);
-
-        let testspace1 = new Space(this, 10, 8);
-        this.world.currentLayer.addSpace(testspace1, 0, 0);
-        testspace1.fill({name:"sand"});
-        testspace1.border({name:"obstacle", variant:"rock"});
-        testspace1.setTile(3,4,{name:"obstacle", variant:"coconut"});
-        testspace1.setTile(4,5,{name:"obstacle", variant:"coconut"});
-        testspace1.setTile(1,7,{name:"sand"});
-        testspace1.setTile(2,7,{name:"sand"});
-        testspace1.setTile(3,7,{name:"sand"});
-        testspace1.setTile(4,7,{name:"sand"});
-        testspace1.setTile(5,7,{name:"sand"});
-        testspace1.setTile(6,7,{name:"sand"});
-        testspace1.setTile(7,7,{name:"sand"});
-        testspace1.setTile(8,7,{name:"sand"});
-        testspace1.setTile(9,4,{name:"sand"});
-
-        let testspace2 = new Space(this, 10, 8);
-        testspace2.fill({name:"sand"});
-        testspace2.border({name:"obstacle", variant:"rock"});
-        testspace2.setTile(0,4,{name:"sand"});
-        this.world.currentLayer.addSpace(testspace2, 1, 0);
-        
-        let testspace3 = new Space(this, 10, 8);
-        testspace3.fill({name:"water"});
-        testspace3.border({name:"obstacle", variant:"rock"});
-        testspace3.setTile(1,0,{name:"sand"});
-        testspace3.setTile(2,0,{name:"sand"});
-        testspace3.setTile(3,0,{name:"sand"});
-        testspace3.setTile(4,0,{name:"sand"});
-        testspace3.setTile(5,0,{name:"sand"});
-        testspace3.setTile(6,0,{name:"sand"});
-        testspace3.setTile(7,0,{name:"sand"});
-        testspace3.setTile(8,0,{name:"sand"});
-        testspace3.setTile(1,1,{name:"sand", edges:"b"});
-        testspace3.setTile(2,1,{name:"sand", edges:"b"});
-        testspace3.setTile(3,1,{name:"sand", edges:"b"});
-        testspace3.setTile(4,1,{name:"sand"});
-        testspace3.setTile(5,1,{name:"sand"});
-        testspace3.setTile(6,1,{name:"sand", edges:"b"});
-        testspace3.setTile(7,1,{name:"sand", edges:"b"});
-        testspace3.setTile(8,1,{name:"sand", edges:"b"});
-        testspace3.setTile(1,2,{name:"puddle"});
-        testspace3.setTile(2,2,{name:"puddle"});
-        testspace3.setTile(3,2,{name:"puddle"});
-        testspace3.setTile(4,2,{name:"sand", edges:"bl"});
-        testspace3.setTile(5,2,{name:"sand", edges:"rb"});
-        testspace3.setTile(6,2,{name:"puddle"});
-        testspace3.setTile(7,2,{name:"puddle"});
-        testspace3.setTile(8,2,{name:"puddle"});
-        testspace3.setTile(1,3,{name:"puddle"});
-        testspace3.setTile(2,3,{name:"puddle"});
-        testspace3.setTile(3,3,{name:"puddle"});
-        testspace3.setTile(4,3,{name:"puddle"});
-        testspace3.setTile(5,3,{name:"puddle"});
-        testspace3.setTile(6,3,{name:"puddle"});
-        testspace3.setTile(7,3,{name:"puddle"});
-        testspace3.setTile(8,3,{name:"puddle"});
-
-        this.world.currentLayer.addSpace(testspace3, 0, 1);
-
-        let testspace4 = new Space(this, 10, 8);
-        testspace4.fill({name:"gravel"});
-        this.world.currentLayer.addSpace(testspace4, 1, 1);
-
-        this.world.currentSpace = testspace1;
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -159,6 +91,7 @@ class Game {
         await this.addTiles();
         await this.generateTiles();
         console.pretty("[label-success:success] All assets loaded.")
+        this.generateWorld();
         this.loop();
     }
 
@@ -197,6 +130,14 @@ class Game {
             this.events.trigger('tile-generated', name, tile);
         }
         this.events.trigger('tiles-generated', this.tiles);
+    }
+
+    generateWorld() {
+        // create layers ( maybe find a better way?)
+        LayerOverworld(this);
+
+        this.world.currentLayer = this.world.layers.overworld;
+        this.world.currentSpace = this.world.currentLayer.getSpace(0, 0);
     }
 
     // logic
@@ -347,12 +288,10 @@ class Game {
                 }
                 if (tick >= steps) {
                     this.world.transitioning = false;
-                    console.log('done transitioning')
-                    this._fpsInterval = 1000/60;
                 }
             } else {
                 this.world.transitioning = false;
-                console.log('done transitioning')
+                console.log('no transition')
             }
         }
 
@@ -558,86 +497,5 @@ class SpriteSheet {
     // context, sprite x, sprite y, position x, position y
     drawSprite(ctx, x, y, px, py) {
         ctx.drawImage(this.image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, this.spritesize, this.spritesize);
-    }
-}
-
-// a space, contains a grid of tiles and all entities in it
-class Space {
-    game;
-    layer;
-    size;
-    tiles;
-    entities;
-
-    options; // filter, music, etc
-
-    constructor(game, sizex, sizey) {
-        this.game = game;
-        this.size = [sizex, sizey];
-        this.tiles = new Array(sizex * sizey);
-        this.entities = [];
-        this.options = {};
-    }
-    get position() {
-        return this.layer.getSpacePosition(this);
-    }
-    get x() {
-        let x,y;
-        [x, y] = this.position;
-        return x;
-    }
-
-    get y() {
-        let x,y;
-        [x, y] = this.position;
-        return y;
-    }
-
-    tile(x, y) {
-        return this.tiles[y*this.size[0]+x];
-    }
-    setTile(x, y, tileinfo) {
-        return this.tiles[y*this.size[0]+x] = tileinfo;
-    }
-    fill(tileinfo) {
-        for (let i=0; i<this.tiles.length; i++) {
-            this.tiles[i] = tileinfo;
-        }
-    }
-    border(tileinfo) {
-        for (let x=0; x<this.size[0]; x++) {
-            this.setTile(x, 0, tileinfo);
-            this.setTile(x, this.size[1]-1, tileinfo);
-        }
-        for (let y=0; y<this.size[1]; y++) {
-            this.setTile(0, y, tileinfo);
-            this.setTile(this.size[0]-1, y, tileinfo);
-        }
-    }
-
-    getCollisionBoxes(condition = "solid") {
-        let boxes = [];
-        // add itself as a collision box, if contition is solid
-        if (condition == "solid") {
-            let bw = (this.size[0]+2)*16;
-            let bh = (this.size[1]+2)*16;
-            boxes.push({x:-32, y:-16, w: 16, h: bh}); // left wall
-            boxes.push({x:bw-16, y:-16, w: 16, h: bh}); // right wall
-            boxes.push({x:-16, y:-32, w: bw, h: 16}); // top wall
-            boxes.push({x:-16, y:bh-16, w: bw, h: 16}); // bottom wall
-        }
-
-        // add tile collissions
-        for (let y=0; y<this.size[1]; y++) {
-            for (let x=0; x<this.size[0]; x++) {
-                let name = this.tile(x, y).name;
-                let tile = this.game.tiles[name];
-                if (tile[condition]) {
-                    boxes.push({x:x*16, y:y*16, h:16, w:16});
-                }
-            }
-        }
-        // todo: add entity collissions ( not enemies and such, only doors, tile entities, etc)
-        return boxes;
     }
 }
