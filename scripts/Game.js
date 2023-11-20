@@ -1,10 +1,10 @@
 class Game {
     events = new EasyEvents();
+    tickEvents = [];
 
     tilesize = 16;
     gridsize = [10, 9];
     offset = [0, 0];
-    screenOffset = [0, 0];
     size = [0, 0];
 
     canvas = null;
@@ -22,6 +22,10 @@ class Game {
 
     doGameLogic = true;
     doAnimation = true;
+    cutscene = false;
+    skipframe = false;
+
+    camFollowPlayer = true;
 
     constructor(canvas) {
         this.canvas = canvas;
@@ -46,7 +50,7 @@ class Game {
         this.interface = new Interface(this, document.getElementById("main"));
 
         this.world = new World(this);
-        this.world.player = new Player(this, 32, 32);
+        this.world.player = new EntityPlayer(this, 32, 32);
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -168,7 +172,7 @@ class Game {
         let player = this.world.player;
         let space = this.world.currentSpace;
 
-        if (this.doGameLogic && !this.world.transitioning) {
+        if (this.camFollowPlayer) {
             let worldOffset = [0, 0];
 
             // follow player
@@ -182,9 +186,11 @@ class Game {
             worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+(this.canvas.height-16));
             worldOffset[1] = Math.min(worldOffset[1], 0);
 
-            this.offset[0] = worldOffset[0] + this.screenOffset[0];
-            this.offset[1] = worldOffset[1] + this.screenOffset[1];
+            this.offset[0] = worldOffset[0];
+            this.offset[1] = worldOffset[1];
+        }
 
+        if (this.doGameLogic && !this.cutscene && !this.world.transitioning) {
             let c_up = this.interface.isControlHeld("up");
             let c_right = this.interface.isControlHeld("right");
             let c_down = this.interface.isControlHeld("down");
@@ -193,7 +199,6 @@ class Game {
             // move player
             let collisionBoxes = space.getCollisionBoxes();
 
-            
             if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
                 player.walking = false;
                 if (c_up) {
@@ -216,6 +221,14 @@ class Game {
                     player.move(1, 0, collisionBoxes);
                 }
             }
+            this.tickEvents.forEach(event => {
+                if (event.type === "logic") {
+                    event.left--;
+                    if (event.left <= 0) {
+                        event.resolve();
+                    }
+                }
+            });
 
             // if player is outside the space to the rigt, transition to the next space
             if (player.x > space.size[0]*this.tilesize) {
@@ -250,24 +263,23 @@ class Game {
                     await this.world.transitionTo(prevspace, "slidedown");
                 }
             }
+
+            // update entities
+            for (let i=0; i<space.entities.length; i++) {
+                let entity = space.entities[i];
+                if (!!entity.logic) {
+                    entity.logic();
+                }
+            }
+            this.tickEvents.forEach(event => {
+            if (event.type === "game") {
+                event.left--;
+                if (event.left <= 0) {
+                    event.resolve();
+                }
+            }
+        });
         } else if(this.world.transitioning) {
-            // stupid copy
-            let worldOffset = [0, 0];
-
-            // follow player
-            worldOffset[0] = -Math.round(player.x - this.canvas.width/2);
-            worldOffset[1] = -Math.round(player.y - this.canvas.height/2);
-
-            // clamp world offset to space size
-            let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
-            worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
-            worldOffset[0] = Math.min(worldOffset[0], 0);
-            worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height);
-            worldOffset[1] = Math.min(worldOffset[1], 0);
-
-            this.offset[0] = worldOffset[0] + this.screenOffset[0];
-            this.offset[1] = worldOffset[1] + this.screenOffset[1];
-            //
             let transition = this.world.transition;
             if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
                 let tick = this.gametick - this.world.transitionStart;
@@ -288,19 +300,65 @@ class Game {
                 }
                 if (tick >= steps) {
                     this.world.transitioning = false;
+                    this.world.transitionCallback();
+                }
+            } else if(transition == "building") { // fade out, then "open" white screen
+                let tick = this.gametick - this.world.transitionStart;
+                // half second fade, and quarter second "open"
+                if (tick > 45) {
+                    this.world.transitioning = false;
+                    this.world.transitionCallback();
                 }
             } else {
                 this.world.transitioning = false;
+                this.world.transitionCallback();
                 console.log('no transition')
             }
         }
 
         if (this.doAnimation && !this.world.transitioning) {
             this.animationtick++;
+            this.tickEvents.forEach(event => {
+                if (event.type === "animation") {
+                    event.left--;
+                    if (event.left <= 0) {
+                        event.resolve();
+                    }
+                }
+            });
         }
-        this.render();
+        if (this.skipframe) {
+            this.skipframe = false;
+        } else {
+            this.render();
+        }
         this.gametick++;
+        this.tickEvents.forEach(event => {
+            if (event.type === "game") {
+                event.left--;
+                if (event.left <= 0) {
+                    event.resolve();
+                }
+            }
+        });
+        // cleanup events with 0 left
+        this.tickEvents.forEach(event => {
+            if (event.left <= 0) {
+                this.tickEvents.splice(this.tickEvents.indexOf(event), 1);
+            }
+        });
         this.ticking = false;
+    }
+
+    waitTicks(ticks, type="game") {
+        return new Promise((resolve, reject) => {
+            this.tickEvents.push({
+                'ticks': ticks,
+                'left': ticks,
+                'type': type,
+                'resolve': resolve
+            });
+        });
     }
 
     // graphics
@@ -368,6 +426,7 @@ class Game {
     render() {
         this.clear();
         //this.drawGrid();
+        let offsetY = this.offset[1];
         this.offset[1] = this.offset[1]+16; // offset for ui
         let space = this.world.currentSpace;
 
@@ -422,6 +481,7 @@ class Game {
         let player = this.world.player;
         player.draw();
 
+        this.renderUi(); 
         // if we are transitioning, draw that!
         if (this.world.transitioning) {
             let transition = this.world.transition;
@@ -434,13 +494,30 @@ class Game {
                     this.ctx.drawImage(snapshot, tick*8, 16);
                 } else if (transition=="slideup") {
                     this.ctx.drawImage(snapshot, 0, -tick*8+16);
+                    this.renderUi(); // render ui again to make sure it is on top
                 } else if (transition=="slidedown") {
                     this.ctx.drawImage(snapshot, 0, tick*8+16);
                 }
+            } else if(transition == "building") { // fade out for a second, then "open" white screen for half
+                let snapshot = this.world.snapshot;
+                let tick = this.gametick - this.world.transitionStart;
+                if (tick < 30) {
+                    this.ctx.drawImage(snapshot, 0, 16);
+                }
+                let alpha = Math.min((tick/30) * 1, 1);
+                this.setColor(`rgba(255,255,255,${alpha})`);
+                if (tick > 30) {
+                    let width = this.canvas.width/2;
+                    let slide = tick > 30 ? (tick-30)*(width/15) : 0;
+                    this.ctx.fillRect(0-slide, 16, width, this.canvas.height-16);
+                    this.ctx.fillRect(width+slide, 16, width, this.canvas.height-16);
+                } else {
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                }
             }
         }
-
-        this.renderUi();  
+        // reset offset to what it was
+        this.offset[1] = offsetY;
     }
     async snapshot() {
         // get imagedata of the canvas, excluding the ui

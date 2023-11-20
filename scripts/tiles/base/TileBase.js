@@ -8,6 +8,7 @@ class TileBase {
     sprites;
 
     solid = false;
+    trigger = false;
     hole = false;
     swim = false;
     drown = false;

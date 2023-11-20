@@ -73,6 +73,11 @@ class Space {
         }
     }
 
+    addEntity(entity) {
+        this.entities.push(entity);
+        return entity;
+    }
+
     getCollisionBoxes(condition = "solid") {
         let boxes = [];
         // add itself as a collision box, if contition is solid

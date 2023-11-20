@@ -39,6 +39,17 @@ function LayerOverworld(game) {
         'rssssssssr',
         'rrrrrrrrrr',
     ]);
+    space.addEntity(new EntityTransitioner(game, 16*8, 16*1, 16, 16, (e,t) => {
+        console.log("player touching!");
+        e.x = t.x + 8;
+        e.y = t.y + 8;
+        e.walking = false;
+        e.direction = 2; // down
+        let space = game.world.currentLayer.getSpace(0,0);
+        game.world.transitionTo(space, "building", () => {
+            console.log('transition done');
+        });
+    }));
     
     // 0,1
     space = new Space(game, 10, 24);

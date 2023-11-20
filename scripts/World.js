@@ -24,13 +24,15 @@ class World {
         return layer;
     }
 
-    async transitionTo(space, transition="none") {
+    async transitionTo(space, transition="none", callback) {
         if (this.transitioning) {
             return;
         }
         this.transitioning = true;
+        this.game.skipframe = true; // skip one frame of animation
         this.transition = transition;
         this.transitionStart = this.game.gametick;
+        this.transitionCallback = callback || (() => {});
         this.snapshot = await this.game.snapshot();
         this.currentSpace = space;
         this.currentLayer = space.layer;

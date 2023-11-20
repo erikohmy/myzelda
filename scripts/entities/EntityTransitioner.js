@@ -1,0 +1,3 @@
+class EntityTransitioner extends EntityTrigger {
+
+}

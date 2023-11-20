@@ -1,4 +1,4 @@
-class Player {
+class EntityPlayer {
     game;
 
     x; // position x
@@ -11,6 +11,8 @@ class Player {
 
     health;
     maxHealth;
+    lastDamaged = 0;
+    invincibilityTime = 30; // ticks, half a second
 
     constructor(game, x, y) {
         this.game = game;
@@ -22,6 +24,24 @@ class Player {
         this.maxHealth = 14*4;
         this.health = this.maxHealth;
     }
+
+    damage(amount, ignoreInvincibility=false) {
+        let ticksSinceDamaged = this.game.gametick - this.lastDamaged;
+        if (ticksSinceDamaged > this.invincibilityTime || ignoreInvincibility) {
+            this.lastDamaged = this.game.gametick;
+            if (this.health <= 0) {
+                // already dead
+                this.health = 0;
+            } else {
+                this.health -= amount;
+                if (this.health <= 0) {
+                    this.health = 0;
+                    // died!
+                }
+            }
+        }
+    }
+
     move(sx, sy, collisionBoxes) {
         // move player
         let hsize = this.size/2;
@@ -104,7 +124,7 @@ class Player {
             soy += 1;
         }
 
-        if (this.walking && this.game.animationtick % 30 > 15) {
+        if (this.walking && this.game.animationtick % 15 > 7) {
             sox += 4;
         }
 
