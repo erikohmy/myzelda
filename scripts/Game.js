@@ -128,6 +128,7 @@ class Game {
         await this.loadSpritesheets();
         await this.addTiles();
         await this.generateTiles();
+        console.clear();
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
         this.loop();
