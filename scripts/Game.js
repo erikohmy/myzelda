@@ -47,32 +47,59 @@ class Game {
 
         this.world = new World(this);
         this.world.addLayer("overworld", 14, 14);
-
-        let testspace = new Space(this, 10, 8); // one full screen (minus one row for the ui)
-        this.world.currentLayer = this.world.layers.overworld
-        this.world.currentSpace = testspace;
+        this.world.currentLayer = this.world.layers.overworld;
         this.world.player = new Player(this, 32, 32);
 
-        this.world.currentLayer.addSpace(testspace, 0, 0);
-        testspace.fill({name:"sand"});
-        testspace.setTile(0,0,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,1,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,2,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,3,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,4,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,6,{name:"obstacle", variant:"rock"});
-        testspace.setTile(0,7,{name:"obstacle", variant:"rock"});
-
-        testspace.setTile(3,4,{name:"obstacle", variant:"coconut"});
-        testspace.setTile(4,5,{name:"obstacle", variant:"coconut"});
+        let testspace1 = new Space(this, 10, 8);
+        this.world.currentLayer.addSpace(testspace1, 0, 0);
+        testspace1.fill({name:"sand"});
+        testspace1.border({name:"obstacle", variant:"rock"});
+        testspace1.setTile(3,4,{name:"obstacle", variant:"coconut"});
+        testspace1.setTile(4,5,{name:"obstacle", variant:"coconut"});
+        testspace1.setTile(1,7,{name:"sand"});
+        testspace1.setTile(2,7,{name:"sand"});
+        testspace1.setTile(3,7,{name:"sand"});
+        testspace1.setTile(4,7,{name:"sand"});
+        testspace1.setTile(5,7,{name:"sand"});
+        testspace1.setTile(6,7,{name:"sand"});
+        testspace1.setTile(7,7,{name:"sand"});
+        testspace1.setTile(8,7,{name:"sand"});
+        testspace1.setTile(9,4,{name:"sand"});
 
         let testspace2 = new Space(this, 10, 8);
         testspace2.fill({name:"sand"});
+        testspace2.border({name:"obstacle", variant:"rock"});
+        testspace2.setTile(0,4,{name:"sand"});
         this.world.currentLayer.addSpace(testspace2, 1, 0);
-
+        
         let testspace3 = new Space(this, 10, 8);
         testspace3.fill({name:"gravel"});
+        testspace3.border({name:"obstacle", variant:"rock"});
+        testspace3.setTile(1,0,{name:"sand"});
+        testspace3.setTile(2,0,{name:"sand"});
+        testspace3.setTile(3,0,{name:"sand"});
+        testspace3.setTile(4,0,{name:"sand"});
+        testspace3.setTile(5,0,{name:"sand"});
+        testspace3.setTile(6,0,{name:"sand"});
+        testspace3.setTile(7,0,{name:"sand"});
+        testspace3.setTile(8,0,{name:"sand"});
+        testspace3.setTile(1,1,{name:"sand", edges:"b"});
+        testspace3.setTile(2,1,{name:"sand", edges:"b"});
+        testspace3.setTile(3,1,{name:"sand", edges:"b"});
+        testspace3.setTile(4,1,{name:"sand"});
+        testspace3.setTile(5,1,{name:"sand"});
+        testspace3.setTile(6,1,{name:"sand", edges:"b"});
+        testspace3.setTile(7,1,{name:"sand", edges:"b"});
+        testspace3.setTile(8,1,{name:"sand", edges:"b"});
+        testspace3.setTile(4,2,{name:"sand", edges:"bl"});
+        testspace3.setTile(5,2,{name:"sand", edges:"rb"});
         this.world.currentLayer.addSpace(testspace3, 0, 1);
+
+        let testspace4 = new Space(this, 10, 8);
+        testspace4.fill({name:"gravel"});
+        this.world.currentLayer.addSpace(testspace4, 1, 1);
+
+        this.world.currentSpace = testspace1;
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -287,16 +314,16 @@ class Game {
                 let steps = 0;
                 if (transition=="slideleft") {
                     steps = this.canvas.width/stepsize;
-                    this.offset[0] = this.canvas.width - (tick+1)*stepsize;
+                    this.offset[0] = this.canvas.width - tick*stepsize;
                 } else if (transition=="slideright") {
                     steps = this.canvas.width/stepsize;
-                    this.offset[0] = -this.canvas.width + (tick+1)*stepsize;
+                    this.offset[0] = -this.canvas.width + tick*stepsize;
                 } else if (transition=="slideup") {
                     steps = (this.canvas.height-16)/stepsize;
-                    this.offset[1] = (this.canvas.height-16) - (tick)*stepsize;
+                    this.offset[1] = (this.canvas.height-16) - tick*stepsize;
                 } else if (transition=="slidedown") {
                     steps = (this.canvas.height-16)/stepsize;
-                    this.offset[1] = -(this.canvas.height-16) + (tick)*stepsize;
+                    this.offset[1] = -(this.canvas.height-16) + tick*stepsize;
                 }
                 if (tick >= steps) {
                     this.world.transitioning = false;
@@ -555,6 +582,16 @@ class Space {
     fill(tileinfo) {
         for (let i=0; i<this.tiles.length; i++) {
             this.tiles[i] = tileinfo;
+        }
+    }
+    border(tileinfo) {
+        for (let x=0; x<this.size[0]; x++) {
+            this.setTile(x, 0, tileinfo);
+            this.setTile(x, this.size[1]-1, tileinfo);
+        }
+        for (let y=0; y<this.size[1]; y++) {
+            this.setTile(0, y, tileinfo);
+            this.setTile(this.size[0]-1, y, tileinfo);
         }
     }
 
