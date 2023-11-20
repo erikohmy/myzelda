@@ -47,6 +47,18 @@ function LayerOverworld(game) {
             game.animations.test1();
         });
     }));
+
+    space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
+    space.addEntity(new EntityTransitioner(game, 16*2, 16*1, 16, 16, (e,t) => {
+        let space = game.world.currentLayer.getSpace(1,1);
+
+        e.setPosition(5*16, space.height)
+        e.direction = 0; // look up
+        
+        game.world.transitionTo(space, "building", () => {
+            game.animations.enterUp();
+        });
+    }));
     
     // 0,1
     space = new Space(game, 10, 24);
@@ -85,4 +97,54 @@ function LayerOverworld(game) {
     space.setTile(6,3,{name:"puddle"});
     space.setTile(7,3,{name:"puddle"});
     space.setTile(8,3,{name:"puddle"});
+
+    // 1,1
+    space = new Space(game, 10, 8);
+    layer.addSpace(space, 1, 1);
+    space.fill({name:"floorWood"});
+    let walltest = "wallWood";
+    /*
+    space.setTile(1,0,{name:walltest, variant:"t"});
+    space.setTile(2,1,{name:walltest, variant:"r"});
+    space.setTile(1,2,{name:walltest, variant:"b"});
+    space.setTile(0,1,{name:walltest, variant:"l"});
+
+    space.setTile(0,0,{name:walltest, variant:"tl"});
+    space.setTile(9,0,{name:walltest, variant:"tr"});
+    space.setTile(0,7,{name:walltest, variant:"bl"});
+    space.setTile(9,7,{name:walltest, variant:"rb"});
+
+    space.setTile(1,1,{name:"floorWood", variant:"carpet2"});
+    */
+    space.setTiles({
+        'fl': {name:"floorWood"},
+        'wt': {name:"wallWood", variant:"t"},
+        'wr': {name:"wallWood", variant:"r"},
+        'wb': {name:"wallWood", variant:"b"},
+        'wl': {name:"wallWood", variant:"l"},
+        'c1': {name:"wallWood", variant:"tl"},
+        'c2': {name:"wallWood", variant:"tr"},
+        'c3': {name:"wallWood", variant:"bl"},
+        'c4': {name:"wallWood", variant:"rb"},
+        'dl': {name:"innerDoorway", variant:"left"},
+        'dr': {name:"innerDoorway", variant:"right"},
+    },[
+        'c1wtwtwtwtwtwtwtwtc2',
+        'wlflflflflflflflflwr',
+        'wlflflflflflflflflwr',
+        'wlflflflflflflflflwr',
+        'wlflflflflflflflflwr',
+        'wlflflflflflflflflwr',
+        'wlflflflflflflflflwr',
+        'c3wbwbwbdldrwbwbwbc4',
+    ]);
+    space.addEntity(new EntityTransitioner(game, 16*4+8, 16*7+8, 16, 8, (e,t) => {
+        e.direction = 0; // look down
+        game.animations.exitDown().then(()=>{
+            let space = game.world.currentLayer.getSpace(1,0);
+            console.log("exit down done");
+            e.setPosition(2*16+8, 2*16+8)
+            game.world.transitionTo(space, "building");
+        });
+    }));
 }

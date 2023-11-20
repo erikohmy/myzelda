@@ -29,6 +29,8 @@ class Game {
 
     camFollowPlayer = true;
 
+    debug = false;
+
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -52,7 +54,7 @@ class Game {
         this.interface = new Interface(this, document.getElementById("main"));
 
         this.world = new World(this);
-        this.world.player = new EntityPlayer(this, 32, 32);
+        this.world.player = new EntityPlayer(this, 16*5, 16*4);
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -95,7 +97,39 @@ class Game {
                     }
                 });
             });
-        }
+        };
+        this.animations.enterUp = () => {
+            return new Promise((resolve) => {
+                let game = this;
+                game.everyTick(24, (t, total) => {
+                    game.cutscene = true;
+                    game.world.player.direction = 0;
+                    game.world.player.walking = true;
+                    game.world.player.move(0, -1);
+                    if (t==total) {
+                        game.world.player.walking = false;
+                        game.cutscene = false;
+                        resolve();
+                    }
+                });
+            });
+        };
+        this.animations.exitDown = () => {
+            return new Promise((resolve) => {
+                let game = this;
+                game.everyTick(24, (t, total) => {
+                    game.cutscene = true;
+                    game.world.player.direction = 2;
+                    game.world.player.walking = true;
+                    game.world.player.move(0, 1);
+                    if (t==total) {
+                        game.world.player.walking = false;
+                        game.cutscene = false;
+                        resolve();
+                    }
+                });
+            });
+        };
     }
 
     // helpers
@@ -128,7 +162,7 @@ class Game {
         await this.loadSpritesheets();
         await this.addTiles();
         await this.generateTiles();
-        console.clear();
+        //console.clear();
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
         this.loop();
@@ -144,6 +178,9 @@ class Game {
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
 
+        let buildings = await this.loadImage("./assets/buildings.png");
+        this.spritesheets.buildings = new SpriteSheet(buildings, 8);
+
         let animated = await this.loadImage("./assets/animated.png");
         this.spritesheets.animated = new SpriteSheet(animated, 8);
     }
@@ -157,6 +194,10 @@ class Game {
         await this.addTile("obstacle", "TileObstacle");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
+
+        await this.addTile("wallWood", "TileWallWood");
+        await this.addTile("floorWood", "TileFloorWood");
+        await this.addTile("innerDoorway", "TileInnerDoorway");
     }
 
     async generateTiles() {
@@ -479,6 +520,17 @@ class Game {
         }
     }
 
+    drawHitBox(x, y, w, h) {
+        // draw a hitbox, rectangle with a cross in it
+        this.ctx.strokeRect(x, y, w, h);
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y);
+        this.ctx.lineTo(x+w, y+h);
+        this.ctx.moveTo(x+w, y);
+        this.ctx.lineTo(x, y+h);
+        this.ctx.stroke();
+    }
+
     render() {
         this.clear();
         //this.drawGrid();
@@ -496,19 +548,36 @@ class Game {
                 if (tile) {
                     let xpos = x*this.tilesize+this.offset[0];
                     let ypos = y*this.tilesize+this.offset[1];
-                    this.tiles[tile.name].draw(this.ctx, xpos, ypos, tile);
+                    let tileClass = this.tiles[tile.name];
+                    if (tileClass) {
+                        tileClass.draw(this.ctx, xpos, ypos, tile);
+                    } else {
+                        console.error("tile not found:", tile.name);
+                    }
                 }
             }
         }
 
         // debug, draw collision boxes
-        if (false) {
+        if (this.debug) {
             space.getCollisionBoxes().forEach(box => {
-                this.setColor("#FF000077"); // transparent red
-                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+                this.setColor("#FF0000DD");
+                this.drawHitBox(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+                //this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
                 //this.setColor("#FF0000"); // red
                 //this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
+
+            space.entities.forEach(e => {
+                if(e instanceof EntityTrigger) {
+                    this.setColor("#0000FFDD");
+                    this.drawHitBox(e.x+this.offset[0], e.y+this.offset[1], e.w, e.h);
+                } else if(e.hasOwnProperty("x")) {
+                    this.setColor("#0000FFDD");
+                    this.ctx.fillRect(e.x+this.offset[0]-1, e.y+this.offset[1]-1, 2, 2);
+                }
+            });
+
             /*
             space.getCollisionBoxes("dig").forEach(box => {
                 this.setColor("#00FF0044"); // transparent green

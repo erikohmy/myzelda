@@ -29,6 +29,14 @@ class Space {
         return y;
     }
 
+    get height() {
+        return this.size[1]*this.game.tilesize;
+    }
+
+    get width() {
+        return this.size[0]*this.game.tilesize;
+    }
+
     get background() {
         let bg = this.options.background;
         if (bg) {
@@ -62,8 +70,17 @@ class Space {
         }
     }
     setTiles(tilemap, tiledata) {
+        // get length of tilemap key
+        let keys = Object.keys(tilemap);
+        let keylen = keys[0].length;
+
         for (let y=0; y<tiledata.length; y++) {
             let row = tiledata[y];
+            if (keylen > 1) {
+                let regexstring = ".{1," + keylen + "}";
+                let regex = new RegExp(regexstring, 'g');
+                row = row.match(regex)
+            }
             for (let x=0; x<row.length; x++) {
                 let tile = tilemap[row[x]];
                 if (tile !== undefined) {
@@ -96,8 +113,25 @@ class Space {
                 let name = this.tile(x, y)?.name;
                 if (name) {
                     let tile = this.game.tiles[name];
-                    if (tile[condition]) {
-                        boxes.push({x:x*16, y:y*16, h:16, w:16});
+                    if (tile) {
+                        if (tile[condition]) {
+                            boxes.push({x:x*16, y:y*16, h:16, w:16});
+                        }
+                        if(condition == "solid" && !!tile.collision) {
+                            // special collisions
+                            let variant = this.tile(x, y)?.variant;
+                            let cname = name + (variant ? "-" + variant : "");
+                            let collision = tile.collision[cname];
+                            if (collision == "left") {
+                                boxes.push({x:x*16, y:y*16, h:16, w:8});
+                            } else if (collision == "right") {
+                                boxes.push({x:x*16+8, y:y*16, h:16, w:8});
+                            } else if (collision == "top") {
+                                boxes.push({x:x*16, y:y*16, h:8, w:16});
+                            } else if (collision == "bottom") {
+                                boxes.push({x:x*16, y:y*16+8, h:8, w:16});
+                            }
+                        }
                     }
                 }
             }

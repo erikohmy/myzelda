@@ -15,6 +15,8 @@ class TileBase {
     wet = false;
     dig = false;
 
+    collision = undefined;
+
     spriteMap = [
         ["tl", "tr" ], // top left, top right
         ["bl", "rb"], // bottom left, bottom right
@@ -28,8 +30,11 @@ class TileBase {
     constructor(game, name) {
         this.game = game;
         this.name = name;
+        this.init();
         game.tiles[name] = this;
     }
+
+    init() {}
 
     defineTiles() {
         let tiles = {};
