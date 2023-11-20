@@ -26,7 +26,7 @@ function LayerOverworld(game) {
     space.setTile(0,4,{name:"sand"});
     
     // 0,1
-    space = new Space(game, 10, 8);
+    space = new Space(game, 10, 14);
     layer.addSpace(space, 0, 1);
     space.fill({name:"water"});
     space.border({name:"obstacle", variant:"rock"});

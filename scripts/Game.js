@@ -179,7 +179,7 @@ class Game {
             let spaceSize = [space.size[0]*this.tilesize, space.size[1]*this.tilesize];
             worldOffset[0] = Math.max(worldOffset[0], -spaceSize[0]+this.canvas.width);
             worldOffset[0] = Math.min(worldOffset[0], 0);
-            worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+this.canvas.height);
+            worldOffset[1] = Math.max(worldOffset[1], -spaceSize[1]+(this.canvas.height-16));
             worldOffset[1] = Math.min(worldOffset[1], 0);
 
             this.offset[0] = worldOffset[0] + this.screenOffset[0];
