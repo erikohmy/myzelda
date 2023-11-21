@@ -25,8 +25,9 @@ class SoundHandler {
         return new Promise((resolve, reject) => {
             let sound = new Audio(src);
             this.sounds[name] = sound;
-            console.log('adding sound', name)
+            this.game.events.trigger('sound-adding', name, sound)
             sound.addEventListener('canplaythrough', () => {
+                this.game.events.trigger('sound-added', name, sound)
                 resolve();
             }, { once: true });
         });
@@ -41,8 +42,9 @@ class SoundHandler {
                 volume: 0.4,
             }
             music.volume = this.music[name].volume;
-            console.log('adding music', name)
+            this.game.events.trigger('sound-adding', name, music)
             music.addEventListener('canplaythrough', () => {
+                this.game.events.trigger('sound-added', name, music)
                 resolve();
             }, { once: true });
             music.addEventListener('ended', () => {  // only fires when ends naturally

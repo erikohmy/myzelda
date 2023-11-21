@@ -38,6 +38,8 @@ class Game {
     gameReady = false;
     started = false;
 
+    loader = null;
+
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -49,14 +51,7 @@ class Game {
         this.ctx.imageSmoothingEnabled = false;
         this.ctx.lineWidth = 1;
 
-        // loading eventlisteners
-        this.events.on('tile-adding', (name, tile, tag) => {console.info('adding tile:', name);});
-        this.events.on('tile-added', (name, tile, tag, tileref) => {});
-        this.events.on('tiles-generating', (tiles) => {console.info('generating tiles...');});
-        this.events.on('tile-generating', (name, tileref) => {console.info('generating tile', name);});
-        this.events.on('tile-generated', (name, tileref) => {});
-        this.events.on('tiles-generated', (tiles) => {console.info('generated '+Object.keys(tiles).length+" tiles");});
-
+        this.loader = new NiceLoader(this);
         this.events.on('ready', () => {this.canvas.classList.add('ready')});
 
         // transition eventlisteners
@@ -202,6 +197,7 @@ class Game {
     }
 
     async addSounds() {
+        this.events.trigger('sounds-adding');
         await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
@@ -212,6 +208,7 @@ class Game {
         // music
         await this.sound.addMusic("overworld", "./assets/sound/music/overworld.mp3", 6.42);
         await this.sound.addMusic("house", "./assets/sound/music/house.mp3");
+        this.events.trigger('sounds-added');
     }
 
     async load() {
@@ -219,9 +216,8 @@ class Game {
         await this.addTiles();
         await this.generateTiles();
         await this.addSounds();
-        console.clear();
-        console.pretty("[label-success:success] All assets loaded.")
-        this.generateWorld();
+        await this.generateWorld();
+
         this.sound.volume = 0.2;
         this.gameReady = true;
         this.events.trigger('ready');
@@ -241,6 +237,7 @@ class Game {
     }
 
     async loadSpritesheets() {
+        this.events.trigger('sprites-adding');
         let ui = await this.loadImage("./assets/ui.png");
         this.spritesheets.ui = new SpriteSheet(ui, 8);
 
@@ -255,9 +252,11 @@ class Game {
 
         let animated = await this.loadImage("./assets/animated.png");
         this.spritesheets.animated = new SpriteSheet(animated, 8);
+        this.events.trigger('sprites-added');
     }
 
     async addTiles() {
+        this.events.trigger('tiles-adding');
         await this.addTile("grass", "TileGrass");
         await this.addTile("grass2", "TileGrassVariant");
         await this.addTile("gravel", "TileGravel");
@@ -275,6 +274,7 @@ class Game {
         await this.addTile("wallWood", "TileWallWood");
         await this.addTile("floorWood", "TileFloorWood");
         await this.addTile("innerDoorway", "TileInnerDoorway");
+        this.events.trigger('tiles-added');
     }
 
     async generateTiles() {
@@ -289,9 +289,10 @@ class Game {
         this.events.trigger('tiles-generated', this.tiles);
     }
 
-    generateWorld() {
-        // create layers ( maybe find a better way?)
-        LayerOverworld(this);
+    async generateWorld() {
+        this.events.trigger('world-generating');
+        await LayerOverworld(this);
+        this.events.trigger('world-generated');
     }
 
     // logic
@@ -821,4 +822,74 @@ class SpriteSheet {
 function tileSnap(x,y) {
     // snap to center of tiles
     return [Math.floor(x/game.tilesize)*game.tilesize, Math.floor(y/game.tilesize)*game.tilesize];
+}
+
+class NiceLoader {
+    wrap = null;
+    tiles = 0;
+    tilesGenerated = 0;
+    _currentItem = "";
+    _stage = null;
+    constructor(game) {
+        this.wrap = document.querySelector('.gamewrap');
+        this.wrap.classList.add('loading');
+
+        this.stage = "pre";
+        // sprites, then tiles, then sound
+
+        // sprites
+        game.events.on('sprites-adding', () => {this.stage = "adding-sprites"});
+
+        // tiles
+        game.events.on('tiles-adding', () => {this.stage = "adding-tiles"});
+        game.events.on('tile-adding', (name, tile, tag) => {this.tiles++;this.currentItem = "Tile: "+name;});
+        game.events.on('tile-added', (name, tile, tag) => {});
+        game.events.on('tiles-added', () => {this.currentItem = "";});
+
+        game.events.on('tiles-generating', (tiles) => {this.stage = "generating-tiles"});
+        game.events.on('tile-generating', (name, tileref) => {this.currentItem = "Tile: "+name;});
+        game.events.on('tile-generated', (name, tileref) => {this.tilesGenerated++;});
+        game.events.on('tiles-generated', (tiles) => {
+            this.currentItem = "";
+            //console.info('generated '+Object.keys(tiles).length+" tiles");
+        });
+
+        // sounds
+        game.events.on('sounds-adding', () => {this.stage = "adding-sounds"});
+        game.events.on('sound-adding', (name, sound) => {this.currentItem = "Sound: "+name;});
+        game.events.on('sound-added', (name, sound) => {});
+        game.events.on('sounds-added', () => {this.currentItem = "";});
+
+        // world
+        game.events.on('world-generating', () => {this.stage = "generating-world"});
+        game.events.on('world-generated', () => {this.currentItem = "";});
+
+        // done!
+        game.events.on('ready', () => {
+            this.stage = "ready"
+            this.wrap.classList.remove('loading');
+        });
+    }
+    get stage() {
+        return this._stage;
+    }
+    set stage(stage) {
+        //console.log("loader stage:", stage);
+        this._stage = stage;
+        this.updateLoadingText();
+    }
+
+    get currentItem() {
+        return this._currentItem;
+    }
+    set currentItem(item) {
+        this._currentItem = item;
+        //console.log("    - ", item);
+        this.updateLoadingText();
+    }
+
+    updateLoadingText() {
+        let text = this.stage + (this.currentItem ? ("\n" + this.currentItem) : "");
+        this.wrap.setAttribute('data-loading', text);
+    }
 }
