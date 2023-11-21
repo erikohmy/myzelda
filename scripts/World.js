@@ -45,6 +45,7 @@ class World {
         this.transitionStart = this.game.gametick;
         this.transitionCallback = callback || (() => {});
 
+        space.safeSpot = null;
         this.currentSpace = space;
         this.currentLayer = space.layer;
         this.game.noRender = false; // re-enable rendering

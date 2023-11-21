@@ -4,6 +4,7 @@ class Space {
     size;
     tiles;
     entities;
+    safeSpot = null;
 
     options; // filter, music, etc
 
@@ -69,6 +70,10 @@ class Space {
         return this.options.music = music;
     }
 
+    getSafeLocation() {
+        return this.safeSpot;
+    }
+
     tile(x, y) {
         return this.tiles[y*this.size[0]+x];
     }
@@ -116,7 +121,7 @@ class Space {
         return entity;
     }
 
-    getCollisionBoxes(condition = "solid") {
+    getCollisionBoxes(condition = "solid", valiator = () => true) {
         let boxes = [];
         // add itself as a collision box, if contition is solid
         if (condition == "solid") {
@@ -160,6 +165,11 @@ class Space {
             }
         }
         // todo: add entity collissions ( not enemies and such, only doors, tile entities, etc)
-        return boxes;
+        this.entities.forEach(entity => {
+            if (entity.getCollisionBox) {
+                boxes.push(entity.getCollisionBox());
+            }
+        });
+        return boxes.filter(valiator);
     }
 }

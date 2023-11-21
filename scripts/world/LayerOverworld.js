@@ -18,6 +18,8 @@ function LayerOverworld(game) {
     space.setTile(7,7,{name:"sand"});
     space.setTile(8,7,{name:"sand"});
     space.setTile(9,4,{name:"sand"});
+
+    space.addEntity(new EntityTestPhysical(game, 16*3, 16*2));
     
     // 1,0
     space = new Space(game, 10, 8);

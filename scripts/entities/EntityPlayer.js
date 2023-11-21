@@ -14,6 +14,11 @@ class EntityPlayer {
     lastDamaged = 0;
     invincibilityTime = 30; // ticks, half a second
 
+    squishing = false;
+    squishStart = 0;
+    falling = false;
+    damageFlash = 0;
+
     constructor(game, x, y) {
         this.game = game;
         this.x = x;
@@ -25,6 +30,29 @@ class EntityPlayer {
         this.health = this.maxHealth;
     }
 
+    get isBusy() {
+        // if animating a move, or dying etc.
+        return this.squishing;
+    }
+
+    getCollisionBox() {
+        return {
+            entity: this,
+            x: this.x-(this.size/2),
+            y: this.y-(this.size/2),
+            w: this.size,
+            h: this.size,
+        };
+    }
+
+    respawn() {
+        // respawn in space safe location
+        let space = this.game.world.currentSpace;
+        let x, y;
+        [x, y] = space.getSafeLocation();
+        this.setPosition(x,y);
+    }
+
     damage(amount, ignoreInvincibility=false, makeSound=true) {
         let ticksSinceDamaged = this.game.gametick - this.lastDamaged;
         if (ticksSinceDamaged > this.invincibilityTime || ignoreInvincibility) {
@@ -34,6 +62,7 @@ class EntityPlayer {
                 this.health = 0;
             } else {
                 this.health -= amount;
+                this.damageFlash = 40;
                 if (makeSound) {
                     this.game.sound.play("link_hurt");
                 }
@@ -45,12 +74,31 @@ class EntityPlayer {
         }
     }
 
+    squish() {
+        if (this.squishing) {
+            return;
+        }
+        console.log("squish");
+        this.squishing = true;
+        this.walking=false;
+        this.squishStart = this.game.gametick;
+        this.size = 2;
+        this.game.waitTicks(30).then(() => {
+            this.damage(4);
+            this.game.waitTicks(30).then(() => {
+                this.respawn();
+                this.size = 10;
+                this.squishing = false;
+            });
+        });
+    }
+
     setPosition(x, y) {
         this.x = x;
         this.y = y;
     }
 
-    move(sx, sy) {
+    move(sx, sy, squish = false) {
         let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes();
         // move player
         let hsize = this.size/2;
@@ -80,6 +128,9 @@ class EntityPlayer {
         }
         if (collidingX) {
             this.x -= sx;
+            if(squish) {
+                this.squish();
+            }
             if (sx > 0) {
                 this.colliding[1] = true;
             } else if (sx < 0) {
@@ -107,6 +158,9 @@ class EntityPlayer {
         }
         if (collidingY) {
             this.y -= sy;
+            if(squish) {
+                this.squish();
+            }
             if (sy > 0) {
                 this.colliding[2] = true;
             } else if (sy < 0) {
@@ -117,6 +171,12 @@ class EntityPlayer {
 
     isColliding() {
         return this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3];
+    }
+
+    tick() {
+        if (this.damageFlash > 0) {
+            this.damageFlash--;
+        }
     }
 
     draw() {
@@ -137,7 +197,38 @@ class EntityPlayer {
             sox += 4;
         }
 
-        sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox, this.y-11+oy);
+        let filterBefore = this.game.ctx.filter;
+
+        // flash red if damaged
+        if (this.damageFlash > 0) {
+            let flashInterval = 6;
+            if (this.game.animationtick%flashInterval >= flashInterval/2) {
+                this.game.ctx.filter = "grayscale(100%) sepia(100%) saturate(100) hue-rotate(0deg)"
+            } else {
+                this.game.ctx.filter = "grayscale(100%) contrast(0.5) brightness(160%)";
+            }
+        }
+
+        // draw player
+        if (this.squishing) {
+            // squish the sprite!
+            // squish is 60 ticks (1 second), shrink for 30, remain thin for 30
+            // player sprite is 16 wide, so shrink to 4 over 30 ticks, 12 px reduction, both sides, so 6px at 30
+            let reduction = 12*(this.game.gametick - this.squishStart)/30;
+            reduction = Math.min(12, reduction);
+            sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox + reduction/2, this.y-11+oy, 16-reduction, 16);
+        } else {
+            sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox, this.y-11+oy);
+        }
+        this.game.ctx.filter = filterBefore;
+
+        // draw tile we are inside
+        if (this.game.debug) {
+            let tx, ty;
+            [tx, ty] = tileSnap(this.x, this.y);
+            this.game.setColor("#FF0000"); // red
+            this.game.ctx.strokeRect(tx+ox, ty+oy, 16, 16);
+        }
 
         /*
         this.game.setColor("#00FF00"); // green

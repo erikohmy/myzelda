@@ -332,32 +332,53 @@ class Game {
         }
 
         if (this.doGameLogic && !this.cutscene && !this.world.transitioning && !this.dialog.show) {
+
+            // set space safeSpot if not set
+            if (!space.safeSpot) {
+                space.safeSpot = [player.x, player.y];
+            }
+
             let c_up = this.interface.isControlHeld("up");
             let c_right = this.interface.isControlHeld("right");
             let c_down = this.interface.isControlHeld("down");
             let c_left = this.interface.isControlHeld("left");
 
+            // update entities
+            player.tick();
+            for (let i=0; i<space.entities.length; i++) {
+                let entity = space.entities[i];
+                if (!!entity.logic) {
+                    entity.logic();
+                }
+                if (!!entity.tick) {
+                    entity.tick();
+                }
+            }
+
             // move player
             if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
-                player.walking = false;
-                if (c_up) {
-                    player.direction=0;
-                    player.walking=true;
-                    player.move(0, -1);
-                } else if (c_down) {
-                    player.direction=2;
-                    player.walking=true;
-                    player.move(0, 1);
-                }
+                if (!player.isBusy) {
+                    // walking
+                    player.walking = false;
+                    if (c_up) {
+                        player.direction=0;
+                        player.walking=true;
+                        player.move(0, -1);
+                    } else if (c_down) {
+                        player.direction=2;
+                        player.walking=true;
+                        player.move(0, 1);
+                    }
 
-                if (c_left) {
-                    player.direction=3;
-                    player.walking=true;
-                    player.move(-1, 0);
-                } else if (c_right) {
-                    player.direction=1;
-                    player.walking=true;
-                    player.move(1, 0);
+                    if (c_left) {
+                        player.direction=3;
+                        player.walking=true;
+                        player.move(-1, 0);
+                    } else if (c_right) {
+                        player.direction=1;
+                        player.walking=true;
+                        player.move(1, 0);
+                    }
                 }
             }
             this.tickEvents.forEach(event => {
@@ -403,14 +424,6 @@ class Game {
                 if (prevspace) {
                     player.y = (prevspace.size[1]*this.tilesize);
                     await this.world.transitionTo(prevspace, "slidedown");
-                }
-            }
-
-            // update entities
-            for (let i=0; i<space.entities.length; i++) {
-                let entity = space.entities[i];
-                if (!!entity.logic) {
-                    entity.logic();
                 }
             }
         } else if(this.world.transitioning) {
@@ -644,6 +657,13 @@ class Game {
             }
         }
 
+        // draw entities
+        space.entities.forEach(e => {
+            if (!!e.draw) {
+                e.draw();
+            }
+        });
+
         // debug, draw collision boxes
         if (this.debug) {
             space.getCollisionBoxes().forEach(box => {
@@ -774,7 +794,19 @@ class SpriteSheet {
         this.spritesize = spritesize;
     }
     // context, sprite x, sprite y, position x, position y
-    drawSprite(ctx, x, y, px, py) {
-        ctx.drawImage(this.image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, this.spritesize, this.spritesize);
+    drawSprite(ctx, x, y, px, py, h=undefined, w=undefined) {
+        h = h || this.spritesize;
+        w = w || this.spritesize;
+        ctx.drawImage(this.image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, h, w);
     }
+    drawRegion(ctx, x, y, px, py, h=undefined, w=undefined) {
+        h = h || this.spritesize;
+        w = w || this.spritesize;
+        ctx.drawImage(this.image, x, y, h, w, px, py, h, w);
+    }
+}
+
+function tileSnap(x,y) {
+    // snap to center of tiles
+    return [Math.floor(x/game.tilesize)*game.tilesize, Math.floor(y/game.tilesize)*game.tilesize];
 }
