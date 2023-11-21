@@ -38,14 +38,35 @@ class Space {
     }
 
     get background() {
-        let bg = this.options.background;
-        if (bg) {
-            return bg;
+        // check if there is a background option on the space
+        if (this.options.background) {
+            return this.options.background;
         }
+        // otherwise, check if there is a background option on the layer
+        if (this.layer.options.background) {
+            return this.layer.options.background;
+        }
+        // and if not, then return black
         return "#000";
     }
     set background(bg) {
         this.options.background = bg;
+    }
+
+    get music() {
+        // check if there is a music option on the space
+        if (this.options.music) {
+            return this.options.music;
+        }
+        // otherwise, check if there is a music option on the layer
+        if (this.layer.options.music) {
+            return this.layer.options.music;
+        }
+        // and if not, then return null
+        return null;
+    }
+    set music(music) {
+        return this.options.music = music;
     }
 
     tile(x, y) {

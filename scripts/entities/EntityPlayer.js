@@ -25,7 +25,7 @@ class EntityPlayer {
         this.health = this.maxHealth;
     }
 
-    damage(amount, ignoreInvincibility=false) {
+    damage(amount, ignoreInvincibility=false, makeSound=true) {
         let ticksSinceDamaged = this.game.gametick - this.lastDamaged;
         if (ticksSinceDamaged > this.invincibilityTime || ignoreInvincibility) {
             this.lastDamaged = this.game.gametick;
@@ -34,6 +34,9 @@ class EntityPlayer {
                 this.health = 0;
             } else {
                 this.health -= amount;
+                if (makeSound) {
+                    this.game.sound.play("link_hurt");
+                }
                 if (this.health <= 0) {
                     this.health = 0;
                     // died!

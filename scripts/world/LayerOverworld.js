@@ -1,5 +1,6 @@
 function LayerOverworld(game) {
     let layer = game.world.addLayer("overworld", 14, 14);
+    layer.music = "overworld";
     
     // 0,0
     let space = new Space(game, 10, 8);
@@ -41,6 +42,8 @@ function LayerOverworld(game) {
         'rrrrrrrrrr',
     ]);
     space.addEntity(new EntityTransitioner(game, 16*8, 16*1, 16, 16, (e,t) => {
+        e.damage(1);
+        return;
         e.setPosition(t.x + 8 - (3*16 + 8), t.y + 8 -16)
         e.direction = 2; // look down
         let space = game.world.currentLayer.getSpace(0,1);
@@ -64,6 +67,8 @@ function LayerOverworld(game) {
 
         e.setPosition(5*16, space.height)
         e.direction = 0; // look up
+
+        game.sound.play('stairs');
         
         game.world.transitionTo(space, "building", () => {
             game.animations.enterUp();
@@ -110,6 +115,7 @@ function LayerOverworld(game) {
 
     // 1,1
     space = new Space(game, 10, 8);
+    space.music = "house";
     layer.addSpace(space, 1, 1);
     space.fill({name:"floorWood"});
     let walltest = "wallWood";
@@ -150,6 +156,7 @@ function LayerOverworld(game) {
     ]);
     space.addEntity(new EntityTransitioner(game, 16*4+8, 16*7+8, 16, 8, (e,t) => {
         e.direction = 0; // look down
+        game.sound.play('stairs');
         game.animations.exitDown().then(()=>{
             let space = game.world.currentLayer.getSpace(1,0);
             e.setPosition(2*16+8, 2*16+8+5)

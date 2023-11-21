@@ -15,6 +15,7 @@ class Game {
 
     interface = null;
     world = null;
+    sound = null;
     animations = {};
 
     ticking = false;
@@ -50,11 +51,19 @@ class Game {
         this.events.on('tile-generated', (name, tileref) => {});
         this.events.on('tiles-generated', (tiles) => {console.info('generated '+Object.keys(tiles).length+" tiles");});
 
+        // transition eventlisteners
+        this.events.on('space-transition-mid', (space) => {
+            this.sound.playMusic(space.music);
+        });
+        this.events.on('space-transitioned', (space) => {});
+
         // create interface
         this.interface = new Interface(this, document.getElementById("main"));
 
         this.world = new World(this);
         this.world.player = new EntityPlayer(this, 16*5, 16*4);
+
+        this.sound = new SoundHandler(this);
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -158,11 +167,22 @@ class Game {
         this.events.trigger('tile-added', name, tile, tag, this.tiles[name]);
     }
 
+    async addSounds() {
+        await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
+
+        await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
+
+        // music
+        await this.sound.addMusic("overworld", "./assets/sound/music/overworld.mp3", 6.42);
+        await this.sound.addMusic("house", "./assets/sound/music/house.mp3");
+    }
+
     async start() {
         await this.loadSpritesheets();
         await this.addTiles();
         await this.generateTiles();
-        //console.clear();
+        await this.addSounds();
+        console.clear();
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
         this.loop();
@@ -391,20 +411,30 @@ class Game {
                     }
                     this.offset[1] = -(this.canvas.height-16) + tick*stepsize;
                 }
+                if(tick == Math.floor(steps/2)) {
+                    this.events.trigger('space-transition-mid', this.world.currentSpace);
+                }
                 if (tick >= steps) {
                     this.world.transitioning = false;
                     this.world.transitionCallback();
+                    this.events.trigger('space-transitioned', this.world.currentSpace);
                 }
             } else if(transition == "building") { // fade out, then "open" white screen
                 let tick = this.gametick - this.world.transitionStart;
                 // half second fade, and quarter second "open"
+                if(tick == 30) {
+                    this.events.trigger('space-transition-mid', this.world.currentSpace);
+                }
                 if (tick > 45) {
                     this.world.transitioning = false;
                     this.world.transitionCallback();
+                    this.events.trigger('space-transitioned', this.world.currentSpace);
                 }
             } else {
+                this.events.trigger('space-transition-mid', this.world.currentSpace);
                 this.world.transitioning = false;
                 this.world.transitionCallback();
+                this.events.trigger('space-transitioned', this.world.currentSpace);
                 console.log('no transition')
             }
         }

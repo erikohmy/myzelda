@@ -72,6 +72,29 @@ class WorldLayer {
         }
     }
 
+    get background() {
+        let bg = this.options.background;
+        if (bg) {
+            return bg;
+        }
+        return "#000";
+    }
+    set background(bg) {
+        this.options.background = bg;
+    }
+
+    get music() {
+        // check if there is a music option on the layer
+        if (this.options.music) {
+            return this.options.music;
+        }
+        // and if not, then return null
+        return null;
+    }
+    set music(music) {
+        return this.options.music = music;
+    }
+
     addSpace(space, x, y) {
         this.spaces[x][y] = space;
         space.layer = this;
