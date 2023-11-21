@@ -16,6 +16,7 @@ class Game {
     interface = null;
     world = null;
     sound = null;
+    dialog = null;
     animations = {};
 
     ticking = false;
@@ -30,6 +31,7 @@ class Game {
 
     camFollowPlayer = true;
 
+    fps = 0;
     debug = false;
 
     constructor(canvas) {
@@ -57,6 +59,23 @@ class Game {
         });
         this.events.on('space-transitioned', (space) => {});
 
+        this.events.on('pressed', (control) => {
+            if (control === "a") {
+                if (this.dialog.show) {
+                    this.dialog.next();
+                    return;
+                }
+            }
+            if (this.dialog.show && this.dialog.anyNext) {
+                this.dialog.next();
+                return;
+            }
+        });
+
+        this.events.on('control-map', () => {
+            console.log("toggle map");
+        });
+
         // create interface
         this.interface = new Interface(this, document.getElementById("main"));
 
@@ -65,16 +84,23 @@ class Game {
 
         this.sound = new SoundHandler(this);
 
+        this.dialog = new Dialog(this);
+
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
-        /*
+        
         let lastframes = 0;
+        let fpsInerval = 10;
+        let fpsSet = new Array(fpsInerval).fill(0);
         setInterval(() => {
-            let fps = this.gametick-lastframes
+            fpsSet.push((this.gametick-lastframes));
+            fpsSet.shift();
+            const sum = fpsSet.reduce((a, b) => a + b, 0);
+            //const avg = (sum / fpsSet.length) || 0;
+            this.fps = sum;
             lastframes = this.gametick;
-            console.log("fps:", fps);
-        }, 1000);
-        */
+        }, 1000/fpsInerval);
+        
         this.animations.test1 = () => {
             return new Promise((resolve) => {
                 let game = this;
@@ -171,6 +197,9 @@ class Game {
         await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
+
+        await this.sound.addSound("text_letter", "./assets/sound/Text_Letter.wav");
+        await this.sound.addSound("text_done", "./assets/sound/Text_Done.wav");
 
         // music
         await this.sound.addMusic("overworld", "./assets/sound/music/overworld.mp3", 6.42);
@@ -290,8 +319,11 @@ class Game {
             this.offset[0] = worldOffset[0];
             this.offset[1] = worldOffset[1];
         }
+        if (this.gametick % 4 == 0) {
+            this.dialog.tick();
+        }
 
-        if (this.doGameLogic && !this.cutscene && !this.world.transitioning) {
+        if (this.doGameLogic && !this.cutscene && !this.world.transitioning && !this.dialog.show) {
             let c_up = this.interface.isControlHeld("up");
             let c_right = this.interface.isControlHeld("right");
             let c_down = this.interface.isControlHeld("down");
@@ -504,9 +536,10 @@ class Game {
     clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    setColor(color) {
+    setColor(color, opacity=1) {
         this.ctx.fillStyle = color;
         this.ctx.strokeStyle = color;
+        this.ctx.globalAlpha = opacity;
     }
     drawGrid() {
         // draw grid, making sure its infinite if offset
@@ -536,7 +569,7 @@ class Game {
 
     renderUi() {
         // draw the white bar
-        this.setColor("#FFF");
+        this.setColor(Graphics.colors.ui);
         this.ctx.fillRect(0, 0, this.canvas.width, 16);
 
         let player = this.world.player;
@@ -653,6 +686,8 @@ class Game {
             player.draw();
         }
 
+        this.dialog.render();
+
         this.renderUi(); 
         // if we are transitioning, draw that!
         if (this.world.transitioning) {
@@ -680,16 +715,24 @@ class Game {
                     this.ctx.drawImage(snapshot, 0, 16);
                 }
                 let alpha = Math.min((tick/30) * 1, 1);
-                this.setColor(`rgba(255,255,255,${alpha})`);
+                
                 if (tick > 30) {
+                    this.setColor(Graphics.colors.ui, alpha);
                     let width = this.canvas.width/2;
                     let slide = tick > 30 ? (tick-30)*(width/15) : 0;
                     this.ctx.fillRect(0-slide, 16, width, this.canvas.height-16);
                     this.ctx.fillRect(width+slide, 16, width, this.canvas.height-16);
+                    this.setColor(Graphics.colors.ui, 1);
                 } else {
+                    this.setColor(`rgba(255,255,255,${alpha})`);
                     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 }
             }
+        }
+        if (this.debug) {
+            // draw fps in top left
+            let fps = this.fps;
+            Graphics.drawText(this.ctx, `${fps}fps`, 0, this.canvas.height - 10, 'black');
         }
         // reset offset to what it was
         this.offset[1] = offsetY;

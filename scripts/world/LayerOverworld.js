@@ -71,7 +71,9 @@ function LayerOverworld(game) {
         game.sound.play('stairs');
         
         game.world.transitionTo(space, "building", () => {
-            game.animations.enterUp();
+            game.animations.enterUp().then(()=>{
+                game.dialog.display("Level 1\nA dusty home", true, true);
+            });
         });
     }));
     

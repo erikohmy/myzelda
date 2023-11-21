@@ -41,7 +41,13 @@ class SoundHandler {
     }
 
     play(name) {
-        this.sounds[name].play();
+        //this.sounds[name].play();
+        // clone sound, so we can play multiple at once
+        let clone = this.sounds[name].cloneNode();
+        clone.play();
+        setTimeout(() => {
+            clone.remove();
+        }, clone.duration + 400);
     }
     stop(name) {
         this.sounds[name].pause();

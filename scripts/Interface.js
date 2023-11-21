@@ -12,6 +12,10 @@ class Interface {
 			"left": "KeyA",
 			"right": "KeyD",
 			"down": "KeyS",
+			"a": "Space",
+			"b": "KeyB",
+			"menu": "KeyP",
+			"map": "KeyM",
 		};
 
 		this.registerMouseEvents();
@@ -19,6 +23,15 @@ class Interface {
 		this.updateOffsets();
 
 		this.event.on("mouse.move", this.updateMousePosition);
+
+		this.event.on("key.down", (data) => {
+			// get which control was pressed
+			let control = Object.keys(this.controls).find(key => this.controls[key] === data.code);
+			if(control) {
+				game.events.trigger('pressed', control);
+				game.events.trigger('control-'+control);
+			}
+		});
 	}
 
 	updateOffsets = () => {
