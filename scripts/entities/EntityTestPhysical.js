@@ -1,12 +1,16 @@
 class EntityTestPhysical extends EntityPhysical {
     constructor(game, x, y) {
         super(game);
-        this.x = x+8;
-        this.y = y+8;
+        this.x = x*16+8;
+        this.y = y*16+8;
         this.size = 16;
         this.pushesEntities = true;
         this.squishesEntities = true;
         this.canBePushed = false;
+        this.canBeBlocked = true;
+        this.blockFilter = (e) => {
+            return !(e instanceof EntityPlayer);
+        }
     }
     draw() {
         let ox = this.game.offset[0];

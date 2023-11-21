@@ -401,7 +401,7 @@ class Game {
                         event.resolve();
                     }
                     if(!!event.every) {
-                        event.every(event.ticks - event.left, event.ticks);
+                        event.dead = false === event.every(event.ticks - event.left, event.ticks);
                     }
                 }
             });
@@ -514,7 +514,7 @@ class Game {
                         event.resolve();
                     }
                     if(!!event.every) {
-                        event.every(event.ticks - event.left, event.ticks);
+                        event.dead = false === event.every(event.ticks - event.left, event.ticks);
                     }
                 }
             });
@@ -532,13 +532,13 @@ class Game {
                     event.resolve();
                 }
                 if(!!event.every) {
-                    event.every(event.ticks - event.left, event.ticks);
+                    event.dead = false === event.every(event.ticks - event.left, event.ticks);
                 }
             }
         });
-        // cleanup events with 0 left
+        // cleanup events with 0 left, or dead set to true
         this.tickEvents.forEach(event => {
-            if (event.left <= 0) {
+            if ((event.ticks > 0 && event.left <= 0) || event.dead === true) {
                 this.tickEvents.splice(this.tickEvents.indexOf(event), 1);
             }
         });
@@ -555,7 +555,7 @@ class Game {
             });
         });
     }
-    // do something for every tick for a certain amount of ticks
+    // do something for every tick for a certain amount of ticks, or if ticks is 0 or null, forever until "every" callback returns false
     everyTick(ticks, callback, type="game") {
         this.tickEvents.push({
             'ticks': ticks,

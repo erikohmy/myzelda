@@ -98,11 +98,21 @@ class Space {
         return this.safeSpot;
     }
 
-    tile(x, y) {
+    tile(x, y) { // tile coordinates
         return this.tiles[y*this.size[0]+x];
+    }
+    tileAt(x, y) { // world coordinates
+        let tx = Math.floor(x/this.game.tilesize);
+        let ty = Math.floor(y/this.game.tilesize);
+        return this.tile(tx, ty);
     }
     setTile(x, y, tileinfo) {
         return this.tiles[y*this.size[0]+x] = tileinfo;
+    }
+    setTileAt(x, y, tileinfo) {
+        let tx = Math.floor(x/this.game.tilesize);
+        let ty = Math.floor(y/this.game.tilesize);
+        return this.tiles[ty*this.size[0]+tx] = tileinfo;
     }
     fill(tileinfo, x=0,y=0,w=undefined,h=undefined) {
         if (h === undefined) {
@@ -151,8 +161,15 @@ class Space {
     }
 
     addEntity(entity) {
+        entity.space = this;
         this.entities.push(entity);
         return entity;
+    }
+    removeEntity(entity) {
+        let index = this.entities.indexOf(entity);
+        if (index > -1) {
+            this.entities.splice(index, 1);
+        }
     }
 
     getCollisionBoxes(condition = "solid", valiator = () => true) {

@@ -1,4 +1,12 @@
 function LayerOverworld(game) {
+    // somehow do this automatically? by folder structure, 
+    // in folder "world", find all folders in folder "layers"
+    // each folder in "layers" is a layer, like world/layers/overworld
+    // and each folder container a file like chunk0x0.js, chunk1x0.js, etc
+    // and a file like layer.js
+
+    // can js even do that? might need a compiler ( like gulp? yarn? )
+
     let layer = game.world.addLayer("overworld", 14, 14);
     layer.music = "overworld";
     
@@ -10,9 +18,35 @@ function LayerOverworld(game) {
         space.fill({name:"sand"}, 1, 7, 8);
         space.setTile(9,4,{name:"sand"});
 
-        space.addEntity(new EntityTestPhysical(space.game, 16*3, 16*2));
-        // add a interval timer, and move coconut!
-        // game.world.currentSpace.entities[0].moveTo(1*16+8,32-8,0.1)
+        let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 1, 1));
+        let blockRight = space.addEntity(new EntityTestPhysical(space.game, 8, 1));
+
+        let toggle = false;
+        space.addEntity(new EntityInterval(space.game, 60*3, (self, count) => {
+            if (toggle) {
+                blockLeft.moveToTile(1,1);
+                blockRight.moveToTile(8,1);
+            }else {
+                blockLeft.moveToTile(4,1);
+                blockRight.moveToTile(5,1);
+            }
+            toggle = !toggle;
+        }, true));
+
+        let blockBlocker = space.addEntity(new EntityTestPhysical(space.game, 9, 4));
+        let timer = space.addEntity(new EntityTimer(space.game, 60*4, () => {
+            blockBlocker.moveToTile(8, 4, undefined, ()=>{
+                blockBlocker.moveToTile(8,1);
+            });
+        }));
+        let player  = space.game.world.player;
+        let px, py;
+        [px, py] = player.position;
+        if (px === 160) { // coming from the right
+            blockBlocker.remove();
+        } else {
+            timer.start();
+        } 
     });
 
     layer.createSpace(1, 0, 10, 8, function(space) {

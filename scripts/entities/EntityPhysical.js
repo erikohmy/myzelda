@@ -1,5 +1,4 @@
-class EntityPhysical {
-    game;
+class EntityPhysical extends EntityBase {
     x = 0;
     y = 0;
     speedX = 0;
@@ -16,12 +15,9 @@ class EntityPhysical {
     canBeBlocked = true; // can this entity be blocked by other entities?
     canBePushed = true; // can this entity be pushed by other entities?
     canGoOutside = false; // can this entity go outside the screen?
+    blockFilter = null; // function to filter which entities can block this entity, if canBeBlocked is false, it acts as a blacklist
 
     colliding = [0,0,0,0]; // top, right, bottom, left
-
-    constructor(game) {
-        this.game = game;
-    }
 
     getCollisionBox() {
         return {
@@ -33,9 +29,18 @@ class EntityPhysical {
         };
     }
     
+    get position() {
+        return [this.x, this.y];
+    }
+
     setPosition(x, y) {
         this.x = x;
         this.y = y;
+    }
+    setTile(x, y) {
+        let halfsize = this.size/2;
+        this.x = x*this.game.tilesize+halfsize;
+        this.y = y*this.game.tilesize+halfsize;
     }
     
     tick() {
@@ -121,17 +126,26 @@ class EntityPhysical {
         return speed;
     }
 
-    moveTo(x, y, speed=1) {
+    moveTo(x, y, speed=1, callback=null) {
         this.targetX = x;
         this.targetY = y;
         this.targetSpeed = speed;
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
+        if(typeof callback === "function") {
+            this.game.everyTick(0, ()=>{
+                // check if we're there yet
+                if (this.x == this.targetX && this.y == this.targetY) {
+                    callback(this);
+                    return false;
+                }
+            }, 'logic');
+        }
     }
 
-    moveToTile(x, y, speed=1) {
+    moveToTile(x, y, speed=1, callback=null) {
         let hsize = this.size/2;
-        this.moveTo(x*16+hsize, y*16+hsize, speed);
+        this.moveTo(x*this.game.tilesize+hsize, y*this.game.tilesize+hsize, speed, callback);
     }
 
     move(sx, sy, squish = false) {
@@ -181,7 +195,17 @@ class EntityPhysical {
                     blockedX = true;
                 }
 
-                if (blockedX && this.canBeBlocked){
+                let canBeBlocked = this.canBeBlocked;
+                if (blockedX && this.blockFilter) {
+                    let filterResult = this.blockFilter(collidingWithX ? collidingWithX.entity : null);
+                    if (this.canBeBlocked) {
+                        canBeBlocked = filterResult;
+                    } else {
+                        canBeBlocked = !filterResult;
+                    }
+                }
+
+                if (blockedX && canBeBlocked){
                     this.x -= sx;
                     if(squish && this.squish) {
                         this.squish();
@@ -226,7 +250,16 @@ class EntityPhysical {
                 } else {
                     blockedY = true;
                 }
-                if (blockedY && this.canBeBlocked) {
+                let canBeBlocked = this.canBeBlocked;
+                if (blockedY && this.blockFilter) {
+                    let filterResult = this.blockFilter(collidingWithY ? collidingWithY.entity : null);
+                    if (this.canBeBlocked) {
+                        canBeBlocked = filterResult;
+                    } else {
+                        canBeBlocked = !filterResult;
+                    }
+                }
+                if (blockedY && canBeBlocked) {
                     this.y -= sy;
                     if(squish && this.squish) {
                         this.squish();
