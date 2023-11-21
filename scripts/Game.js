@@ -32,7 +32,7 @@ class Game {
 
     camFollowPlayer = true;
 
-    fps = 0;
+    tps = 0;
     debug = false;
 
     constructor(canvas) {
@@ -91,16 +91,15 @@ class Game {
         this._lastFrame = 0;
         
         let lastframes = 0;
-        let fpsInerval = 10;
-        let fpsSet = new Array(fpsInerval).fill(0);
+        let tpsInterval = 10;
+        let tpsSet = new Array(tpsInterval).fill(0);
         setInterval(() => {
-            fpsSet.push((this.gametick-lastframes));
-            fpsSet.shift();
-            const sum = fpsSet.reduce((a, b) => a + b, 0);
-            //const avg = (sum / fpsSet.length) || 0;
-            this.fps = sum;
+            tpsSet.push((this.gametick-lastframes));
+            tpsSet.shift();
+            const sum = tpsSet.reduce((a, b) => a + b, 0);
+            this.tps = sum;
             lastframes = this.gametick;
-        }, 1000/fpsInerval);
+        }, 1000/tpsInterval);
         
         this.animations.test1 = () => {
             return new Promise((resolve) => {
@@ -217,7 +216,7 @@ class Game {
         this.generateWorld();
         this.loop();
 
-        // test, ensure stable fps
+        // test, ensure stable tps
         setInterval(() => {
             if (!this.ticking) {
                 this.tick();
@@ -741,9 +740,9 @@ class Game {
             }
         }
         if (this.debug) {
-            // draw fps in top left
-            let fps = this.fps;
-            Graphics.drawText(this.ctx, `${fps}fps`, 0, this.canvas.height - 10, 'black');
+            // draw tps in top left
+            let tps = this.tps;
+            Graphics.drawText(this.ctx, `${tps}tps`, 0, this.canvas.height - 10, 'black');
         }
         // reset offset to what it was
         this.offset[1] = offsetY;
