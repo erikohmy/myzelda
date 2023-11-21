@@ -214,6 +214,7 @@ class Game {
         console.clear();
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
+        this.sound.volume = 0.2;
         this.loop();
 
         // test, ensure stable tps

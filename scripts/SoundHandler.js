@@ -5,6 +5,20 @@ class SoundHandler {
         this.sounds = {};
         this.music = {};
         this.currentMusic = null;
+        this._volume = 1;
+    }
+
+    get volume() {
+        return this._volume;
+    }
+    set volume(volume) {
+        this._volume = volume;
+        for (let sound in this.sounds) {
+            this.sounds[sound].volume = volume;
+        }
+        for (let music in this.music) {
+            this.music[music].audio.volume = volume * this.music[music].volume;
+        }
     }
 
     addSound(name, src) {
@@ -44,6 +58,7 @@ class SoundHandler {
         //this.sounds[name].play();
         // clone sound, so we can play multiple at once
         let clone = this.sounds[name].cloneNode();
+        clone.volume = this.volume;
         clone.play();
         setTimeout(() => {
             clone.remove();
@@ -70,6 +85,7 @@ class SoundHandler {
             if (! music.start) {
                 music.audio.loop = true;
             }
+            music.audio.volume = this.volume * music.volume;
             music.audio.play();
         }
     }
