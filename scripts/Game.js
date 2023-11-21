@@ -35,6 +35,9 @@ class Game {
     tps = 0;
     debug = false;
 
+    gameReady = false;
+    started = false;
+
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -54,6 +57,8 @@ class Game {
         this.events.on('tile-generated', (name, tileref) => {});
         this.events.on('tiles-generated', (tiles) => {console.info('generated '+Object.keys(tiles).length+" tiles");});
 
+        this.events.on('ready', () => {this.canvas.classList.add('ready')});
+
         // transition eventlisteners
         this.events.on('space-transition-mid', (space) => {
             this.sound.playMusic(space.music);
@@ -61,6 +66,10 @@ class Game {
         this.events.on('space-transitioned', (space) => {});
 
         this.events.on('pressed', (control) => {
+            if (!this.started) {
+                this.start();
+                return;
+            }
             if (control === "a") {
                 if (this.dialog.show) {
                     this.dialog.next();
@@ -81,10 +90,9 @@ class Game {
         this.interface = new Interface(this, document.getElementById("main"));
 
         this.world = new World(this);
-        this.world.player = new EntityPlayer(this, 16*5, 16*4);
+        this.world.player = new EntityPlayer(this, 0, 0);
 
         this.sound = new SoundHandler(this);
-
         this.dialog = new Dialog(this);
 
         this._fpsInterval = 1000/60;
@@ -206,7 +214,7 @@ class Game {
         await this.sound.addMusic("house", "./assets/sound/music/house.mp3");
     }
 
-    async start() {
+    async load() {
         await this.loadSpritesheets();
         await this.addTiles();
         await this.generateTiles();
@@ -215,14 +223,21 @@ class Game {
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
         this.sound.volume = 0.2;
-        this.loop();
+        this.gameReady = true;
+        this.events.trigger('ready');
+    }
 
-        // test, ensure stable tps
+    start() {
+        this.started = true;
+        this.world.player.setPosition(16*5, 16*4);
+        this.world.transitionTo(this.world.layers.overworld.getSpace(0, 0), "none");
+        this.loop();
+        // ensure stable tps
         setInterval(() => {
             if (!this.ticking) {
                 this.tick();
             }
-        },8);
+        }, 8);
     }
 
     async loadSpritesheets() {
@@ -277,9 +292,6 @@ class Game {
     generateWorld() {
         // create layers ( maybe find a better way?)
         LayerOverworld(this);
-
-        this.world.currentLayer = this.world.layers.overworld;
-        this.world.currentSpace = this.world.currentLayer.getSpace(0, 0);
     }
 
     // logic

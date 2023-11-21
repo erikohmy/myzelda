@@ -19,7 +19,7 @@ class World {
     }
 
     addLayer(name, sizex, sizey) {
-        let layer = new WorldLayer(name, sizex, sizey);
+        let layer = new WorldLayer(this.game, name, sizex, sizey);
         this.layers[name] = layer;
         return layer;
     }
@@ -36,7 +36,9 @@ class World {
         } else {
             this.game.noRender = true; // skip rendering
         }
-        this.snapshot = await this.game.snapshot();
+        if (transition !== "none") {
+            this.snapshot = await this.game.snapshot();
+        }
         this.game.hideplayer = false;
 
         this.transitioning = true;
@@ -44,6 +46,15 @@ class World {
         this.transition = transition;
         this.transitionStart = this.game.gametick;
         this.transitionCallback = callback || (() => {});
+
+        if (this.currentSpace) { // todo: sometimes we dont want to destroy the current space, like in dungeons
+            this.currentSpace._destroy();
+        }
+        if (!space.built) {
+            space._build(space);
+        } else {
+            console.log("space already built", space.tiles);
+        }
 
         space.safeSpot = null;
         this.currentSpace = space;
@@ -53,6 +64,8 @@ class World {
 }
 
 class WorldLayer {
+    game;
+
     name;
     sizex; 
     sizey;
@@ -61,7 +74,8 @@ class WorldLayer {
 
     options; // filter, music, map, etc
 
-    constructor(name, sizex, sizey) {
+    constructor(game, name, sizex, sizey) {
+        this.game = game;
         this.name = name;
         this.sizex = sizex;
         this.sizey = sizey;
@@ -101,6 +115,12 @@ class WorldLayer {
         this.spaces[x][y] = space;
         space.layer = this;
         return space;
+    }
+
+    createSpace(x, y, w, h, build) {
+        let space = new Space(this.game, w, h);
+        this.addSpace(space, x, y);
+        space.build = build;
     }
 
     getSpace(x, y) {

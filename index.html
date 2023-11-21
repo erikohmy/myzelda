@@ -9,7 +9,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
 
-    <title>Game</title>
+    <title>Oracle Js</title>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     <style>
       html, body {
@@ -24,13 +24,20 @@
       }
       .gamewrap {
         width: calc(160px * 3);
-        box-shadow: #000 0 0 32px;
       }
       #game {
         width: 100%;
         aspect-ratio: 10/9;
         background-color: #000;
+        box-shadow: #000 0 0 32px;
         image-rendering: pixelated;
+        transition-duration: 0.3s;
+        transition-property: opacity, box-shadow;
+        cursor: none;
+      }
+      #game:not(.ready) {
+        box-shadow: #0000 0 0 32px;
+        cursor: wait;
       }
     </style>
     <link href="main.css" rel="stylesheet">

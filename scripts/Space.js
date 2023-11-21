@@ -5,6 +5,7 @@ class Space {
     tiles;
     entities;
     safeSpot = null;
+    built = false;
 
     options; // filter, music, etc
 
@@ -70,6 +71,29 @@ class Space {
         return this.options.music = music;
     }
 
+    _build() {
+        //console.log("building space", this.layer.name, this.position)
+        if (this.build) {
+            this.build(this);
+        }
+        this.built = true;
+    }
+    _destroy() {
+        //console.log("destroying space", this.layer.name, this.position)
+        this.entities.forEach(entity => {
+            if (entity.destroy) {
+                entity.destroy();
+            }
+        });
+        this.entities = [];
+        this.tiles = new Array(this.size[0] * this.size[1]);
+        this.safeSpot = null;
+        this.built = false;
+        if (this.destroy) {
+            this.destroy(this);
+        }
+    }
+
     getSafeLocation() {
         return this.safeSpot;
     }
@@ -80,9 +104,19 @@ class Space {
     setTile(x, y, tileinfo) {
         return this.tiles[y*this.size[0]+x] = tileinfo;
     }
-    fill(tileinfo) {
-        for (let i=0; i<this.tiles.length; i++) {
-            this.tiles[i] = tileinfo;
+    fill(tileinfo, x=0,y=0,w=undefined,h=undefined) {
+        if (h === undefined) {
+            h = this.size[1];
+        }
+        if (w === undefined) {
+            w = this.size[0];
+        }
+        h = Math.min(h, this.size[1]-y);
+        w = Math.min(w, this.size[0]-x);
+        for (let iy=y; iy<y+h; iy++) {
+            for (let ix=x; ix<x+w; ix++) {
+                this.setTile(ix, iy, tileinfo);
+            }
         }
     }
     border(tileinfo) {
