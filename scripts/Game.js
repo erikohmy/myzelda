@@ -27,6 +27,7 @@ class Game {
     doAnimation = true;
     cutscene = false;
     skipframe = false;
+    noRender = false;
     hideplayer = false;
 
     camFollowPlayer = true;
@@ -215,6 +216,13 @@ class Game {
         console.pretty("[label-success:success] All assets loaded.")
         this.generateWorld();
         this.loop();
+
+        // test, ensure stable fps
+        setInterval(() => {
+            if (!this.ticking) {
+                this.tick();
+            }
+        },8);
     }
 
     async loadSpritesheets() {
@@ -607,6 +615,9 @@ class Game {
     }
 
     render() {
+        if (this.noRender) {
+            return;
+        }
         this.clear();
         //this.drawGrid();
         let offsetY = this.offset[1];

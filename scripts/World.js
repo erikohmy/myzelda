@@ -33,8 +33,8 @@ class World {
         if (transition === "slideup" || transition === "slidedown" || transition === "slideleft" || transition === "slideright") {
             this.game.hideplayer = true;
             this.game.render();
-        }else {
-            this.game.skipframe = true; // skip one frame of animation
+        } else {
+            this.game.noRender = true; // skip rendering
         }
         this.snapshot = await this.game.snapshot();
         this.game.hideplayer = false;
@@ -47,6 +47,7 @@ class World {
 
         this.currentSpace = space;
         this.currentLayer = space.layer;
+        this.game.noRender = false; // re-enable rendering
     }
 }
 

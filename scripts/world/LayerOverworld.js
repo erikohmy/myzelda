@@ -64,17 +64,15 @@ function LayerOverworld(game) {
     //space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
     space.addEntity(new EntityTransitioner(game, 16*2, 16*2, 16, 16, (e,t) => {
         let space = game.world.currentLayer.getSpace(1,1);
-
-        e.setPosition(5*16, space.height)
-        e.direction = 0; // look up
-
         game.sound.play('stairs');
-        
         game.world.transitionTo(space, "building", () => {
             game.animations.enterUp().then(()=>{
                 game.dialog.display("Level 1\nA dusty home", true, true);
             });
         });
+
+        e.setPosition(5*16, space.height)
+        e.direction = 0; // look up
     }));
     
     // 0,1
