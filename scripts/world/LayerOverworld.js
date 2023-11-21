@@ -37,6 +37,7 @@ function LayerOverworld(game) {
         ]);
         space.addEntity(new EntityTransitioner(space.game, 16*8, 16*1, 16, 16, (e,t) => {
             e.damage(1);
+            e.push(-1,1);
             return;
             e.setPosition(t.x + 8 - (3*16 + 8), t.y + 8 -16)
             e.direction = 2; // look down

@@ -1,13 +1,6 @@
-class EntityPlayer {
-    game;
-
-    x; // position x
-    y; // position y
-    size; // size of player
+class EntityPlayer extends EntityPhysical {
     direction;
     walking = false;
-
-    colliding = [0,0,0,0]; // top, right, bottom, left
 
     health;
     maxHealth;
@@ -20,10 +13,15 @@ class EntityPlayer {
     damageFlash = 0;
 
     constructor(game, x, y) {
+        super(game);
         this.game = game;
         this.x = x;
         this.y = y;
         this.size = 10; // 10x10 collision box
+        this.speed = 1;
+        this.pushesEntities = true;
+        this.canBeBlocked = true;
+        this.canBePushed = true;
         this.direction = 2; // down
 
         this.maxHealth = 14*4;
@@ -33,16 +31,6 @@ class EntityPlayer {
     get isBusy() {
         // if animating a move, or dying etc.
         return this.squishing;
-    }
-
-    getCollisionBox() {
-        return {
-            entity: this,
-            x: this.x-(this.size/2),
-            y: this.y-(this.size/2),
-            w: this.size,
-            h: this.size,
-        };
     }
 
     respawn() {
@@ -78,7 +66,6 @@ class EntityPlayer {
         if (this.squishing) {
             return;
         }
-        console.log("squish");
         this.squishing = true;
         this.walking=false;
         this.squishStart = this.game.gametick;
@@ -93,87 +80,8 @@ class EntityPlayer {
         });
     }
 
-    setPosition(x, y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    move(sx, sy, squish = false) {
-        let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes();
-        // move player
-        let hsize = this.size/2;
-
-        this.colliding=[0,0,0,0];
-        if (Math.abs(sx) <= 0 && Math.abs(sy) <= 0) {
-            return;
-        }
-
-        this.x += sx;
-        let collidingX = false;
-        let collidingXbox = null;
-        for (let i = 0; i < collisionBoxes.length; i++) {
-            let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
-                let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
-                let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
-                let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
-                let left = this.x - hsize < box.x + box.w && this.x - hsize > box.x;
-                // do nudging?
-                if (top || bottom || left || right) {
-                    collidingX=true;
-                    collidingXbox = box;
-                }
-            }
-        }
-        if (collidingX) {
-            this.x -= sx;
-            if(squish) {
-                this.squish();
-            }
-            if (sx > 0) {
-                this.colliding[1] = true;
-            } else if (sx < 0) {
-                this.colliding[3] = true;
-            }
-        }
-
-        this.y += sy;
-        let collidingY = false;
-        let collidingYbox = null;
-        for (let i = 0; i < collisionBoxes.length; i++) {
-            let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
-                let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
-                let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
-                let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
-                let left = this.x - hsize < box.x + box.w && this.x - hsize >= box.x;
-                // do nudging?
-                if (top || bottom || left || right) {
-                    collidingY=true;
-                    collidingYbox = box;
-                }
-            }
-        }
-        if (collidingY) {
-            this.y -= sy;
-            if(squish) {
-                this.squish();
-            }
-            if (sy > 0) {
-                this.colliding[2] = true;
-            } else if (sy < 0) {
-                this.colliding[0] = true;
-            }
-        }
-    }
-
-    isColliding() {
-        return this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3];
-    }
-
     tick() {
+        super.tick();
         if (this.damageFlash > 0) {
             this.damageFlash--;
         }

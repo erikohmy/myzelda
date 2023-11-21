@@ -11,6 +11,9 @@ class EntityPhysical {
     size = 8;
     playerCollisions = true;
     pushesEntities = false;
+    squishesEntities = false;
+    canBeBlocked = true;
+    canBePushed = true;
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
@@ -95,8 +98,25 @@ class EntityPhysical {
     }
 
     push(sx, sy) {
+        let limit = 5;
         this.speedX += sx;
         this.speedY += sy;
+
+        if (this.speedX > limit) {
+            this.speedX = limit;
+        } else if (this.speedX < -limit) {
+            this.speedX = -limit;
+        }
+        if (this.speedY > limit) {
+            this.speedY = limit;
+        } else if (this.speedY < -limit) {
+            this.speedY = -limit;
+        }
+    }
+
+    get velocity() {
+        let speed = Math.sqrt(this.speedX*this.speedX + this.speedY*this.speedY);
+        return speed;
     }
 
     moveTo(x, y, speed=1) {
@@ -121,77 +141,90 @@ class EntityPhysical {
         let hsize = this.size/2;
 
         this.colliding=[0,0,0,0];
-        if (Math.abs(sx) <= 0 && Math.abs(sy) <= 0) {
-            return;
-        }
 
         this.x += sx;
         let collidingX = false;
         let collidingWithX = null;
-        for (let i = 0; i < collisionBoxes.length; i++) {
-            let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
-                let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
-                let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
-                let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
-                let left = this.x - hsize < box.x + box.w && this.x - hsize > box.x;
-                if (top || bottom || left || right) {
-                    collidingX=true;
-                    collidingWithX = box;
+        let blockedX = false;
+        if (Math.abs(sx) > 0) {
+            for (let i = 0; i < collisionBoxes.length; i++) {
+                let box = collisionBoxes[i];
+                if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
+                    this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
+                    let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
+                    let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
+                    let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
+                    let left = this.x - hsize < box.x + box.w && this.x - hsize > box.x;
+                    if (top || bottom || left || right) {
+                        collidingX=true;
+                        collidingWithX = box;
+                    }
                 }
             }
-        }
-        if (collidingX) {
-            if (this.pushesEntities && collidingWithX.entity && collidingWithX.entity.move) {
-                // move the entity the same amount
-                collidingWithX.entity.move(sx, 0, true);
-            } else {
-                this.x -= sx;
-                if(squish && this.squish) {
-                    this.squish();
+            if (collidingX) {
+                if (this.pushesEntities && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
+                    // move the entity the same amount
+                    blockedX = !collidingWithX.entity.move(sx, 0, this.squishesEntities);
+                    //console.log( this.constructor.name ,"pushing entity sideways", collidingWithX.entity.constructor.name, blockedX);
+                } else {
+                    blockedX = true;
                 }
-            }
-            if (sx > 0) {
-                this.colliding[1] = true;
-            } else if (sx < 0) {
-                this.colliding[3] = true;
+
+                if (blockedX && this.canBeBlocked){
+                    this.x -= sx;
+                    if(squish && this.squish) {
+                        this.squish();
+                    }
+                }
+                if (sx > 0) {
+                    this.colliding[1] = true;
+                } else if (sx < 0) {
+                    this.colliding[3] = true;
+                }
             }
         }
 
         this.y += sy;
         let collidingY = false;
         let collidingWithY = null;
-        for (let i = 0; i < collisionBoxes.length; i++) {
-            let box = collisionBoxes[i];
-            if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
-                this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
-                let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
-                let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
-                let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
-                let left = this.x - hsize < box.x + box.w && this.x - hsize >= box.x;
-                if (top || bottom || left || right) {
-                    collidingY=true;
-                    collidingWithY = box;
+        let blockedY = false;
+        if (Math.abs(sy) > 0) {
+            for (let i = 0; i < collisionBoxes.length; i++) {
+                let box = collisionBoxes[i];
+                if (this.x + hsize > box.x && this.x - hsize < box.x + box.w &&
+                    this.y + hsize > box.y && this.y - hsize < box.y + box.h) {
+                    let top = this.y - hsize <= box.y+box.h && this.y - hsize > box.y;
+                    let bottom = this.y + hsize > box.y && this.y + hsize <= box.y+box.h;
+                    let right = this.x + hsize > box.x && this.x + hsize <= box.x + box.w;
+                    let left = this.x - hsize < box.x + box.w && this.x - hsize >= box.x;
+                    if (top || bottom || left || right) {
+                        collidingY=true;
+                        collidingWithY = box;
+                    }
+                }
+            }
+            if (collidingY) {
+                if (this.pushesEntities && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
+                    // move the entity the same amount
+                    blockedY = !collidingWithY.entity.move(0, sy, this.squishesEntities);
+                    //console.log( this.constructor.name ,"pushing entity up or down", collidingWithY.entity.constructor.name, blockedY);
+                } else {
+                    blockedY = true;
+                }
+                if (blockedY && this.canBeBlocked) {
+                    this.y -= sy;
+                    if(squish && this.squish) {
+                        this.squish();
+                    }
+                }
+                if (sy > 0) {
+                    this.colliding[2] = true;
+                } else if (sy < 0) {
+                    this.colliding[0] = true;
                 }
             }
         }
-        if (collidingY) {
-            if (this.pushesEntities && collidingWithY.entity && collidingWithY.entity.move) {
-                // move the entity the same amount
-                collidingWithY.entity.move(0, sy, true);
-            } else {
-                this.y -= sy;
-                if(squish && this.squish) {
-                    this.squish();
-                }
-            }
-            if (sy > 0) {
-                this.colliding[2] = true;
-            } else if (sy < 0) {
-                this.colliding[0] = true;
-            }
-        }
+        return !(blockedX || blockedY);
     }
 
     isColliding() {

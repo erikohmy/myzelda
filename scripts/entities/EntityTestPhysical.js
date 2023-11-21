@@ -5,6 +5,8 @@ class EntityTestPhysical extends EntityPhysical {
         this.y = y+8;
         this.size = 16;
         this.pushesEntities = true;
+        this.squishesEntities = true;
+        this.canBePushed = false;
     }
     draw() {
         let ox = this.game.offset[0];

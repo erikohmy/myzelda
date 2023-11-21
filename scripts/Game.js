@@ -645,10 +645,11 @@ class Game {
             return;
         }
         this.clear();
-        //this.drawGrid();
         let offsetY = this.offset[1];
         this.offset[1] = this.offset[1]+16; // offset for ui
         let space = this.world.currentSpace;
+
+        let player = this.world.player;
 
         this.setColor(space.background);
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -725,7 +726,6 @@ class Game {
             });
         }
 
-        let player = this.world.player;
         if (!this.hideplayer && !this.world.transitioning) {
             player.draw();
         }
