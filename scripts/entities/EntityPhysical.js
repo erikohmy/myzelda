@@ -9,11 +9,13 @@ class EntityPhysical {
     targetY = null;
     targetSpeed=1;
     size = 8;
-    playerCollisions = true;
-    pushesEntities = false;
-    squishesEntities = false;
-    canBeBlocked = true;
-    canBePushed = true;
+
+    playerCollisions = true; // should this entity collide with the player?
+    pushesEntities = false; // if this entity is pushed into another entity, should it push that entity?
+    squishesEntities = false; // if this entity is pushed into another entity, should it squish that entity if it cannot be moved?
+    canBeBlocked = true; // can this entity be blocked by other entities?
+    canBePushed = true; // can this entity be pushed by other entities?
+    canGoOutside = false; // can this entity go outside the screen?
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
@@ -98,7 +100,7 @@ class EntityPhysical {
     }
 
     push(sx, sy) {
-        let limit = 5;
+        let limit = 8;
         this.speedX += sx;
         this.speedY += sy;
 
@@ -125,6 +127,11 @@ class EntityPhysical {
         this.targetSpeed = speed;
         this.x = Math.round(this.x);
         this.y = Math.round(this.y);
+    }
+
+    moveToTile(x, y, speed=1) {
+        let hsize = this.size/2;
+        this.moveTo(x*16+hsize, y*16+hsize, speed);
     }
 
     move(sx, sy, squish = false) {
@@ -161,8 +168,12 @@ class EntityPhysical {
                     }
                 }
             }
+            // would this send us outside the screen?
+            if (!this.canGoOutside && (this.x - hsize < 0 || this.x + hsize > (this.game.world.currentSpace.size[0])*16)) {
+                collidingX = true;
+            }
             if (collidingX) {
-                if (this.pushesEntities && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
+                if (this.pushesEntities && collidingWithX && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
                     // move the entity the same amount
                     blockedX = !collidingWithX.entity.move(sx, 0, this.squishesEntities);
                     //console.log( this.constructor.name ,"pushing entity sideways", collidingWithX.entity.constructor.name, blockedX);
@@ -203,8 +214,12 @@ class EntityPhysical {
                     }
                 }
             }
+            // would this send us outside the screen?
+            if (!this.canGoOutside && (this.y - hsize < 0 || this.y + hsize > (this.game.world.currentSpace.size[1])*16)) {
+                collidingY = true;
+            }
             if (collidingY) {
-                if (this.pushesEntities && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
+                if (this.pushesEntities && collidingWithY && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
                     // move the entity the same amount
                     blockedY = !collidingWithY.entity.move(0, sy, this.squishesEntities);
                     //console.log( this.constructor.name ,"pushing entity up or down", collidingWithY.entity.constructor.name, blockedY);

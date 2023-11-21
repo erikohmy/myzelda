@@ -22,6 +22,7 @@ class EntityPlayer extends EntityPhysical {
         this.pushesEntities = true;
         this.canBeBlocked = true;
         this.canBePushed = true;
+        this.canGoOutside = true;
         this.direction = 2; // down
 
         this.maxHealth = 14*4;
