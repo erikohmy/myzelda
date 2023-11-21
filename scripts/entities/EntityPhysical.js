@@ -12,6 +12,8 @@ class EntityPhysical {
     playerCollisions = true;
     pushesEntities = false;
 
+    colliding = [0,0,0,0]; // top, right, bottom, left
+
     constructor(game) {
         this.game = game;
     }
@@ -110,10 +112,15 @@ class EntityPhysical {
             return box.entity !== this;
         });
         if (this.playerCollisions) {
-            collisionBoxes.push(this.game.world.player.getCollisionBox());
+            if (this instanceof EntityPlayer) {
+                // ???
+            } else {
+                collisionBoxes.push(this.game.world.player.getCollisionBox());
+            }
         }
         let hsize = this.size/2;
 
+        this.colliding=[0,0,0,0];
         if (Math.abs(sx) <= 0 && Math.abs(sy) <= 0) {
             return;
         }
@@ -141,9 +148,14 @@ class EntityPhysical {
                 collidingWithX.entity.move(sx, 0, true);
             } else {
                 this.x -= sx;
-                if(squish) {
-                    console.log("squish");
+                if(squish && this.squish) {
+                    this.squish();
                 }
+            }
+            if (sx > 0) {
+                this.colliding[1] = true;
+            } else if (sx < 0) {
+                this.colliding[3] = true;
             }
         }
 
@@ -170,10 +182,19 @@ class EntityPhysical {
                 collidingWithY.entity.move(0, sy, true);
             } else {
                 this.y -= sy;
-                if(squish) {
-                    console.log("squish");
+                if(squish && this.squish) {
+                    this.squish();
                 }
             }
+            if (sy > 0) {
+                this.colliding[2] = true;
+            } else if (sy < 0) {
+                this.colliding[0] = true;
+            }
         }
+    }
+
+    isColliding() {
+        return this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3];
     }
 }
