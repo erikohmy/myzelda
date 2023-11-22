@@ -8,7 +8,6 @@ class TileBase {
     sprites;
 
     solid = false;
-    trigger = false;
     hole = false;
     swim = false;
     drown = false;
@@ -26,6 +25,7 @@ class TileBase {
     spriteOffsetX = 0;
     spriteOffsetY = 0;
     variants = 1;
+    variantNames = [];
 
     constructor(game, name) {
         this.game = game;
@@ -40,7 +40,7 @@ class TileBase {
         if (this.solid) {
             return true
         }
-        return this.collision && this.collision.length > 0;
+        return !!this.collision;
     }
 
     defineTiles() {

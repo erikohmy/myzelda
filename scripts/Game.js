@@ -259,6 +259,10 @@ class Game {
 
         let dungeonCommon = await this.loadImage("./assets/dungeoncommon.png");
         this.spritesheets.dungeonCommon = new SpriteSheet(dungeonCommon, 16);
+        await this.spritesheets.dungeonCommon.generatePallet('red', {
+            "42,130,176": "197,75,44",
+            "77,201,245": "240,180,187"
+        })
 
         let buildings = await this.loadImage("./assets/buildings.png");
         this.spritesheets.buildings = new SpriteSheet(buildings, 8);
@@ -826,15 +830,26 @@ class Game {
 class SpriteSheet {
     image;
     spritesize;
+    pallets = {};
     constructor(image, spritesize) {
         this.image = image;
         this.spritesize = spritesize;
     }
+    async generatePallet(name, colors) {
+        this.pallets[name] = await Graphics.palletChange(this.image, colors);
+    }
+    downloadPallet(name) {
+        downloadURI(this.pallets[name].src, name+".png");
+    }
     // context, sprite x, sprite y, position x, position y
-    drawSprite(ctx, x, y, px, py, h=undefined, w=undefined) {
+    drawSprite(ctx, x, y, px, py, h=undefined, w=undefined, pallet=undefined) {
         h = h || this.spritesize;
         w = w || this.spritesize;
-        ctx.drawImage(this.image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, h, w);
+        let image = this.image;
+        if (pallet) {
+            image = this.pallets[pallet];
+        }
+        ctx.drawImage(image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, h, w);
     }
     drawRegion(ctx, x, y, px, py, h=undefined, w=undefined) {
         h = h || this.spritesize;
@@ -846,6 +861,15 @@ class SpriteSheet {
 function tileSnap(x,y) {
     // snap to center of tiles
     return [Math.floor(x/game.tilesize)*game.tilesize, Math.floor(y/game.tilesize)*game.tilesize];
+}
+function downloadURI(uri, name) {
+    var link = document.createElement("a");
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    delete link;
 }
 
 class NiceLoader {
@@ -915,5 +939,91 @@ class NiceLoader {
     updateLoadingText() {
         let text = this.stage + (this.currentItem ? ("\n" + this.currentItem) : "");
         this.wrap.setAttribute('data-loading', text);
+    }
+}
+
+class Editor {
+    game;
+    sprites;
+    spriteImages = [];
+    spriteImage;
+
+    constructor(game) {
+        this.game = game;
+        this.buildSpritelist();
+    }
+
+    buildSpritelist() {
+        let sprites = [];
+        // for all the tiles
+        let tileNames = Object.keys(this.game.tiles);
+        tileNames.forEach(name => {
+            let tile = this.game.tiles[name];
+            let spriteNames = Object.keys(tile.sprites);
+            sprites.push({
+                name: name,
+                type: "tile",
+                class: tile.constructor.name,
+                subtype: this.getTileSubtype(tile),
+                sprites: spriteNames,
+                variants: tile.variantNames,
+                flags: this.getTileFlags(tile),
+            });
+            spriteNames.forEach(spritename => {
+                this.spriteImages.push({
+                    name: spritename,
+                    image: tile.sprites[spritename]
+                });
+            });
+        });
+        this.sprites = sprites;
+    }
+    getTileFlags(tile) {
+        return {
+            solid: tile.solid,
+            hole: tile.hole,
+            swim: tile.swim,
+            drown: tile.drown,
+            wet: tile.wet,
+            dig: tile.dig,
+            collision: tile.hasCollision(),
+        };
+    }
+    getTileSubtype(tile) {
+        // tile, edged, wall, directional
+        if (tile instanceof TileEdged) {
+            return "edged";
+        }
+        if (tile instanceof TileWall) {
+            return "wall";
+        }
+        /*if (tile instanceof TileDirectional) {
+            return "directional";
+        }*/
+        return "tile";
+    }
+    async buildSpriteSheet() {
+        // width and height of sheet
+        let size = Math.ceil(Math.sqrt(this.spriteImages.length));
+        let canvas = document.createElement("canvas");
+        canvas.width = size*16;
+        canvas.height = size*16;
+        let ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        this.spriteImages.forEach((sprite, i) => {
+            let x = i%size;
+            let y = Math.floor(i/size);
+            ctx.drawImage(sprite.image, x*16, y*16);
+        });
+        let img = new Image();
+        img.src = canvas.toDataURL();
+        await img.decode();
+        this.spriteImage = img;
+        return img;
+    }
+    downloadSpriteSheet() {
+        this.buildSpriteSheet().then(() => {
+            downloadURI(this.spriteImage.src, "spritesheet.png");
+        });
     }
 }

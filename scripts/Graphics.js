@@ -1,10 +1,14 @@
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     window.graphics_font = new Image();
     graphics_font.src = 'assets/font.png';
+    window.graphics_font_blue = await Graphics.palletChange(window.graphics_font, {
+        "255,255,255": Graphics.colors.zblue
+    });
 });
 class Graphics {
     static colors = {
         ui: "#fce6c6",
+        zblue: "#1882ff",
     };
     static fontMap() {
         return [
@@ -27,14 +31,15 @@ class Graphics {
         }
         return [null, null];
     }
-    static font() {
+    static font(color = "white") {
+        if(color === "blue"){return window.graphics_font_blue}
         return window.graphics_font;
     }
     static fontSize() {
         return [8,10];
     }
 
-    static drawChar(ctx, char, x, y) {
+    static drawChar(ctx, char, x, y, color = "white") {
         let fw, fh, fx, fy;
         [fw, fh] = this.fontSize();
         [fx, fy] = this.getCharIndex(char);
@@ -44,7 +49,7 @@ class Graphics {
             ctx.fillStyle = "black";
             ctx.fillRect(x+1, y+1, fw-2, fh-2);
         } else {
-            ctx.drawImage(this.font(), fx*fw, fy*fh, fw, fh, x, y, fw, fh);
+            ctx.drawImage(this.font(color), fx*fw, fy*fh, fw, fh, x, y, fw, fh);
         }
     }
 
@@ -79,5 +84,62 @@ class Graphics {
         if (color !== "white") {
             ctx.filter = filterBefore;
         }
+    }
+
+    static async palletChange(image, map) {
+        await image.decode();
+        map = this.colorMapProcess(map);
+        // change the colors in an image, based on a map
+        let canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        let ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(image, 0, 0);
+        let imgData = ctx.getImageData(0, 0, image.width, image.height);
+        const data = new Uint8ClampedArray(imgData.data);
+        let seen = [];
+        for (let i = 0; i < data.length; i += 4) {
+            let r = data[i + 0];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            let key = r + "," + g + "," + b;
+            if (seen.indexOf(key) === -1) {
+                //console.log('seen a new color', key);
+                seen.push(key);
+            }
+            if (map[key]) {
+                let [r2, g2, b2] = map[key].split(",");
+                data[i + 0] = r2;
+                data[i + 1] = g2;
+                data[i + 2] = b2;
+            }
+        }
+        const changedData = new ImageData(data, imgData.width, imgData.height)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(changedData, 0, 0);
+        let changedImage = new Image();
+        changedImage.src = canvas.toDataURL();
+        await changedImage.decode();
+        return changedImage;
+    }
+    static hex2rgb(hex) {
+        // if we dont start with a #, return as is
+        if (hex[0] !== "#") return hex;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return r + "," + g + "," + b;
+    }
+    static colorMapProcess(map) {
+        // turn all keys and values from hex to rgb
+        let newMap = {};
+        for (let key in map) {
+            let value = map[key];
+            let newKey = this.hex2rgb(key);
+            let newValue = this.hex2rgb(value);
+            newMap[newKey] = newValue;
+        }
+        return newMap;
     }
 }
