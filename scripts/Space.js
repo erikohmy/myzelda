@@ -163,6 +163,7 @@ class Space {
     addEntity(entity) {
         entity.space = this;
         this.entities.push(entity);
+        this.entities.sort(entitySort);
         return entity;
     }
     removeEntity(entity) {

@@ -1,5 +1,7 @@
 class EntityBase {
     game;
+    physical = false;
+    zindex = 0; // higher zindex means it is drawn on top
 
     constructor(game) {
         this.game = game;

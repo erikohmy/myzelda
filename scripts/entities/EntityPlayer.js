@@ -1,4 +1,6 @@
 class EntityPlayer extends EntityPhysical {
+    zindex = 10;
+
     direction;
     walking = false;
 
@@ -10,8 +12,9 @@ class EntityPlayer extends EntityPhysical {
     pushingEntity = null;
 
     squishing = false;
-    squishStart = 0;
     falling = false;
+    drowning = false;
+    actionStart = 0; // animation start tick, for squishing, falling, drowning, etc
     damageFlash = 0;
 
     canSwim = true;
@@ -41,7 +44,7 @@ class EntityPlayer extends EntityPhysical {
             return true;
         }
         // if animating a move, or dying etc.
-        return this.squishing;
+        return this.squishing || this.falling || this.drowning;
     }
 
     setPushingEntity(entity) {
@@ -93,7 +96,7 @@ class EntityPlayer extends EntityPhysical {
         }
         this.squishing = true;
         this.walking=false;
-        this.squishStart = this.game.gametick;
+        this.actionStart = this.game.gametick;
         this.size = 2;
         this.game.waitTicks(30).then(() => {
             this.damage(4);
@@ -102,6 +105,34 @@ class EntityPlayer extends EntityPhysical {
                 this.size = 10;
                 this.squishing = false;
             });
+        });
+    }
+
+    fall() {
+        if (this.falling) {
+            return;
+        }
+        this.falling = true;
+        this.walking=false;
+        this.actionStart = this.game.gametick;
+        this.game.sound.play("link_fall");
+        this.game.waitTicks(60).then(() => {
+            this.damage(4);
+            this.respawn();
+            this.falling = false;
+        });
+    }
+
+    drown() {
+        if (this.drowning) {
+            return;
+        }
+        this.drowning = true;
+        this.walking=false;
+        this.game.waitTicks(30).then(() => {
+            this.damage(4);
+            this.respawn();
+            this.drowning = false;
         });
     }
 
@@ -129,10 +160,17 @@ class EntityPlayer extends EntityPhysical {
 
             if (tile.swim) {
                 if (this.canSwim) {
-                    this.isSwimming = true;
+                    if (this.isSwimming === false) {
+                        this.isSwimming = true;
+                        let splash = new EntityEffectSplash(this.game, this.x, this.y);
+                        this.space.addEntity(splash);
+                    }
                 } else {
-                    console.log('drowned')
-                    this.respawn();// drown instead
+                    if (! this.drowning) {
+                        let splash = new EntityEffectSplash(this.game, this.x, this.y);
+                        this.space.addEntity(splash);
+                        this.drown();
+                    }
                 }
             } else {
                 this.isSwimming = false;
@@ -140,8 +178,7 @@ class EntityPlayer extends EntityPhysical {
 
             if (tile.hole) {
                 // check if we should fall to lower layer?
-                console.log('fell')
-                this.respawn();// fall instead
+                this.fall();
             }
         }
     }
@@ -168,18 +205,40 @@ class EntityPlayer extends EntityPhysical {
         let oy = this.game.offset[1];
 
         let sheet = this.game.spritesheets.player;
-
+        let x = this.x;
+        let y = this.y;
+        let wo = 8; // width offset
+        let ho = 11; // height offset
         let sox = 0; // sprite offset x
         let soy = 0; // sprite offset y
+
+        if (this.falling) {
+            let ticks = this.game.gametick - this.actionStart;
+            let falltime = 60;
+            let frames = 3;
+            let frame = Math.floor(ticks/(falltime/frames));
+            sox = 8 + frame;
+            soy = 0;
+            let tx, ty;
+            [tx, ty] = tileSnap(this.x, this.y);
+            sheet.drawSprite(this.game.ctx, sox, soy, tx+ox, ty+oy);
+            return;
+        } else if (this.drowning) {
+            sox = 8 + (this.game.animationtick % 15 > 7 ? 1 : 0);
+            soy = 1;
+            sheet.drawSprite(this.game.ctx, sox, soy, x-8+ox, y-8+oy);
+            return;
+        }
 
         sox += this.direction;
         if(this.isSwimming) {
             soy += 2;
+            ho = 8;
         } else if (this.isColliding() && this.walking) {
             soy += 1;
         }
 
-        if (!this.isBusy && this.walking && this.game.animationtick % 15 > 7) {
+        if (!this.isBusy && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
             sox += 4;
         }
 
@@ -195,24 +254,20 @@ class EntityPlayer extends EntityPhysical {
             }
         }
 
-        // if we are standing in a puddle, draw wet effect
+        // draw player
+        if (this.squishing) {
+            let reduction = Math.min(12, 12*(this.game.gametick - this.actionStart)/30);
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox + reduction/2, y-ho+oy, 16-reduction, 16);
+        } else {
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox, y-ho+oy);
+        }
+        this.game.ctx.filter = filterBefore;
+
+        // if we are standing in a puddle, draw wet effect, actually, handler on ALL entities that are physical instead
         if (this.inpuddle) {
             //let sheet = this.game.spritesheets.overworld;
             //sheet.drawRegion(this.game.ctx, 48, 48, this.x-8+ox, this.y-8+oy, 16,16);
         }
-
-        // draw player
-        if (this.squishing) {
-            // squish the sprite!
-            // squish is 60 ticks (1 second), shrink for 30, remain thin for 30
-            // player sprite is 16 wide, so shrink to 4 over 30 ticks, 12 px reduction, both sides, so 6px at 30
-            let reduction = 12*(this.game.gametick - this.squishStart)/30;
-            reduction = Math.min(12, reduction);
-            sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox + reduction/2, this.y-11+oy, 16-reduction, 16);
-        } else {
-            sheet.drawSprite(this.game.ctx, sox, soy, this.x-8+ox, this.y-11+oy);
-        }
-        this.game.ctx.filter = filterBefore;
 
         // draw tile we are inside
         if (this.game.debug) {

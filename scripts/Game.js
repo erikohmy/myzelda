@@ -209,8 +209,11 @@ class Game {
     async addSounds() {
         this.events.trigger('sounds-adding');
         await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
+        await this.sound.addSound("block_push", "./assets/sound/Block_Push.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
+        await this.sound.addSound("link_fall", "./assets/sound/Link_Fall.wav");
+        await this.sound.addSound("link_wade", "./assets/sound/Link_Wade.wav");
 
         await this.sound.addSound("text_letter", "./assets/sound/Text_Letter.wav");
         await this.sound.addSound("text_done", "./assets/sound/Text_Done.wav");
@@ -270,6 +273,9 @@ class Game {
         let animated = await this.loadImage("./assets/animated.png");
         this.spritesheets.animated = new SpriteSheet(animated, 8);
         this.events.trigger('sprites-added');
+
+        let effects = await this.loadImage("./assets/effects.png");
+        this.spritesheets.effects = new SpriteSheet(effects, 8);
     }
 
     async addTiles() {
@@ -280,6 +286,7 @@ class Game {
         await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
         await this.addTile("obstacle", "TileObstacle");
+        await this.addTile("hole", "TileHole");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
 
@@ -700,10 +707,14 @@ class Game {
         }
 
         // draw entities
-        space.entities.forEach(e => {
-            if (!!e.draw) {
-                e.draw();
-            }
+        let entitiesToDraw = space.entities.filter(e => !!e.draw);
+        if (!this.hideplayer && !this.world.transitioning) {
+            entitiesToDraw.push(player);
+            entitiesToDraw.sort(entitySort);
+        }
+
+        entitiesToDraw.forEach(e => {
+            e.draw();
         });
 
         // debug, draw collision boxes
@@ -752,10 +763,6 @@ class Game {
                 this.setColor("#0000FF"); // blue
                 this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
             });
-        }
-
-        if (!this.hideplayer && !this.world.transitioning) {
-            player.draw();
         }
 
         this.dialog.render();
@@ -862,6 +869,15 @@ function tileSnap(x,y) {
     // snap to center of tiles
     return [Math.floor(x/game.tilesize)*game.tilesize, Math.floor(y/game.tilesize)*game.tilesize];
 }
+
+// sort entities by zindex, or if same, y position
+function entitySort(a,b) {
+    if (a.zindex == b.zindex && a.hasOwnProperty("y") && b.hasOwnProperty("y")) {
+            return a.y - b.y;
+    }
+    return a.zindex - b.zindex;
+}
+    
 function downloadURI(uri, name) {
     var link = document.createElement("a");
     link.download = name;

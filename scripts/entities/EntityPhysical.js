@@ -9,6 +9,8 @@ class EntityPhysical extends EntityBase {
     targetSpeed=1;
     size = 8;
 
+    physical = true;
+
     playerCollisions = true; // should this entity collide with the player?
     pushesEntities = false; // if this entity is pushed into another entity, should it push that entity?
     squishesEntities = false; // if this entity is pushed into another entity, should it squish that entity if it cannot be moved?

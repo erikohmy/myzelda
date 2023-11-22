@@ -42,7 +42,7 @@ class EntityPushBlock extends EntityPhysical {
 
         // get the tile at the new position
         let tile = this.game.tile(this.space.tile(tx,ty));
-        if (tile.hasCollision()) {
+        if (tile && tile.hasCollision() || !tile) {
             return false;
         }
 
@@ -57,6 +57,7 @@ class EntityPushBlock extends EntityPhysical {
         else if (direction == 3) {bx-=16;}
 
         let intheway = this.space.entitiesWithinRect(bx,by,16,16).some((e) => {
+            if (!e.physical) return false;
             if (e.canBePushed === false) {
                 return true;
             }
@@ -72,6 +73,7 @@ class EntityPushBlock extends EntityPhysical {
             this.pushedTime = this.pushCooldown;
             this.isBeingPushed = false;
         });
+        this.game.sound.play("block_push");
     }
     draw() {
         let ox = this.game.offset[0];

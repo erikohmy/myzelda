@@ -63,9 +63,10 @@ function LayerOverworld(game) {
             '2': {name:"grass2", edges:"b"},
             '3': {name:"grass2", edges:"l"},
             '5': {name:"grass2", edges:"bl"},
+            'h': {name: "hole"}
         },[
             'rrrrrrrrrr',
-            'rssss3gggr',
+            'rssss3hggr',
             'rssss3gggr',
             'rssss3gggr',
             'sssss5222r',
