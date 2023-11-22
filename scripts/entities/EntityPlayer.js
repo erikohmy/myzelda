@@ -19,7 +19,9 @@ class EntityPlayer extends EntityPhysical {
 
     canSwim = true;
 
-    inpuddle = false;
+    inAir = false;
+    inPuddle = false;
+    onRoughGround = false;
     isSwimming = false;
 
     constructor(game, x, y) {
@@ -33,6 +35,7 @@ class EntityPlayer extends EntityPhysical {
         this.canBeBlocked = true;
         this.canBePushed = true;
         this.canGoOutside = true;
+        this.moveNudge = true;
         this.direction = 2; // down
 
         this.maxHealth = 14*4;
@@ -45,6 +48,18 @@ class EntityPlayer extends EntityPhysical {
         }
         // if animating a move, or dying etc.
         return this.squishing || this.falling || this.drowning;
+    }
+
+    get isPushing() {
+        // but also if we push a solid tile...
+        return this.pushingEntity !== null || (this.isColliding() && this.walking);
+    }
+
+    get moveSpeed() {
+        if (this.isSwimming||this.onRoughGround) {
+            return 0.5;
+        }
+        return 1;
     }
 
     setPushingEntity(entity) {
@@ -66,6 +81,15 @@ class EntityPlayer extends EntityPhysical {
         let space = this.game.world.currentSpace;
         let x, y;
         [x, y] = space.getSafeLocation();
+
+        // disable all triggers temporarily ( they get reenabled by not being triggered)
+        for (let i=0; i<space.entities.length; i++) {
+            let entity = space.entities[i];
+            if (entity instanceof EntityTrigger) {
+                entity.tempDisabled = true;
+            }
+        }
+
         this.setPosition(x,y);
     }
 
@@ -151,11 +175,11 @@ class EntityPlayer extends EntityPhysical {
 
         let beneath = this.tileBeneath();
         let tile = this.game.tile(beneath)
-        if (tile) {
+        if (tile && !this.inAir) {
             if (tile.wet) {
-                this.inpuddle = true;
+                this.inPuddle = true;
             } else {
-                this.inpuddle = false;
+                this.inPuddle = false;
             }
 
             if (tile.swim) {
@@ -234,10 +258,17 @@ class EntityPlayer extends EntityPhysical {
         if(this.isSwimming) {
             soy += 2;
             ho = 8;
-        } else if (this.isColliding() && this.walking) {
+        } else if (this.isPushing) {
+            // todo: do we need to check multiple directions?
+            let collideDir = this.colliding.indexOf(1);
+            if (this.direction !== collideDir && collideDir !== -1) {
+                sox -= this.direction;
+                sox += collideDir;
+            }
             soy += 1;
         }
 
+        // animate walking or swimming
         if (!this.isBusy && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
             sox += 4;
         }
@@ -264,7 +295,7 @@ class EntityPlayer extends EntityPhysical {
         this.game.ctx.filter = filterBefore;
 
         // if we are standing in a puddle, draw wet effect, actually, handler on ALL entities that are physical instead
-        if (this.inpuddle) {
+        if (this.inPuddle) {
             //let sheet = this.game.spritesheets.overworld;
             //sheet.drawRegion(this.game.ctx, 48, 48, this.x-8+ox, this.y-8+oy, 16,16);
         }

@@ -22,6 +22,7 @@ class EntityPhysical extends EntityBase {
     colliding = [0,0,0,0]; // top, right, bottom, left
 
     collideEntity = null; // entity we are currently colliding with
+    moveNudge = false;
 
     getCollisionBox() {
         return {
@@ -173,7 +174,15 @@ class EntityPhysical extends EntityBase {
         this.moveTo(x*this.game.tilesize+hsize, y*this.game.tilesize+hsize, speed, callback);
     }
 
-    move(sx, sy, squish = false) {
+    move(sx, sy, justTest = false) {
+        if (!justTest) {
+            this.colliding=[0,0,0,0];
+        }
+        let couldMoveX = sx !== 0 ? this._move(sx, 0, justTest) : false;
+        let couldMoveY = sy !== 0 ? this._move(0, sy, justTest) : false;
+        return couldMoveX || couldMoveY;
+    }
+    _move(sx, sy, justTest = false) {
         let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes("solid", (box) => {
             return box.entity !== this;
         });
@@ -185,8 +194,6 @@ class EntityPhysical extends EntityBase {
             }
         }
         let hsize = this.size/2;
-
-        this.colliding=[0,0,0,0];
 
         this.x += sx;
         let collidingX = false;
@@ -214,32 +221,13 @@ class EntityPhysical extends EntityBase {
             if (collidingX) {
                 if (this.pushesEntities && collidingWithX && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
                     // move the entity the same amount
-                    blockedX = !collidingWithX.entity.move(sx, 0, this.squishesEntities);
+                    blockedX = !collidingWithX.entity.move(sx, 0);
+                    if (this.squishesEntities && blockedX && collidingWithX.entity.squish) {
+                        collidingWithX.entity.squish();
+                    }
                     //console.log( this.constructor.name ,"pushing entity sideways", collidingWithX.entity.constructor.name, blockedX);
                 } else {
                     blockedX = true;
-                }
-
-                let canBeBlocked = this.canBeBlocked;
-                if (blockedX && this.blockFilter) {
-                    let filterResult = this.blockFilter(collidingWithX ? collidingWithX.entity : null);
-                    if (this.canBeBlocked) {
-                        canBeBlocked = filterResult;
-                    } else {
-                        canBeBlocked = !filterResult;
-                    }
-                }
-
-                if (blockedX && canBeBlocked){
-                    this.x -= sx;
-                    if(squish && this.squish) {
-                        this.squish();
-                    }
-                }
-                if (sx > 0) {
-                    this.colliding[1] = true;
-                } else if (sx < 0) {
-                    this.colliding[3] = true;
                 }
             }
         }
@@ -271,42 +259,66 @@ class EntityPhysical extends EntityBase {
                 if (this.pushesEntities && collidingWithY && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
                     // move the entity the same amount
                     blockedY = !collidingWithY.entity.move(0, sy, this.squishesEntities);
+                    if (this.squishesEntities && blockedY && collidingWithY.entity.squish) {
+                        collidingWithY.entity.squish();
+                    }
                     //console.log( this.constructor.name ,"pushing entity up or down", collidingWithY.entity.constructor.name, blockedY);
                 } else {
                     blockedY = true;
                 }
-                let canBeBlocked = this.canBeBlocked;
-                if (blockedY && this.blockFilter) {
-                    let filterResult = this.blockFilter(collidingWithY ? collidingWithY.entity : null);
-                    if (this.canBeBlocked) {
-                        canBeBlocked = filterResult;
-                    } else {
-                        canBeBlocked = !filterResult;
-                    }
-                }
-                if (blockedY && canBeBlocked) {
-                    this.y -= sy;
-                    if(squish && this.squish) {
-                        this.squish();
-                    }
-                }
-                if (sy > 0) {
-                    this.colliding[2] = true;
-                } else if (sy < 0) {
-                    this.colliding[0] = true;
-                }
             }
         }
-        let wasBlocked = (blockedX || blockedY);
-        if (wasBlocked) {
-            this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
-        } else {
-            this._clearCollideEntity();
+
+        let wasBlocked = (blockedX || blockedY); // todo, work with canBeBlocked
+        if (!justTest) {
+            if (wasBlocked) {
+                this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
+            } else {
+                this._clearCollideEntity();
+            }
+
+            let canBeBlockedX = this.canBeBlocked;
+            if (blockedX && this.blockFilter) {
+                let filterResult = this.blockFilter(collidingWithX ? collidingWithX.entity : null);
+                if (this.canBeBlocked) {
+                    canBeBlockedX = filterResult;
+                } else {
+                    canBeBlockedX = !filterResult;
+                }
+            }
+
+            let canBeBlockedY = this.canBeBlocked;
+            if (blockedY && this.blockFilter) {
+                let filterResult = this.blockFilter(collidingWithY ? collidingWithY.entity : null);
+                if (this.canBeBlocked) {
+                    canBeBlockedY = filterResult;
+                } else {
+                    canBeBlockedY = !filterResult;
+                }
+            }
+
+            if (blockedX && canBeBlockedX) { // undo the x move if we were blocked, and can be blocked
+                this.x -= sx;
+                if (sx > 0) {
+                    this.colliding[1] = 1;
+                } else if (sx < 0) {
+                    this.colliding[3] = 1;
+                }
+            }
+
+            if (blockedY && canBeBlockedY) { // undo the y move if we were blocked, and can be blocked
+                this.y -= sy;
+                if (sy > 0) {
+                    this.colliding[2] = 1;
+                } else if (sy < 0) {
+                    this.colliding[0] = 1;
+                }
+            }
         }
         return !wasBlocked;
     }
 
     isColliding() {
-        return this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3];
+        return !!(this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3]);
     }
 }

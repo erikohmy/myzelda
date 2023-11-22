@@ -22,6 +22,7 @@ class Game {
     ticking = false;
     gametick = 0;
     animationtick = 0;
+    walkticks = 0;
 
     doGameLogic = true;
     doAnimation = true;
@@ -380,16 +381,7 @@ class Game {
             let c_down = this.interface.isControlHeld("down");
             let c_left = this.interface.isControlHeld("left");
             let c_anydir = c_up || c_right || c_down || c_left;
-            if (c_anydir) {
-                //if (player.collideEntity && !player.pushingEntity) {
-                if (player.collideEntity) {
-                    player.setPushingEntity(player.collideEntity);
-                } else if (!player.collideEntity && player.pushingEntity) {
-                    player.setPushingEntity(null);
-                }
-            } else {
-                player.setPushingEntity(null);
-            }
+            let c_multidir = (c_up || c_down) && (c_left || c_right);
 
             // update entities
             player.tick();
@@ -403,32 +395,49 @@ class Game {
                 }
             }
 
-            // move player
-            if (player.isSwimming || !player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
-                if (!player.isBusy) {
-                    // walking
-                    player.walking = false;
-                    if (c_up) {
-                        player.direction=0;
-                        player.walking=true;
-                        player.move(0, -1);
-                    } else if (c_down) {
-                        player.direction=2;
-                        player.walking=true;
-                        player.move(0, 1);
+            if (!player.isBusy) {
+                // pushing
+                if (c_anydir && !c_multidir) {
+                    if (player.collideEntity) {
+                        player.setPushingEntity(player.collideEntity);
+                    } else if (!player.collideEntity && player.pushingEntity) {
+                        player.setPushingEntity(null);
                     }
+                } else {
+                    player.setPushingEntity(null);
+                }
+                
+                // walking
+                player.walking = c_anydir;
+                let mx = 0;
+                let my = 0;
 
-                    if (c_left) {
-                        player.direction=3;
-                        player.walking=true;
-                        player.move(-1, 0);
-                    } else if (c_right) {
-                        player.direction=1;
-                        player.walking=true;
-                        player.move(1, 0);
+                if (c_up) {
+                    player.direction=0;
+                    my = -player.moveSpeed;
+                } else if (c_down) {
+                    player.direction=2;
+                    my = player.moveSpeed;
+                }
+                if (c_left) {
+                    player.direction=3;
+                    mx = -player.moveSpeed;  
+                } else if (c_right) {
+                    player.direction=1;
+                    mx = player.moveSpeed;  
+                }
+                if (mx !== 0 || my !== 0) {
+                    if (player.inPuddle && (this.walkticks+1)%20 === 0) {
+                        this.sound.play("link_wade");
                     }
+                    player.move(mx, my);
+                    this.walkticks++;
+                } else {
+                    this.walkticks = 0;
                 }
             }
+            
+
             this.tickEvents.forEach(event => {
                 if (event.type === "logic") {
                     event.left--;
