@@ -1,61 +1,82 @@
 class Interface {
-	constructor(game, element) {
+	constructor(game) {
 		this.game = game;
-		this.element = element;
-		this.event = new EasyEvents();
-		this.offsets = {x:0,y:0}; // mouse offsets
-		this.mouse = {x:0,y:0}; // mouse position
+		this.events = new EasyEvents();
 		this.heldKeys = [];
+		this.inputs = []; // the actual gameboy inputs: up, right, down, left, a, b, start, select
 		
-		this.controls = {
-			"up": "KeyW",
-			"left": "KeyA",
-			"right": "KeyD",
-			"down": "KeyS",
-			"a": "Space",
-			"b": "KeyB",
-			"menu": "KeyP",
-			"map": "KeyM",
+		this.keyboardControls = {
+			"KeyW": "up",
+			"KeyA": "left",
+			"KeyD": "right",
+			"KeyS": "down",
+			"Space": "a",
+			"KeyB": "b",
+			"KeyP": "start",
+			"KeyM": "select"
 		};
 
-		this.registerMouseEvents();
+		this.gamepadControls = {}; // todo
+
 		this.registerKeyEvents();
-		this.updateOffsets();
 
-		this.event.on("mouse.move", this.updateMousePosition);
-
-		this.event.on("key.down", (data) => {
-			// get which control was pressed
-			let control = Object.keys(this.controls).find(key => this.controls[key] === data.code);
-			if(control) {
-				game.events.trigger('pressed', control);
-				game.events.trigger('control-'+control);
+		this.events.on('key.down', (code, event) => {
+			let input = this.keyboardControls[code];
+			if (input && this.inputs.indexOf(input) === -1) {
+				this.pressInput(input);
 			}
 		});
+		this.events.on('key.up', (code, event) => {
+			let input = this.keyboardControls[code];
+			if (input && this.inputs.indexOf(input) !== -1) {
+				this.releaseInput(input);
+			}
+		});
+
+		/* todo: redo these
+		game.events.trigger('pressed', control);
+		game.events.trigger('control-'+control);
+		*/
 	}
 
-	updateOffsets = () => {
-		let bb = this.element.getBoundingClientRect();
-		this.offsets.x = bb.x;
-		this.offsets.y = bb.y;
-	}
-
-	updateMousePosition = (data) => {
-		this.mouse.x = data.x;
-		this.mouse.y = data.y;
-	}
-
-	registerMouseEvents = () => {
-		this.element.onmousemove = ( event ) => {
-			let scale = 5;
-			let x = event.clientX - this.offsets.x;
-			let y = event.clientY - this.offsets.y;
-			this.event.trigger("mouse.move",{
-				"x": Math.round( x / scale ),
-				"y": Math.round( y / scale ),
-				"event": event
-			});
+	pressInput(name) { // adds an input to the list of inputs, and triggers events
+		if (this.inputs.indexOf(name) === -1) {
+			if (name === "up") {
+				this.releaseInput("down");
+			} else if (name === "down") {
+				this.releaseInput("up");
+			} else if (name === "left") {
+				this.releaseInput("right");
+			} else if (name === "right") {
+				this.releaseInput("left");
+			}
+			this.inputs.push(name);
+			this.game.events.trigger('input', name);
+			this.game.events.trigger('input.'+name);
 		}
+	}
+
+	releaseInput(name) { // removes an input from the list of inputs, and triggers events
+		let index = this.inputs.indexOf(name);
+		if (index !== -1) {
+			this.inputs.splice(index, 1);
+			this.game.events.trigger('input.released', name);
+			this.game.events.trigger('input.'+name+'.released');
+		}
+	}
+	get up() {return this.inputs.indexOf("up") !== -1;}
+	get down() {return this.inputs.indexOf("down") !== -1;}
+	get left() {return this.inputs.indexOf("left") !== -1;}
+	get right() {return this.inputs.indexOf("right") !== -1;}
+	get a() {return this.inputs.indexOf("a") !== -1;}
+	get b() {return this.inputs.indexOf("b") !== -1;}
+	get start() {return this.inputs.indexOf("start") !== -1;}
+	get select() {return this.inputs.indexOf("select") !== -1;}
+
+	get dpad() {
+		// get the dpad main direction (first held direction in inputs)
+		let held = this.inputs.filter((i) => ["up", "down", "left", "right"].indexOf(i) !== -1);
+		return held[0] || null;
 	}
 
 	registerKeyEvents = () => {
@@ -63,10 +84,7 @@ class Interface {
 			let code = event.code;
 			if ( ! this.isKeyHeld(code) ) { // prevent event spamming
 				this.heldKeys.push(code);
-				this.event.trigger("key.down",{
-					"code": code,
-					"event": event
-				});
+				this.events.trigger("key.down", code, event);
 			}
 		});
 
@@ -76,25 +94,12 @@ class Interface {
 			if ( index !== -1 ) { // if key exists
 				this.heldKeys.splice(index, 1);
 			}
-			this.event.trigger("key.up",{
-				"code": code,
-				"event": event
-			});
+			this.events.trigger("key.up", code, event);
 		});
 	}
 
 	// check things
-
 	isKeyHeld = (code) => {
 		return this.heldKeys.indexOf(code) !== -1;
-	}
-
-	control = (name) => {
-		return this.controls[name];
-	}
-
-	isControlHeld = (name) => {
-		let code = this.controls[name];
-		return this.isKeyHeld(code);
 	}
 }

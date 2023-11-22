@@ -61,7 +61,7 @@ class Game {
         });
         this.events.on('space-transitioned', (space) => {});
 
-        this.events.on('pressed', (control) => {
+        this.events.on('input', (control) => {
             if (!this.started) {
                 this.start();
                 return;
@@ -81,7 +81,7 @@ class Game {
             }
         });
 
-        this.events.on('control-map', () => {
+        this.events.on('input.select', () => {
             console.log("toggle map");
         });
 
@@ -376,11 +376,11 @@ class Game {
                 space.safeSpot = [player.x, player.y];
             }
 
-            let c_up = this.interface.isControlHeld("up");
-            let c_right = this.interface.isControlHeld("right");
-            let c_down = this.interface.isControlHeld("down");
-            let c_left = this.interface.isControlHeld("left");
-            let c_anydir = c_up || c_right || c_down || c_left;
+            let c_up = this.interface.up;
+            let c_right = this.interface.right
+            let c_down = this.interface.down;
+            let c_left = this.interface.left;
+            let c_anydir = !!this.interface.dpad;
             let c_multidir = (c_up || c_down) && (c_left || c_right);
 
             // update entities
@@ -406,6 +406,11 @@ class Game {
                 } else {
                     player.setPushingEntity(null);
                 }
+
+                // direction
+                if (c_anydir) {
+                    player.direction = dirIndex(this.interface.dpad);
+                }
                 
                 // walking
                 player.walking = c_anydir;
@@ -413,17 +418,13 @@ class Game {
                 let my = 0;
 
                 if (c_up) {
-                    player.direction=0;
                     my = -player.moveSpeed;
                 } else if (c_down) {
-                    player.direction=2;
                     my = player.moveSpeed;
                 }
                 if (c_left) {
-                    player.direction=3;
                     mx = -player.moveSpeed;  
                 } else if (c_right) {
-                    player.direction=1;
                     mx = player.moveSpeed;  
                 }
                 if (mx !== 0 || my !== 0) {
@@ -885,6 +886,22 @@ function entitySort(a,b) {
             return a.y - b.y;
     }
     return a.zindex - b.zindex;
+}
+
+function dirIndex(dir) {
+    if (dir=='up') {
+        return 0;
+    }
+    if (dir=='right') {
+        return 1;
+    }
+    if (dir=='down') {
+        return 2;
+    }
+    if (dir=='left') {
+        return 3;
+    }
+    return -1;
 }
     
 function downloadURI(uri, name) {
