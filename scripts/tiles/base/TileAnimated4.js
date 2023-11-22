@@ -12,7 +12,7 @@ class TileAnimated4 extends TileBase {
     }
 
     drawTile(ctx, x, y, options={}) {
-        let frame = Math.floor(this.game.animationtick % 60 / 15);
+        let frame = Math.floor(this.game.animationtick % 60 / 15); // todo, base on number of variants
         let sprite = this.name+"-"+this.variantNames[frame];
         ctx.drawImage(this.sprites[sprite], x, y);
     }

@@ -8,7 +8,6 @@ class EntityEffectSplash extends EntityBase {
         this.y = y;
         this._ticks = 0;
         this.zindex = zindex;
-        console.log("creating splash");
         if (sound) {
             this.game.sound.play("link_wade");
         }

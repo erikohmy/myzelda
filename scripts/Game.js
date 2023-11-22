@@ -283,9 +283,11 @@ class Game {
         this.events.trigger('tiles-adding');
         await this.addTile("grass", "TileGrass");
         await this.addTile("grass2", "TileGrassVariant");
+        await this.addTile("flowers", "TileFlowers");
         await this.addTile("gravel", "TileGravel");
         await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
+        await this.addTile("road", "TileRoad");
         await this.addTile("obstacle", "TileObstacle");
         await this.addTile("hole", "TileHole");
         await this.addTile("water", "TileWater");
@@ -438,7 +440,6 @@ class Game {
                 }
             }
             
-
             this.tickEvents.forEach(event => {
                 if (event.type === "logic") {
                     event.left--;
@@ -546,7 +547,9 @@ class Game {
                 this.world.transitioning = false;
                 this.world.transitionCallback();
                 this.events.trigger('space-transitioned', this.world.currentSpace);
-                console.log('no transition')
+                if (transition !== "none") {
+                    console.error('unknown transition', transition);
+                }
             }
         }
 
