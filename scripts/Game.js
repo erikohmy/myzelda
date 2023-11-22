@@ -430,7 +430,7 @@ class Game {
                     if (player.inPuddle && (this.walkticks+1)%20 === 0) {
                         this.sound.play("link_wade");
                     }
-                    player.move(mx, my);
+                    player.move(mx, my, false, !c_multidir);
                     this.walkticks++;
                 } else {
                     this.walkticks = 0;

@@ -174,15 +174,17 @@ class EntityPhysical extends EntityBase {
         this.moveTo(x*this.game.tilesize+hsize, y*this.game.tilesize+hsize, speed, callback);
     }
 
-    move(sx, sy, justTest = false) {
+    move(sx, sy, justTest = false, allownudge = true) {
         if (!justTest) {
             this.colliding=[0,0,0,0];
         }
-        let couldMoveX = sx !== 0 ? this._move(sx, 0, justTest) : false;
-        let couldMoveY = sy !== 0 ? this._move(0, sy, justTest) : false;
+        let couldMoveX = sx !== 0 ? this._move(sx, 0, justTest, allownudge) : false;
+        let couldMoveY = sy !== 0 ? this._move(0, sy, justTest, allownudge) : false;
         return couldMoveX || couldMoveY;
     }
-    _move(sx, sy, justTest = false) {
+    _move(sx, sy, justTest = false, allownudge = true) {
+        let oldx = this.x;
+        let oldy = this.y;
         let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes("solid", (box) => {
             return box.entity !== this;
         });
@@ -219,7 +221,7 @@ class EntityPhysical extends EntityBase {
                 collidingX = true;
             }
             if (collidingX) {
-                if (this.pushesEntities && collidingWithX && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
+                if (!justTest && this.pushesEntities && collidingWithX && collidingWithX.entity && collidingWithX.entity.move && collidingWithX.entity.canBePushed) {
                     // move the entity the same amount
                     blockedX = !collidingWithX.entity.move(sx, 0);
                     if (this.squishesEntities && blockedX && collidingWithX.entity.squish) {
@@ -256,7 +258,7 @@ class EntityPhysical extends EntityBase {
                 collidingY = true;
             }
             if (collidingY) {
-                if (this.pushesEntities && collidingWithY && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
+                if (!justTest && this.pushesEntities && collidingWithY && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
                     // move the entity the same amount
                     blockedY = !collidingWithY.entity.move(0, sy, this.squishesEntities);
                     if (this.squishesEntities && blockedY && collidingWithY.entity.squish) {
@@ -269,7 +271,7 @@ class EntityPhysical extends EntityBase {
             }
         }
 
-        let wasBlocked = (blockedX || blockedY); // todo, work with canBeBlocked
+        let wasBlocked = (blockedX || blockedY); // todo: work with canBeBlocked
         if (!justTest) {
             if (wasBlocked) {
                 this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
@@ -298,6 +300,30 @@ class EntityPhysical extends EntityBase {
             }
 
             if (blockedX && canBeBlockedX) { // undo the x move if we were blocked, and can be blocked
+                if (this.moveNudge && allownudge) {
+                    let checks = Math.floor(this.size/2) + 2;
+                    let nudgeUp = false;
+                    let nudgeDown = false;
+                    for (let i = 1; i <= checks; i++) {
+                        if (this._move(0, -i, true)) {
+                            nudgeUp = i;
+                            break;
+                        }
+                        if (this._move(0, i, true)) {
+                            nudgeDown = i;
+                            break;
+                        }
+                    }
+                    if (nudgeUp) {
+                        //console.log('could walk, if we nudged up by', nudgeUp, 'px')
+                        this.x -= sx;
+                        return this.move(0,-1)
+                    } else if (nudgeDown) {
+                        //console.log('could walk, if we nudged down by', nudgeDown, 'px')
+                        this.x -= sx;
+                        return this.move(0,1)
+                    }
+                }
                 this.x -= sx;
                 if (sx > 0) {
                     this.colliding[1] = 1;
@@ -307,6 +333,30 @@ class EntityPhysical extends EntityBase {
             }
 
             if (blockedY && canBeBlockedY) { // undo the y move if we were blocked, and can be blocked
+                if (this.moveNudge && allownudge) {
+                    let checks = Math.floor(this.size/2) + 2;
+                    let nudgeLeft = false;
+                    let nudgeRight = false;
+                    for (let i = 1; i <= checks; i++) {
+                        if (this._move(-i, 0, true)) {
+                            nudgeLeft = i;
+                            break;
+                        }
+                        if (this._move(i, 0, true)) {
+                            nudgeRight = i;
+                            break;
+                        }
+                    }
+                    if (nudgeLeft) {
+                        //console.log('could walk, if we nudged left by', nudgeLeft, 'px')
+                        this.y -= sy;
+                        return this.move(-1,0)
+                    } else if (nudgeRight) {
+                        //console.log('could walk, if we nudged right by', nudgeRight, 'px')
+                        this.y -= sy;
+                        return this.move(1,0)
+                    }
+                }
                 this.y -= sy;
                 if (sy > 0) {
                     this.colliding[2] = 1;
@@ -314,6 +364,9 @@ class EntityPhysical extends EntityBase {
                     this.colliding[0] = 1;
                 }
             }
+        } else { // just a test, reset position
+            this.x = oldx;
+            this.y = oldy;
         }
         return !wasBlocked;
     }
