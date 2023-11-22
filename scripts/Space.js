@@ -171,6 +171,26 @@ class Space {
             this.entities.splice(index, 1);
         }
     }
+    entitiesWithinRect(x, y, w, h) {// return all entities with an ORIGIN within the rect
+        let entities = [];
+        this.entities.forEach(entity => {
+            if (entity.hasOwnProperty("x") ) {
+                if (entity.hasOwnProperty("size") || entity.hasOwnProperty("width")) {
+                    let ew = entity.size ? entity.size[0] : entity.width;
+                    let eh = entity.size ? entity.size[1] : entity.height;
+                    if (entity.x-ew/2 >= x && entity.x+ew/2 < x+w && entity.y-eh/2 >= y && entity.y+eh/2 < y+h) {
+                        entities.push(entity);
+                    } else if (entity.x >= x && entity.x < x+w && entity.y >= y && entity.y < y+h) {
+                        entities.push(entity);
+                    }
+                } else if (entity.x >= x && entity.x < x+w && entity.y >= y && entity.y < y+h) {
+                    entities.push(entity);
+                }
+            }
+            
+        });
+        return entities;
+    }
 
     getCollisionBoxes(condition = "solid", valiator = () => true) {
         let boxes = [];

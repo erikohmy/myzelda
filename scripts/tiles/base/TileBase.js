@@ -36,6 +36,13 @@ class TileBase {
 
     init() {}
 
+    hasCollision() {
+        if (this.solid) {
+            return true
+        }
+        return this.collision && this.collision.length > 0;
+    }
+
     defineTiles() {
         let tiles = {};
         // each tile is a 2x2 grid of sprites

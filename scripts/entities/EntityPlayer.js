@@ -6,11 +6,18 @@ class EntityPlayer extends EntityPhysical {
     maxHealth;
     lastDamaged = 0;
     invincibilityTime = 30; // ticks, half a second
+    timePushed = 0;
+    pushingEntity = null;
 
     squishing = false;
     squishStart = 0;
     falling = false;
     damageFlash = 0;
+
+    canSwim = true;
+
+    inpuddle = false;
+    isSwimming = false;
 
     constructor(game, x, y) {
         super(game);
@@ -30,8 +37,25 @@ class EntityPlayer extends EntityPhysical {
     }
 
     get isBusy() {
+        if (this.game.dialog.show) {
+            return true;
+        }
         // if animating a move, or dying etc.
         return this.squishing;
+    }
+
+    setPushingEntity(entity) {
+        if (!entity) {
+            if (this.pushingEntity) {
+                this.timePushed = 0;
+                this.pushingEntity = null;
+            }
+        } else if(entity !== this.pushingEntity) {
+            this.timePushed = 0;
+            this.pushingEntity = entity;
+        } else if(entity === this.pushingEntity) {
+            this.timePushed++;
+        }
     }
 
     respawn() {
@@ -86,6 +110,57 @@ class EntityPlayer extends EntityPhysical {
         if (this.damageFlash > 0) {
             this.damageFlash--;
         }
+
+        if (this.pushingEntity && this.timePushed >= 30) {
+            if (this.pushingEntity.push){
+                this.pushingEntity.push(this.direction);
+            }
+            this.timePushed = 0;
+        }
+
+        let beneath = this.tileBeneath();
+        let tile = this.game.tile(beneath)
+        if (tile) {
+            if (tile.wet) {
+                this.inpuddle = true;
+            } else {
+                this.inpuddle = false;
+            }
+
+            if (tile.swim) {
+                if (this.canSwim) {
+                    this.isSwimming = true;
+                } else {
+                    console.log('drowned')
+                    this.respawn();// drown instead
+                }
+            } else {
+                this.isSwimming = false;
+            }
+
+            if (tile.hole) {
+                // check if we should fall to lower layer?
+                console.log('fell')
+                this.respawn();// fall instead
+            }
+        }
+    }
+
+    actionMain() {
+        // interact with entity in front of us
+        let bx = this.x-8+this.game.offset[0];
+        let by = this.y-8+this.game.offset[1];
+        if (this.direction == 0) {by-=8;}
+        else if (this.direction == 1) {bx+=8;}
+        else if (this.direction == 2) {by+=8;}
+        else if (this.direction == 3) {bx-=8;}
+        let entities = this.space.entitiesWithinRect(bx,by,16,16).filter(e => !!e.interact);
+        if (entities.length > 0) {
+            entities[0].interact();
+            return true;
+        }
+        // if no entity, use main item
+        console.log("using main item")
     }
 
     draw() {
@@ -98,11 +173,13 @@ class EntityPlayer extends EntityPhysical {
         let soy = 0; // sprite offset y
 
         sox += this.direction;
-        if (this.isColliding() && this.walking) {
+        if(this.isSwimming) {
+            soy += 2;
+        } else if (this.isColliding() && this.walking) {
             soy += 1;
         }
 
-        if (this.walking && this.game.animationtick % 15 > 7) {
+        if (!this.isBusy && this.walking && this.game.animationtick % 15 > 7) {
             sox += 4;
         }
 
@@ -116,6 +193,12 @@ class EntityPlayer extends EntityPhysical {
             } else {
                 this.game.ctx.filter = "grayscale(100%) contrast(0.5) brightness(160%)";
             }
+        }
+
+        // if we are standing in a puddle, draw wet effect
+        if (this.inpuddle) {
+            //let sheet = this.game.spritesheets.overworld;
+            //sheet.drawRegion(this.game.ctx, 48, 48, this.x-8+ox, this.y-8+oy, 16,16);
         }
 
         // draw player

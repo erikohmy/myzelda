@@ -19,6 +19,8 @@ class EntityPhysical extends EntityBase {
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
+    collideEntity = null; // entity we are currently colliding with
+
     getCollisionBox() {
         return {
             entity: this,
@@ -28,9 +30,30 @@ class EntityPhysical extends EntityBase {
             h: this.size,
         };
     }
+
+    _setCollideEntity(entity) {
+        if (entity !== this.collideEntity) {
+            if (!entity) {
+                this._clearCollideEntity();
+                return;
+            }
+            this.collideEntity = entity;
+        }
+    }
+    _clearCollideEntity() {
+        if (this.collideEntity) {
+            this.collideEntity = null;
+        }
+    }
     
     get position() {
         return [this.x, this.y];
+    }
+
+    get tilePosition() {// currently occupied tile
+        let tx = Math.floor(this.x/16);
+        let ty = Math.floor(this.y/16);
+        return [tx, ty];
     }
 
     setPosition(x, y) {
@@ -38,7 +61,7 @@ class EntityPhysical extends EntityBase {
         this.y = y;
     }
     setTile(x, y) {
-        let halfsize = this.size/2;
+        let halfsize = this.game.tilesize/2;
         this.x = x*this.game.tilesize+halfsize;
         this.y = y*this.game.tilesize+halfsize;
     }
@@ -272,7 +295,13 @@ class EntityPhysical extends EntityBase {
                 }
             }
         }
-        return !(blockedX || blockedY);
+        let wasBlocked = (blockedX || blockedY);
+        if (wasBlocked) {
+            this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
+        } else {
+            this._clearCollideEntity();
+        }
+        return !wasBlocked;
     }
 
     isColliding() {

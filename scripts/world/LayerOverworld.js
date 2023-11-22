@@ -47,6 +47,10 @@ function LayerOverworld(game) {
         } else {
             timer.start();
         } 
+
+        // pushblock test
+        space.addEntity(new EntityPushBlock(space.game, 2, 4));
+        space.addEntity(new EntityPushBlock(space.game, 1, 4));
     });
 
     layer.createSpace(1, 0, 10, 8, function(space) {

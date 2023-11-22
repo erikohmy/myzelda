@@ -59,6 +59,7 @@ class World {
         space.safeSpot = null;
         this.currentSpace = space;
         this.currentLayer = space.layer;
+        this.player.space = space;
         this.game.noRender = false; // re-enable rendering
     }
 }

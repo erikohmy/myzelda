@@ -70,6 +70,9 @@ class Game {
                     this.dialog.next();
                     return;
                 }
+                if (!this.player.isBusy) {
+                    this.player.actionMain();
+                }
             }
             if (this.dialog.show && this.dialog.anyNext) {
                 this.dialog.next();
@@ -86,6 +89,7 @@ class Game {
 
         this.world = new World(this);
         this.world.player = new EntityPlayer(this, 0, 0);
+        this.player = this.world.player;
 
         this.sound = new SoundHandler(this);
         this.dialog = new Dialog(this);
@@ -179,6 +183,12 @@ class Game {
             img.src = src;
         });
     }
+    tile(tileOrTileRef) {
+        if (tileOrTileRef && tileOrTileRef.hasOwnProperty('name')) {
+            return this.tiles[tileOrTileRef.name];
+        }
+        return null;
+    }
     
     // loading
     async addTile(name, tile) {
@@ -246,6 +256,9 @@ class Game {
 
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
+
+        let dungeonCommon = await this.loadImage("./assets/dungeoncommon.png");
+        this.spritesheets.dungeonCommon = new SpriteSheet(dungeonCommon, 16);
 
         let buildings = await this.loadImage("./assets/buildings.png");
         this.spritesheets.buildings = new SpriteSheet(buildings, 8);
@@ -355,6 +368,17 @@ class Game {
             let c_right = this.interface.isControlHeld("right");
             let c_down = this.interface.isControlHeld("down");
             let c_left = this.interface.isControlHeld("left");
+            let c_anydir = c_up || c_right || c_down || c_left;
+            if (c_anydir) {
+                //if (player.collideEntity && !player.pushingEntity) {
+                if (player.collideEntity) {
+                    player.setPushingEntity(player.collideEntity);
+                } else if (!player.collideEntity && player.pushingEntity) {
+                    player.setPushingEntity(null);
+                }
+            } else {
+                player.setPushingEntity(null);
+            }
 
             // update entities
             player.tick();
@@ -369,7 +393,7 @@ class Game {
             }
 
             // move player
-            if (!player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
+            if (player.isSwimming || !player.isColliding() || player.isColliding() && this.gametick % 2 == 0) {
                 if (!player.isBusy) {
                     // walking
                     player.walking = false;
