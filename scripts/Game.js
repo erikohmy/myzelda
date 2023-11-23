@@ -101,7 +101,7 @@ class Game {
         });
 
         this.events.on('input.select', () => {
-            console.log("toggle map");
+            // open / close map in the future
         });
 
         // create interface
@@ -134,7 +134,6 @@ class Game {
                 game.everyTick(120, (t, total) => {
                     if (t == 1) {
                         game.cutscene = true;
-                        console.log('started cutscene of', total, "ticks");
                     }
                     if (t <= 30) { // walk down
                         game.world.player.walking = true;
@@ -153,7 +152,6 @@ class Game {
 
                     if (t==total) {
                         game.world.player.direction = 2; // down
-                        console.log('cutscene done');
                         game.cutscene = false;
                         resolve();
                     }
@@ -1029,7 +1027,6 @@ class NiceLoader {
         return this._stage;
     }
     set stage(stage) {
-        //console.log("loader stage:", stage);
         this._stage = stage;
         this.updateLoadingText();
     }
@@ -1039,7 +1036,6 @@ class NiceLoader {
     }
     set currentItem(item) {
         this._currentItem = item;
-        //console.log("    - ", item);
         this.updateLoadingText();
     }
 
@@ -1265,13 +1261,10 @@ class Editor {
                     classname += "-" + tiledata.variant;
                 }
                 let el = this.grid.querySelector('.tile-'+x+'-'+y);
-                try {
-                    el.classList.remove('empty');
-                    el.classList.add(classname);
-                } catch(e) {
-                    console.log(x,y, '.tile-'+x+'-'+y, classname);
-                }
-
+                
+                el.classList.remove('empty');
+                el.classList.add(classname);
+                
                 this.tileData[y][x] = tiledata;
             }
         }
@@ -1304,7 +1297,6 @@ class Editor {
 
             el.addEventListener('click', () => {
                 this.paletteSelection = {'name': sprite.name, class: 'sprite-'+sprite.sprites[0]}
-                console.log(this.paletteSelection)
             });
             if (sprite.sprites.length > 1 && sprite.subtype !== 'animated') {
                 // all variants
@@ -1342,7 +1334,6 @@ class Editor {
                         if (variant) {
                             this.paletteSelection.variant = variant;
                         }
-                        console.log(this.paletteSelection)
                     });
                 });
                 el.appendChild(variants);
@@ -1454,7 +1445,6 @@ class Editor {
                 }
             });
         });
-        //console.log(maps, stringversion);
 
         let code = "space.setTiles({\n";
         maps.forEach(map => {
