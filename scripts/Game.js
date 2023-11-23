@@ -307,6 +307,9 @@ class Game {
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
 
+        let trees = await this.loadImage("./assets/trees.png");
+        this.spritesheets.trees = new SpriteSheet(trees, 16);
+
         let dungeonCommon = await this.loadImage("./assets/dungeoncommon.png");
         this.spritesheets.dungeonCommon = new SpriteSheet(dungeonCommon, 16);
         await this.spritesheets.dungeonCommon.generatePallet('red', {
@@ -338,6 +341,8 @@ class Game {
         await this.addTile("hole", "TileHole");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
+
+        await this.addTile("tree", "TileTree");
 
         await this.addTile("roof", "TileRoof");
         await this.addTile("roofShack", "TileRoofShack");
@@ -479,7 +484,7 @@ class Game {
                 }
                 if (mx !== 0 || my !== 0) {
                     if (player.inPuddle && (this.walkticks+1)%20 === 0) {
-                        this.sound.play("link_wade");
+                        this.sound.play("link_wade",0.04);
                     }
                     player.move(mx, my, false, !c_multidir);
                     this.walkticks++;

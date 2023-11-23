@@ -301,6 +301,7 @@ class EntityPhysical extends EntityBase {
 
             if (blockedX && canBeBlockedX) { // undo the x move if we were blocked, and can be blocked
                 if (this.moveNudge && allownudge) {
+                    
                     let checks = Math.floor(this.size/2) + 2;
                     let nudgeUp = false;
                     let nudgeDown = false;

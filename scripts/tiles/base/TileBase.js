@@ -161,8 +161,23 @@ class TileBase {
 
     drawTile(ctx, x, y, options={}) {
         let name = this.name;
-        if (options?.variant) {
-            name += "-" + options.variant;
+        if (options?.edges) name += "-" + options.edges;
+        if (options?.variant) name += "-" + options.variant;
+        if (! this.sprites.hasOwnProperty(name)) {
+            name = this.name;
+        }
+        if (options?.background && options.background != "none" && options.background != "transparent") {
+            let bg = options.background;
+            if (bg[0] == "#") {
+                ctx.fillStyle = bg;
+                ctx.fillRect(x, y, 16, 16);
+            } else {// assume tile
+                let parts = bg.split("-");
+                let tile = this.game.tiles[parts[0]];
+                if (tile) {
+                    tile.draw(ctx, x, y, {variant: parts.length > 1 ? parts[1]: ""});
+                }
+            }
         }
         ctx.drawImage(this.sprites[name], x, y);
     }

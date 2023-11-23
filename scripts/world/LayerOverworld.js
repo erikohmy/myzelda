@@ -12,7 +12,7 @@ function LayerOverworld(game) {
     
     layer.createSpace(0, 0, 10, 8, function(space) {
         space.fill({name:"sand"});
-        space.border({name:"obstacle", variant:"rock"});
+        space.border({name:"obstacle", variant:"rock",  background:"sand"});
         space.setTile(3,4,{name:"obstacle", variant:"coconut"});
         space.setTile(4,5,{name:"obstacle", variant:"coconut"});
         space.fill({name:"sand"}, 1, 7, 8);
@@ -58,7 +58,7 @@ function LayerOverworld(game) {
         space.setTiles({
             ' ': null,
             's': {name:"sand"},
-            'r': {name:"obstacle", variant:"rock"},
+            'r': {name:"obstacle", variant:"rock", background:"sand"},
             'g': {name:"grass2"},
             '2': {name:"grass2", edges:"b"},
             '3': {name:"grass2", edges:"l"},
@@ -94,7 +94,9 @@ function LayerOverworld(game) {
         space.setTile(1,2, {name:"window"});
         space.setTile(2,2, {name:"doorway"});
         space.setTile(3,2, {name:"window"});
+        space.setTile(0,5, {name:"obstacle", variant:"poles2", background:"sand"});
 
+        space.setTile(7,7,{name:"road"});
         space.setTile(2,7,{name:"road"});
 
         //space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
@@ -152,7 +154,7 @@ function LayerOverworld(game) {
         space.setTiles({
             'wa': {name:"water"},
             'gr': {name:"grass"},
-            'gg': {name:"grass"}, // fully green grass, dont have yet
+            'gg': {name:"grass", variant:"c"},
             'g2': {name:"grass", edges:"rb"},
             'fl': {name:"flowers"},
             'ro': {name:"road"},
@@ -166,7 +168,10 @@ function LayerOverworld(game) {
             'rf': {name:"roofShack", variant:"blue"},
             'wi': {name:"window"},
             'dw': {name:"doorway"},
-            'wl': {name:"wallWood", variant:"b"},
+            'tl': {name:"tree", variant:"tl-common", background:"grass2"},
+            'tr': {name:"tree", variant:"tr-common", background:"grass2"},
+            'wl': {name:"tree", variant:"tl-common", background:"grass2-t"},
+            'wr': {name:"tree", variant:"tr-common", background:"grass2-t"},
         },[
             'g2ygyrwawaylygroggfl',
             'ygygyrwawaylygrorogg',
@@ -175,41 +180,43 @@ function LayerOverworld(game) {
             'wawawarfrfrfway2ybyb',
             'ytytytwidwwiwawawawa',
             'ygygygygygyrwawawawa',
-            'wlwlwlwlwlwlwlwlwlwl',
+            'tltrtltrtltrwlwrwlwr',
         ]);
     });
     layer.createSpace(2,1, 10, 8, function(space) {
         space.setTiles({
-            '00': {name:'obstacle', variant: 'rock'},
-            '01': {name:'grass2'},
-            '02': {name:'obstacle', variant: 'poles2'},
-            '03': {name:'roof', edges: 'tl'},
-            '04': {name:'chimney'},
-            '05': {name:'roof', edges: 'tr'},
+            '00': {name:'tree', variant: 'rb-common'},
+            '01': {name:'tree', variant: 'bl-common'},
+            '02': {name:'tree', variant: 'tl-common'},
+            '03': {name:'tree', variant: 'tr-common'},
+            '04': {name:'obstacle', variant: 'rock', background: 'grass2'},
+            '05': {name:'grass2'},
             '06': {name:'road'},
-            '07': {name:'roof', edges: 'bl'},
-            '08': {name:'roof', edges: 'b'},
-            '09': {name:'roof', edges: 'rb'},
-            '0a': {name:'window'},
-            '0b': {name:'doorway'},
-            '0c': {name:'obstacle'},
-            '0d': {name:'gravel', edges: 'tb'},
-            '0e': {name:'gravel', edges: 'rb'},
-            '0f': {name:'grass', edges: 'tl'},
-            '10': {name:'grass', edges: 't'},
-            '11': {name:'grass', edges: 'tr'},
-            '12': {name:'grass', edges: 'l'},
-            '13': {name:'flowers'},
-            '14': {name:'grass', edges: 'r'},
+            '07': {name:'roof', edges: 'tl'},
+            '08': {name:'chimney'},
+            '09': {name:'roof', edges: 'tr'},
+            '0a': {name:'obstacle', variant: 'poles2'},
+            '0b': {name:'roof', edges: 'bl'},
+            '0c': {name:'roof', edges: 'b'},
+            '0d': {name:'roof', edges: 'rb'},
+            '0e': {name:'window'},
+            '0f': {name:'doorway'},
+            '10': {name:'obstacle'},
+            '11': {name:'grass', edges: 'tl'},
+            '12': {name:'grass', edges: 't'},
+            '13': {name:'grass', edges: 'tr'},
+            '14': {name:'grass', edges: 'l'},
+            '15': {name:'flowers'},
+            '16': {name:'grass', edges: 'r'},
         }, [
-            '00000000000000000000',
-            '00010101010101010100',
-            '00010101010101010100',
-            '02010101030405010100',
-            '06060601070809010100',
-            '020106010a0b0a0c0c00',
-            '0001060d0d0e0f101100',
-            '00010601010112131400',
+            '00010001000203040402',
+            '02030505050100050501',
+            '01000505050505050203',
+            '06060605070809050100',
+            '0a0a06050b0c0d050504',
+            '020306050e0f0e101004',
+            '01000606060611121304',
+            '02030605050514151604',
         ]);
     });
 }

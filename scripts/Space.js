@@ -102,6 +102,9 @@ class Space {
         return this.tiles[y*this.size[0]+x];
     }
     tileAt(x, y) { // world coordinates
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+            return null;
+        }
         let tx = Math.floor(x/this.game.tilesize);
         let ty = Math.floor(y/this.game.tilesize);
         return this.tile(tx, ty);
