@@ -2,8 +2,6 @@ class TileBase {
     game;
 
     name;
-    tags;
-    sets;
 
     sprites;
 
@@ -56,23 +54,25 @@ class TileBase {
     
     async generate() {
         // if we have variants, assume they are next to each other in the spritesheet
+        let spriteMap = this.spriteMap;
         if (this.variants > 1) {
+            spriteMap = [];
             for(let i=0; i<this.spriteMap.length; i++) {
-                let newRow = [...this.spriteMap[i]];
-                for (let v=1; v<this.variants; v++) {
+                let newRow = [];
+                for (let v=0; v<this.variants; v++) {
                     let segment = [...this.spriteMap[i]];
                     for (let j=0; j<segment.length; j++) {
                         segment[j] += "-"+v;
                     }
                     newRow = newRow.concat(segment);
                 }
-                this.spriteMap[i] = newRow;
+                spriteMap[i] = newRow;
             }
         }
         let sprites = {};
-        for (let y=0; y<this.spriteMap.length; y++) {
-            for (let x=0; x<this.spriteMap[y].length; x++) {
-                let sprite = this.spriteMap[y][x];
+        for (let y=0; y<spriteMap.length; y++) {
+            for (let x=0; x<spriteMap[y].length; x++) {
+                let sprite = spriteMap[y][x];
                 sprites[sprite] = [this.spriteOffsetX+x, this.spriteOffsetY+y];
             }
         }
@@ -82,17 +82,15 @@ class TileBase {
         
         if (this.variants > 1) {
             let variants = {};
-            // add standard
-            variants[this.name+"-"+this.variantNames[0]] = tiles[this.name];
             // add variants
             for (let tileName in tiles) {
                 let tile = tiles[tileName];
-                for (let v=1;v<this.variants;v++) {
+                for (let v=0;v<this.variants;v++) {
                     let vname = this.variantNames[v];
                     variants[tileName+"-"+vname] = tile.map((sprite) => sprite+"-"+v);
                 }
             }
-            tiles = {...tiles, ...variants};
+            tiles = variants;
         }
 
         // pre-generate each version of the tile
@@ -164,7 +162,17 @@ class TileBase {
         if (options?.edges) name += "-" + options.edges;
         if (options?.variant) name += "-" + options.variant;
         if (! this.sprites.hasOwnProperty(name)) {
-            name = this.name;
+            let issue = {
+                identifier: 'error.tiles.sprite'+this.name+"."+(name?name:typeof name),
+                severity: "error",
+                type: 'error.tiles.sprite',
+                message: "Sprite '"+(name?name:typeof name)+"' for tile "+this.name+" does not exist",
+            };
+            if(this.variants > 1) {
+                issue.message += ", should be variant? (variants: "+this.variantNames.join(", ")+")";
+            }
+            this.game.addIssue(issue);
+            name = this.sprites.hasOwnProperty(this.name) ? this.name : this.name + "-" + this.variantNames[0];
         }
         if (options?.background && options.background != "none" && options.background != "transparent") {
             let bg = options.background;

@@ -96,8 +96,8 @@ function LayerOverworld(game) {
         space.setTile(3,2, {name:"window"});
         space.setTile(0,5, {name:"obstacle", variant:"poles2", background:"sand"});
 
-        space.setTile(7,7,{name:"road"});
-        space.setTile(2,7,{name:"road"});
+        space.setTile(7,7,{name:"road", variant:"bright"});
+        space.setTile(2,7,{name:"road", variant:"bright"});
 
         //space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
         space.addEntity(new EntityTransitioner(space.game, 16*2, 16*2, 16, 16, (e,t) => {
@@ -154,10 +154,10 @@ function LayerOverworld(game) {
         space.setTiles({
             'wa': {name:"water"},
             'gr': {name:"grass"},
-            'gg': {name:"grass", variant:"c"},
+            'gg': {name:"grass", variant:"green"},
             'g2': {name:"grass", edges:"rb"},
             'fl': {name:"flowers"},
-            'ro': {name:"road"},
+            'ro': {name:"road", variant:"bright"},
             'yg': {name:"grass2"},
             'yt': {name:"grass2", edges:"t"},
             'yb': {name:"grass2", edges:"b"},
@@ -191,17 +191,17 @@ function LayerOverworld(game) {
             '03': {name:'tree', variant: 'tr-common'},
             '04': {name:'obstacle', variant: 'rock', background: 'grass2'},
             '05': {name:'grass2'},
-            '06': {name:'road'},
-            '07': {name:'roof', edges: 'tl'},
+            '06': {name:'road', variant: 'bright'},
+            '07': {name:'roof', edges: 'tl', variant: 'red'},
             '08': {name:'chimney'},
-            '09': {name:'roof', edges: 'tr'},
+            '09': {name:'roof', edges: 'tr', variant: 'red'},
             '0a': {name:'obstacle', variant: 'poles2'},
-            '0b': {name:'roof', edges: 'bl'},
-            '0c': {name:'roof', edges: 'b'},
-            '0d': {name:'roof', edges: 'rb'},
+            '0b': {name:'roof', edges: 'bl', variant: 'red'},
+            '0c': {name:'roof', edges: 'b', variant: 'red'},
+            '0d': {name:'roof', edges: 'rb', variant: 'red'},
             '0e': {name:'window'},
             '0f': {name:'doorway'},
-            '10': {name:'obstacle'},
+            '10': {name:'obstacle', variant: 'fence'},
             '11': {name:'grass', edges: 'tl'},
             '12': {name:'grass', edges: 't'},
             '13': {name:'grass', edges: 'tr'},

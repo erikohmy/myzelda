@@ -105,7 +105,7 @@ class WorldLayer {
         if (bg) {
             return bg;
         }
-        return "#000";
+        return Graphics.colors.zyellow;
     }
     set background(bg) {
         this.options.background = bg;

@@ -49,7 +49,7 @@ class Space {
             return this.layer.options.background;
         }
         // and if not, then return black
-        return "#000";
+        return Graphics.colors.zyellow;
     }
     set background(bg) {
         this.options.background = bg;

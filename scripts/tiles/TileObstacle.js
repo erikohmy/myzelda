@@ -16,9 +16,4 @@ class TileObstacle extends TileBase {
     getSheet() {
         return this.game.spritesheets.overworld;
     }
-
-    drawTile(ctx, x, y, options={}) {
-        if (!options.background) {options.background = "#f8e010";}
-        super.drawTile(ctx, x, y, options);
-    }
 }

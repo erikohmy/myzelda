@@ -9,6 +9,7 @@ class Graphics {
     static colors = {
         ui: "#fce6c6",
         zblue: "#1882ff",
+        zyellow: "#f8e010"
     };
     static fontMap() {
         return [

@@ -22,15 +22,6 @@ class TileTreeBase extends TileBase{
             });
             highestX++;
             // add variants
-            /*
-            for (let tileName in tiles) {
-                let tile = tiles[tileName];
-                for (let v=0;v<this.variants;v++) {
-                    let vname = this.variantNames[v];
-                    variants[tileName+"-"+vname] = [tile[0]+v*highestX, tile[1]];
-                }
-            }
-            */
             for (let v=0;v<this.variants;v++) {
                 for (let tileName in tiles) {
                     let tile = tiles[tileName];
@@ -78,10 +69,5 @@ class TileTreeBase extends TileBase{
             tiles[this.name+"-rrr"]    = [3,1];
         }
         return tiles;
-    }
-
-    drawTile(ctx, x, y, options={}) {
-        if (!options.background) {options.background = "#f8e010";}
-        super.drawTile(ctx, x, y, options);
     }
 }
