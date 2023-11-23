@@ -56,6 +56,17 @@ class SoundHandler {
         });
     }
 
+    pause() {
+        if(this.currentMusic && this.music[this.currentMusic]) {
+            this.music[this.currentMusic].audio.pause();
+        }
+    }
+    resume() {
+        if(this.currentMusic && this.music[this.currentMusic]) {
+            this.music[this.currentMusic].audio.play();
+        }
+    }
+
     play(name) {
         //this.sounds[name].play();
         // clone sound, so we can play multiple at once

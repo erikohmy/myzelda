@@ -48,7 +48,7 @@ div, canvas {
     image-rendering: pixelated;
     transition-duration: 0.3s;
     transition-property: opacity, box-shadow;
-    cursor: none;
+    cursor: pointer;
 }
 #game:not(.ready) {
     box-shadow: #0000 0 0 32px;

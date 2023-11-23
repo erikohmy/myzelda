@@ -43,7 +43,7 @@ class EntityPlayer extends EntityPhysical {
     }
 
     get isBusy() {
-        if (this.game.dialog.show) {
+        if (this.game.dialog.show || this.game.cutscene) {
             return true;
         }
         // if animating a move, or dying etc.

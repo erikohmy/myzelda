@@ -34,7 +34,7 @@ function LayerOverworld(game) {
         }, true));
 
         let blockBlocker = space.addEntity(new EntityTestPhysical(space.game, 9, 4));
-        let timer = space.addEntity(new EntityTimer(space.game, 60*4, () => {
+        let timer = space.addEntity(new EntityTimer(space.game, 60*2, () => {
             blockBlocker.moveToTile(8, 4, undefined, ()=>{
                 blockBlocker.moveToTile(8,1);
             });
@@ -95,14 +95,14 @@ function LayerOverworld(game) {
         space.setTile(2,2, {name:"doorway"});
         space.setTile(3,2, {name:"window"});
 
+        space.setTile(2,7,{name:"road"});
+
         //space.setTile(2,1,{name:"floorWood", variant:"carpet2"});
         space.addEntity(new EntityTransitioner(space.game, 16*2, 16*2, 16, 16, (e,t) => {
-            let space = game.world.currentLayer.getSpace(1,1);
+            let space = game.world.layers.buildings.getSpace(0,0);
             game.sound.play('stairs');
             game.world.transitionTo(space, "building", () => {
-                game.animations.enterUp().then(()=>{
-                    game.dialog.display("Level 1\nA dusty home", true, true);
-                });
+                game.animations.enterUp();
             });
 
             e.setPosition(5*16, space.height)
@@ -148,38 +148,68 @@ function LayerOverworld(game) {
     });
 
     layer.createSpace(1, 1, 10, 8, function(space) {
-        space.music = "house";
-        space.fill({name:"floorWood"});
+        space.music = "none";
         space.setTiles({
-            'fl': {name:"floorWood"},
-            'wt': {name:"wallWood", variant:"t"},
-            'wr': {name:"wallWood", variant:"r"},
-            'wb': {name:"wallWood", variant:"b"},
-            'wl': {name:"wallWood", variant:"l"},
-            'c1': {name:"wallWood", variant:"tl"},
-            'c2': {name:"wallWood", variant:"tr"},
-            'c3': {name:"wallWood", variant:"bl"},
-            'c4': {name:"wallWood", variant:"rb"},
-            'dl': {name:"innerDoorway", variant:"left"},
-            'dr': {name:"innerDoorway", variant:"right"},
+            'wa': {name:"water"},
+            'gr': {name:"grass"},
+            'gg': {name:"grass"}, // fully green grass, dont have yet
+            'g2': {name:"grass", edges:"rb"},
+            'fl': {name:"flowers"},
+            'ro': {name:"road"},
+            'yg': {name:"grass2"},
+            'yt': {name:"grass2", edges:"t"},
+            'yb': {name:"grass2", edges:"b"},
+            'yr': {name:"grass2", edges:"r"},
+            'yl': {name:"grass2", edges:"l"},
+            'y1': {name:"grass2", edges:"rb"},
+            'y2': {name:"grass2", edges:"bl"},
+            'rf': {name:"roofShack", variant:"blue"},
+            'wi': {name:"window"},
+            'dw': {name:"doorway"},
+            'wl': {name:"wallWood", variant:"b"},
         },[
-            'c1wtwtwtwtwtwtwtwtc2',
-            'wlflflflflflflflflwr',
-            'wlflflflflflflflflwr',
-            'wlflflflflflflflflwr',
-            'wlflflflflflflflflwr',
-            'wlflflflflflflflflwr',
-            'wlflflflflflflflflwr',
-            'c3wbwbwbdldrwbwbwbc4',
+            'g2ygyrwawaylygroggfl',
+            'ygygyrwawaylygrorogg',
+            'ybyby1waway2ybygrogr',
+            'wawawawawawawaylroro',
+            'wawawarfrfrfway2ybyb',
+            'ytytytwidwwiwawawawa',
+            'ygygygygygyrwawawawa',
+            'wlwlwlwlwlwlwlwlwlwl',
         ]);
-        space.addEntity(new EntityTransitioner(game, 16*4+8, 16*7+8, 16, 8, (e,t) => {
-            e.direction = 0; // look down
-            game.sound.play('stairs');
-            game.animations.exitDown().then(()=>{
-                let space = game.world.currentLayer.getSpace(1,0);
-                e.setPosition(2*16+8, 2*16+8+5)
-                game.world.transitionTo(space, "building");
-            });
-        }));
+    });
+    layer.createSpace(2,1, 10, 8, function(space) {
+        space.setTiles({
+            '00': {name:'obstacle', variant: 'rock'},
+            '01': {name:'grass2'},
+            '02': {name:'obstacle', variant: 'poles2'},
+            '03': {name:'roof', edges: 'tl'},
+            '04': {name:'chimney'},
+            '05': {name:'roof', edges: 'tr'},
+            '06': {name:'road'},
+            '07': {name:'roof', edges: 'bl'},
+            '08': {name:'roof', edges: 'b'},
+            '09': {name:'roof', edges: 'rb'},
+            '0a': {name:'window'},
+            '0b': {name:'doorway'},
+            '0c': {name:'obstacle'},
+            '0d': {name:'gravel', edges: 'tb'},
+            '0e': {name:'gravel', edges: 'rb'},
+            '0f': {name:'grass', edges: 'tl'},
+            '10': {name:'grass', edges: 't'},
+            '11': {name:'grass', edges: 'tr'},
+            '12': {name:'grass', edges: 'l'},
+            '13': {name:'flowers'},
+            '14': {name:'grass', edges: 'r'},
+        }, [
+            '00000000000000000000',
+            '00010101010101010100',
+            '00010101010101010100',
+            '02010101030405010100',
+            '06060601070809010100',
+            '020106010a0b0a0c0c00',
+            '0001060d0d0e0f101100',
+            '00010601010112131400',
+        ]);
     });
 }

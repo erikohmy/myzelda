@@ -55,6 +55,17 @@ class World {
         } else {
             console.log("space already built", space.tiles);
         }
+        if (space.onenter) {
+            this.game.everyTick(0, () => {
+                if (!game.world.transitioning) {
+                    space.onenter();
+                    return false;
+                }
+            });
+        }
+        if (space.onleave) {
+            space.onleave();
+        }
 
         space.safeSpot = null;
         this.currentSpace = space;

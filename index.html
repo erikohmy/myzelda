@@ -44,13 +44,158 @@
     <script src="scripts/tiles/base/TileAnimated4.js" type="text/javascript"></script>
 
     <script src="scripts/world/LayerOverworld.js" type="text/javascript"></script>
+    <script src="scripts/world/LayerBuildings.js" type="text/javascript"></script>
 
     <script src="scripts/app.js" type="text/javascript"></script>
+    <style>
+      .editor {
+        position: absolute;
+        top:0;
+        left:0;
+        right: 0;
+        bottom: 0;
+        z-index: 100;
+        background-color: #fff;
+        padding:8px;
+        --tilesize: calc(16px * 3);
+      }
+      .editor:not(.active) {
+        display: none;
+      }
+      .editor .grid {
+        position: absolute;
+        width: calc(var(--tilesize) * 20);
+        height: calc(var(--tilesize) * 16);
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+
+        top: calc(50% - 40px);
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .editor .grid:before {
+        pointer-events: none;
+        content:"";
+        position: absolute;
+        top:0;
+        width: calc(var(--tilesize) * 10);
+        height: calc(var(--tilesize) * 8);
+        outline: 2px solid #f00;
+        outline-offset: -1px;
+        z-index: 10;
+      }
+      .editor .tile {
+        position: relative;
+        display: block;
+        width: var(--tilesize);
+        height: var(--tilesize);
+        background-color: #fff;
+        background-image: var(--tile-sheet);
+        background-size: calc(var(--tile-sheetwidth) * 3) calc(var(--tile-sheetheight) * 3);
+        cursor: pointer;
+      }
+      .editor .tile.empty {
+        background-image: none
+      }
+      .editor .grid .tile {
+        outline: 1px solid #0003;
+      }
+      .editor .grid .tile:hover {
+        box-shadow: #000f 0 0 8px;
+        outline: none;
+      }
+      .editor .tile:before {
+        pointer-events: none;
+        display: block;
+        content: "";
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        top:0;
+        left:0;
+        box-shadow: inset #fff 0 0 8px;
+        opacity: 0;
+      }
+      .editor .tile:hover:before {
+        opacity: 0;
+      }
+      .editor .tile:hover {
+        z-index: 11;
+      }
+      .editor .pallet {
+        position: absolute;
+        bottom:0;
+        left:50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        padding:4px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-width: calc(100vw / 2);
+      }
+      .editor .pallet:hover > .tile:not(:hover) {
+        opacity: 0.4;
+      }
+      .editor .pallet > .tile {
+        
+      }
+      .editor .pallet .tile .variants {
+        position: absolute;
+        bottom: var(--tilesize);
+        left:0;
+        width: max-content;
+        box-shadow: #000f 0 0 16px;
+        padding: 4px;
+        background: white;
+      }
+      .editor .pallet .tile .variants .variants-wrap {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        max-width: calc(var(--tilesize) * 8);
+        background-color: #aaa;
+      }
+      .editor .pallet .tile:not(:hover) .variants {
+        display: none;
+      }
+      .editor .variants:hover .tile:not(:hover) {
+        opacity: 0.3;
+      }
+      .btn-edit {
+        position: absolute;
+        top:8px;
+        right:8px;
+        z-index: 1;
+      }
+      .editor .toolbar {
+        position: absolute;
+        top:0;
+        right:0;
+        z-index: 100;
+        padding:8px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .editor .toolbar button {}
+      .editor .toolbar button:not(:last-child) {
+        margin-right: 8px;
+      }
+
+    </style>
 </head>
 <body>
   <div id="main" class="application">
     <div class='gamewrap'>
       <canvas id="game"></canvas>
+    </div>
+    <div id="editor" class="editor">
+      <div class="grid"></div>
+      <div class="pallet"></div>
+      <div class="toolbar"></div>
     </div>
   </div>
 </body>
