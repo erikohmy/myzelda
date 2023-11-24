@@ -18,7 +18,7 @@ class Graphics {
             'abcdefghijklm',
             'nopqrstuvwxyz',
             ' 0123456789',
-            '.!?'
+            '.!?\'-'
         ]
     }
     static getCharIndex(char) {

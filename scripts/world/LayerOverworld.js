@@ -17,6 +17,7 @@ function LayerOverworld(game) {
         space.setTile(4,5,{name:"obstacle", variant:"coconut"});
         space.fill({name:"sand"}, 1, 7, 8);
         space.setTile(9,4,{name:"sand"});
+        space.setTile(1,3,{name:"gravelRough", goesTo: "buildings:5,5"});
 
         let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 1, 1));
         let blockRight = space.addEntity(new EntityTestPhysical(space.game, 8, 1));
@@ -94,7 +95,7 @@ function LayerOverworld(game) {
             '0012161212121216121a',
             '001c161c1c1c1c161c1a',
         ]);
-        space.addEntity(new EntityTransitioner(space.game, 16*8, 16*1, 16, 16, (e,t) => {
+        space.addEntity(new EntityTrigger(space.game, 16*8, 16*1, 16, 16, (e,t) => {
             e.damage(1);
             e.push(-1,1);
             return;
@@ -106,7 +107,7 @@ function LayerOverworld(game) {
             });
         }));
 
-        space.addEntity(new EntityTransitioner(space.game, 16*2, 16*2, 16, 16, (e,t) => {
+        space.addEntity(new EntityTrigger(space.game, 16*2, 16*2, 16, 16, (e,t) => {
             let space = game.world.layers.buildings.getSpace(0,0);
             game.sound.play('stairs');
             game.world.transitionTo(space, "building", () => {
@@ -227,64 +228,87 @@ function LayerOverworld(game) {
     });
 
     // recreate
-    layer.createSpace(5,5, 10, 8, function(space) {
+    layer.createSpace(5,5, 10, 8, function(space) { // Know-It-All birds' hut area
+        space.music = "lynna-city-present";
         space.setTilesB64(
             `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J2NsaWZmJyxwYXJ0OicyMics
             dmFyaWFudDoncHJlc2VudCd9LCcwMSc6e25hbWU6J2NsaWZmJyxwYXJ0Oicz
             MycsdmFyaWFudDoncHJlc2VudCd9LCcwMic6e25hbWU6J2NsaWZmJyxwYXJ0
             OiczMCcsdmFyaWFudDoncHJlc2VudCd9LCcwMyc6e25hbWU6J3N0YWlycyd9
             LCcwNCc6e25hbWU6J2NsaWZmJyxwYXJ0OicyOScsdmFyaWFudDoncHJlc2Vu
-            dCd9LCcwNSc6e25hbWU6J3dhbGxSb290Jyx2YXJpYW50OidvcmInfSwnMDYn
-            OntuYW1lOidjbGlmZicscGFydDonMzEnLHZhcmlhbnQ6J3ByZXNlbnQnfSwn
-            MDcnOntuYW1lOid0cmVlJyxwYXJ0Oid0bCcsdmFyaWFudDonY29tbW9uJ30s
-            JzA4Jzp7bmFtZTondHJlZScscGFydDondHInLHZhcmlhbnQ6J2NvbW1vbid9
-            LCcwOSc6e25hbWU6J2dyYXNzMid9LCcwYSc6e25hbWU6J2dyYXNzJyxlZGdl
-            czonbCd9LCcwYic6e25hbWU6J2dyYXNzJyxlZGdlczoncid9LCcwYyc6e25h
-            bWU6J2dyYXNzMicsZWRnZXM6J3InfSwnMGQnOntuYW1lOid3YXRlcid9LCcw
-            ZSc6e25hbWU6J3RyZWUnLHBhcnQ6J2JsJyx2YXJpYW50Oidjb21tb24nfSwn
-            MGYnOntuYW1lOid0cmVlJyxwYXJ0OidyYicsdmFyaWFudDonY29tbW9uJ30s
-            JzEwJzp7bmFtZTonZmxvd2Vycyd9LCcxMSc6e25hbWU6J2dyYXNzJyxlZGdl
-            czondHInfSwnMTInOntuYW1lOidncmFzczInLGVkZ2VzOid0J30sJzEzJzp7
-            bmFtZToncm9vZlNoYWNrJyx2YXJpYW50OidibHVlJ30sJzE0Jzp7bmFtZTon
-            Z3Jhc3MnLHZhcmlhbnQ6J2dyZWVuJ30sJzE1Jzp7bmFtZTonZ3Jhc3MnLGVk
-            Z2VzOid0J30sJzE2Jzp7bmFtZTond2luZG93J30sJzE3Jzp7bmFtZTonZG9v
-            cndheSd9LCcxOCc6e25hbWU6J2dyYXNzJ30sJzE5Jzp7bmFtZTonZ3Jhc3Mn
-            LGVkZ2VzOidiJ30sJzFhJzp7bmFtZTonZ3Jhc3MnLGVkZ2VzOidybCd9LCcx
-            Yic6e25hbWU6J2dyYXNzJyxlZGdlczonYmwnfSwnMWMnOntuYW1lOidncmFz
-            cycsZWRnZXM6J3RiJ30sJzFkJzp7bmFtZTonY2xpZmYnLHBhcnQ6JzU3Jyx2
-            YXJpYW50OidwcmVzZW50J30sJzFlJzp7bmFtZTonY2xpZmYnLHBhcnQ6JzA3
-            Jyx2YXJpYW50OidwcmVzZW50J30sfSxbJzAwMDEwMTAyMDMwMzA0MDIwNTA1
-            JywnMDYwNzA4MDkwYTBiMDkwYzBkMGQnLCcwNjBlMGYwOTBhMTAxMTA5MTIx
-            MicsJzA2MTMxMzEzMGExNDE0MTUxMTA5JywnMDYxNjE3MTYwYTE4MTkxOTE0
-            MTUnLCcwNjA5MWEwOTBhMGIwOTA5MWIxOCcsJzA2MWMxOTFjMTAwYjA5MDkw
-            OTBhJywnMWQxZTA5MDkwYTE4MTUxNTE1MTAnLF0pOw==`
+            dCd9LCcwNSc6e25hbWU6J3dhdGVyZmFsbEJvdHRvbSd9LCcwNic6e25hbWU6
+            J2NsaWZmJyxwYXJ0OiczMScsdmFyaWFudDoncHJlc2VudCd9LCcwNyc6e25h
+            bWU6J3RyZWUnLHBhcnQ6J3RsJyx2YXJpYW50Oidjb21tb24nfSwnMDgnOntu
+            YW1lOid0cmVlJyxwYXJ0Oid0cicsdmFyaWFudDonY29tbW9uJ30sJzA5Jzp7
+            bmFtZTonZ3Jhc3MyJ30sJzBhJzp7bmFtZTonZ3Jhc3MnLGVkZ2VzOidsJ30s
+            JzBiJzp7bmFtZTonZ3Jhc3MnLGVkZ2VzOidyJ30sJzBjJzp7bmFtZTonZ3Jh
+            c3MyJyxlZGdlczoncid9LCcwZCc6e25hbWU6J3dhdGVyJ30sJzBlJzp7bmFt
+            ZTondHJlZScscGFydDonYmwnLHZhcmlhbnQ6J2NvbW1vbid9LCcwZic6e25h
+            bWU6J3RyZWUnLHBhcnQ6J3JiJyx2YXJpYW50Oidjb21tb24nfSwnMTAnOntu
+            YW1lOidmbG93ZXJzJ30sJzExJzp7bmFtZTonZ3Jhc3MnLGVkZ2VzOid0cid9
+            LCcxMic6e25hbWU6J2dyYXNzMicsZWRnZXM6J3QnfSwnMTMnOntuYW1lOidy
+            b29mU2hhY2snLHZhcmlhbnQ6J2JsdWUnfSwnMTQnOntuYW1lOidncmFzcycs
+            dmFyaWFudDonZ3JlZW4nfSwnMTUnOntuYW1lOidncmFzcycsZWRnZXM6J3Qn
+            fSwnMTYnOntuYW1lOid3aW5kb3cnfSwnMTcnOntuYW1lOidkb29yd2F5J30s
+            JzE4Jzp7bmFtZTonZ3Jhc3MnfSwnMTknOntuYW1lOidncmFzcycsZWRnZXM6
+            J2InfSwnMWEnOntuYW1lOidncmFzcycsZWRnZXM6J3JsJ30sJzFiJzp7bmFt
+            ZTonZ3Jhc3MnLGVkZ2VzOidibCd9LCcxYyc6e25hbWU6J2dyYXNzJyxlZGdl
+            czondGInfSwnMWQnOntuYW1lOidjbGlmZicscGFydDonNTcnLHZhcmlhbnQ6
+            J3ByZXNlbnQnfSwnMWUnOntuYW1lOidjbGlmZicscGFydDonMDcnLHZhcmlh
+            bnQ6J3ByZXNlbnQnfSx9LFsnMDAwMTAxMDIwMzAzMDQwMjA1MDUnLCcwNjA3
+            MDgwOTBhMGIwOTBjMGQwZCcsJzA2MGUwZjA5MGExMDExMDkxMjEyJywnMDYx
+            MzEzMTMwYTE0MTQxNTExMDknLCcwNjE2MTcxNjBhMTgxOTE5MTQxNScsJzA2
+            MDkxYTA5MGEwYjA5MDkxYjE4JywnMDYxYzE5MWMxMDBiMDkwOTA5MGEnLCcx
+            ZDFlMDkwOTBhMTgxNTE1MTUxMCcsXSk7`
         );
+        let sign = space.createEntity('sign',{ x:1, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
+        space.setTile(2, 4, {name:"doorway", 'goesTo': "buildings:5,5:entrance"});
+        space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
+    }, function(space) {
+        space.minimap = (ctx, x, y) => {
+            ctx.fillStyle = "#ffbd10";
+            ctx.fillRect(x, y, 7, 7);
+            ctx.fillStyle = "#845210";
+            ctx.fillRect(x, y, 7, 1);
+            ctx.fillRect(x, y+1, 1, 6);
+            ctx.fillRect(x+1, y+1, 3, 4);
+            ctx.fillRect(x+1, y+1, 3, 4);
+            ctx.fillStyle= "#1094ff";
+            ctx.fillRect(x+1, y+1, 2, 1);
+            ctx.fillRect(x+6, y+1, 1, 1);
+            ctx.fillStyle= "#ffbd10";
+            ctx.fillRect(x+1, y+3, 2, 1);
+        }
     });
+
     layer.createSpace(6,5, 10, 8, function(space) {
+        space.music = "lynna-city-present";
         space.setTilesB64(
-            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3dhbGxSb290Jyx2YXJpYW50
-            OidvcmInfSwnMDEnOntuYW1lOidjbGlmZicscGFydDonMjknLHZhcmlhbnQ6
-            J3ByZXNlbnQnfSwnMDInOntuYW1lOidjbGlmZicscGFydDonMzMnLHZhcmlh
-            bnQ6J3ByZXNlbnQnfSwnMDMnOntuYW1lOidyb29mJyxlZGdlczondGwnLHZh
-            cmlhbnQ6J2JsdWUnfSwnMDQnOntuYW1lOidjaGltbmV5J30sJzA1Jzp7bmFt
-            ZToncm9vZicsZWRnZXM6J3RyJyx2YXJpYW50OidibHVlJ30sJzA2Jzp7bmFt
-            ZTond2F0ZXInfSwnMDcnOntuYW1lOidncmFzczInLGVkZ2VzOidsJ30sJzA4
-            Jzp7bmFtZTonZ3Jhc3MyJ30sJzA5Jzp7bmFtZToncm9vZicsZWRnZXM6J2Js
-            Jyx2YXJpYW50OidibHVlJ30sJzBhJzp7bmFtZToncm9vZicsZWRnZXM6J2In
-            LHZhcmlhbnQ6J2JsdWUnfSwnMGInOntuYW1lOidyb29mJyxlZGdlczoncmIn
-            LHZhcmlhbnQ6J2JsdWUnfSwnMGMnOntuYW1lOidncmFzczInLGVkZ2VzOid0
-            J30sJzBkJzp7bmFtZTonZ3Jhc3MyJyxlZGdlczondHInfSwnMGUnOntuYW1l
-            Oid3aW5kb3cnfSwnMGYnOntuYW1lOidkb29yd2F5J30sJzEwJzp7bmFtZTon
-            Z3Jhc3MyJyxlZGdlczoncid9LCcxMSc6e25hbWU6J29ic3RhY2xlJyx2YXJp
-            YW50Oidwb2xlczInfSwnMTInOntuYW1lOidyb2FkJyx2YXJpYW50Oidicmln
-            aHQnfSx9LFsnMDAwMTAyMDIwMjAyMDIwMzA0MDUnLCcwNjA2MDYwNjA2MDcw
-            ODA5MGEwYicsJzBjMGMwZDA2MDYwNzA4MGUwZjBlJywnMDgwODEwMDYwNjA3
-            MDgxMTEyMTEnLCcwODA4MTAwMDAwMDcxMjEyMTIxMicsJzA4MDgxMDAwMDAw
-            NzEyMTIwODA4JywnMDgwODEwMDYwNjA3MDgxMjA4MDgnLCcwODA4MTAwNjA2
-            MDcwODEyMDgwOCcsXSk7`
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3dhdGVyZmFsbEJvdHRvbSd9
+            LCcwMSc6e25hbWU6J2NsaWZmJyxwYXJ0OicyOScsdmFyaWFudDoncHJlc2Vu
+            dCd9LCcwMic6e25hbWU6J2NsaWZmJyxwYXJ0OiczMycsdmFyaWFudDoncHJl
+            c2VudCd9LCcwMyc6e25hbWU6J3Jvb2YnLGVkZ2VzOid0bCcsdmFyaWFudDon
+            Ymx1ZSd9LCcwNCc6e25hbWU6J2NoaW1uZXknfSwnMDUnOntuYW1lOidyb29m
+            JyxlZGdlczondHInLHZhcmlhbnQ6J2JsdWUnfSwnMDYnOntuYW1lOid3YXRl
+            cid9LCcwNyc6e25hbWU6J2dyYXNzMicsZWRnZXM6J2wnfSwnMDgnOntuYW1l
+            OidncmFzczInfSwnMDknOntuYW1lOidyb29mJyxlZGdlczonYmwnLHZhcmlh
+            bnQ6J2JsdWUnfSwnMGEnOntuYW1lOidyb29mJyxlZGdlczonYicsdmFyaWFu
+            dDonYmx1ZSd9LCcwYic6e25hbWU6J3Jvb2YnLGVkZ2VzOidyYicsdmFyaWFu
+            dDonYmx1ZSd9LCcwYyc6e25hbWU6J2dyYXNzMicsZWRnZXM6J3QnfSwnMGQn
+            OntuYW1lOidncmFzczInLGVkZ2VzOid0cid9LCcwZSc6e25hbWU6J3dpbmRv
+            dyd9LCcwZic6e25hbWU6J2Rvb3J3YXknfSwnMTAnOntuYW1lOidncmFzczIn
+            LGVkZ2VzOidyJ30sJzExJzp7bmFtZTonb2JzdGFjbGUnLHZhcmlhbnQ6J3Bv
+            bGVzMid9LCcxMic6e25hbWU6J3JvYWQnLHZhcmlhbnQ6J2JyaWdodCd9LCcx
+            Myc6e25hbWU6J2JyaWRnZScsdmFyaWFudDondG9wJ30sJzE0Jzp7bmFtZTon
+            YnJpZGdlJyx2YXJpYW50Oidib3R0b20nfSx9LFsnMDAwMTAyMDIwMjAyMDIw
+            MzA0MDUnLCcwNjA2MDYwNjA2MDcwODA5MGEwYicsJzBjMGMwZDA2MDYwNzA4
+            MGUwZjBlJywnMDgwODEwMDYwNjA3MDgxMTEyMTEnLCcwODA4MTAxMzEzMDcx
+            MjEyMTIxMicsJzA4MDgxMDE0MTQwNzEyMTIwODA4JywnMDgwODEwMDYwNjA3
+            MDgxMjA4MDgnLCcwODA4MTAwNjA2MDcwODEyMDgwOCcsXSk7`
         );
     });
     layer.createSpace(5,6, 10, 8, function(space) {
+        space.music = "lynna-city-present";
         space.setTilesB64(
             `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J2NsaWZmJyxwYXJ0OicyOScs
             dmFyaWFudDoncHJlc2VudCd9LCcwMSc6e25hbWU6J2NsaWZmJyxwYXJ0Oicz
@@ -295,17 +319,19 @@ function LayerOverworld(game) {
             MicsZWRnZXM6J2JsJ30sJzA4Jzp7bmFtZTonZ3Jhc3MnLGVkZ2VzOidibCd9
             LCcwOSc6e25hbWU6J2dyYXNzJyxlZGdlczoncmInfSwnMGEnOntuYW1lOid3
             YXRlcid9LCcwYic6e25hbWU6J2dyYXNzMicsZWRnZXM6J2InfSwnMGMnOntu
-            YW1lOid3YWxsUm9vdCcsdmFyaWFudDonb3JiJ30sJzBkJzp7bmFtZTonb2Jz
-            dGFjbGUnLHZhcmlhbnQ6J3BvbGVzMid9LCcwZSc6e25hbWU6J2dyYXNzMics
-            ZWRnZXM6J3QnfSwnMGYnOntuYW1lOidncmF2ZWwnLGVkZ2VzOid0J30sfSxb
-            JzAwMDEwMjAyMDMwNDA1MDUwNTA1JywnMDYwNjA3MDIwODA5MDIwMjAyMDIn
-            LCcwYTBhMGEwNzBiMGIwYjBiMGIwYicsJzBhMGEwYTBhMGMwYzBhMGEwYTBh
-            JywnMDYwNjBhMGEwYzBjMGEwYTBhMGEnLCcwZDBkMGUwZTBlMGUwZTBlMGUw
-            ZScsJzAyMDIwMjAyMDIwMjAyMDIwMjAyJywnMGQwZDBjMGMwZjBmMGMwYzBj
-            MGMnLF0pOw==`
+            YW1lOidicmlkZ2UnLHZhcmlhbnQ6J2xlZnQnfSwnMGQnOntuYW1lOidicmlk
+            Z2UnLHZhcmlhbnQ6J3JpZ2h0J30sJzBlJzp7bmFtZTonb2JzdGFjbGUnLHZh
+            cmlhbnQ6J3BvbGVzMid9LCcwZic6e25hbWU6J2dyYXNzMicsZWRnZXM6J3Qn
+            fSwnMTAnOntuYW1lOid3YWxsUm9vdCcsdmFyaWFudDonb3JiJ30sJzExJzp7
+            bmFtZTonZ3JhdmVsJyxlZGdlczondCd9LH0sWycwMDAxMDIwMjAzMDQwNTA1
+            MDUwNScsJzA2MDYwNzAyMDgwOTAyMDIwMjAyJywnMGEwYTBhMDcwYjBiMGIw
+            YjBiMGInLCcwYTBhMGEwYTBjMGQwYTBhMGEwYScsJzA2MDYwYTBhMGMwZDBh
+            MGEwYTBhJywnMGUwZTBmMGYwZjBmMGYwZjBmMGYnLCcwMjAyMDIwMjAyMDIw
+            MjAyMDIwMicsJzBlMGUxMDEwMTExMTEwMTAxMDEwJyxdKTs=`
         );
     });
     layer.createSpace(6,6, 10, 8, function(space) {
+        space.music = "lynna-city-present";
         space.setTilesB64(
             `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J2dyYXNzJyxlZGdlczoncmIn
             fSwnMDEnOntuYW1lOidncmFzczInfSwnMDInOntuYW1lOidncmFzczInLGVk

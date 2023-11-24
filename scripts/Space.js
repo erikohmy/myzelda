@@ -6,8 +6,14 @@ class Space {
     entities;
     safeSpot = null;
     built = false;
+    init = null; // init function
 
     options; // filter, music, etc
+
+    _hasSpaceAbove = null;
+    _hasSpaceBelow = null;
+    _hasSpaceLeft = null;
+    _hasSpaceRight = null;
 
     constructor(game, sizex, sizey) {
         this.game = game;
@@ -16,6 +22,40 @@ class Space {
         this.entities = [];
         this.options = {};
     }
+
+    get hasSpaceBelow() {
+        if (this._hasSpaceBelow === null) {
+            let space = this.layer.getSpace(this.x, this.y+1);
+            if (this.built !== false) {this._hasSpaceBelow = !!space;}
+            return !!space; 
+        }
+        return this._hasSpaceBelow;
+    }
+    get hasSpaceAbove() {
+        if (this._hasSpaceAbove === null) {
+            let space = this.layer.getSpace(this.x, this.y-1);
+            if (this.built !== false) {this._hasSpaceAbove = !!space;}
+            return !!space; 
+        }
+        return this._hasSpaceAbove;
+    }
+    get hasSpaceLeft() {
+        if (this._hasSpaceLeft === null) {
+            let space = this.layer.getSpace(this.x-1, this.y);
+            if (this.built !== false) {this._hasSpaceLeft = !!space;}
+            return !!space; 
+        }
+        return this._hasSpaceLeft;
+    }
+    get hasSpaceRight() {
+        if (this._hasSpaceRight === null) {
+            let space = this.layer.getSpace(this.x+1, this.y);
+            if (this.built !== false) {this._hasSpaceRight = !!space;}
+            return !!space; 
+        }
+        return this._hasSpaceRight;
+    }
+
     get position() {
         return this.layer.getSpacePosition(this);
     }
@@ -172,6 +212,24 @@ class Space {
         this.entities.sort(entitySort);
         return entity;
     }
+    createEntity(entity, args) {
+        // todo, automate this?
+        let entities = ["pushblock", "sign", "splash", "interval", "timer", "tick", "transitioner", "trigger"];
+        if (entities.includes(entity)) {
+            if (entity === "pushblock") {
+                return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
+            } else if (entity === "sign") {
+                return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
+            } else if (entity === "splash") {
+                return this.addEntity(new EntitySplash(this.game, args.x, args.y));
+            } else if (entity === "transitioner") {
+                return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
+            }
+            console.error("Not implemented yet", entity);
+        } else {
+            console.error("Unknown entity type", entity);
+        }
+    }
     removeEntity(entity) {
         let index = this.entities.indexOf(entity);
         if (index > -1) {
@@ -205,10 +263,30 @@ class Space {
         if (condition == "solid") {
             let bw = (this.size[0]+2)*16;
             let bh = (this.size[1]+2)*16;
-            boxes.push({x:-32, y:-16, w: 16, h: bh}); // left wall
-            boxes.push({x:bw-16, y:-16, w: 16, h: bh}); // right wall
-            boxes.push({x:-16, y:-32, w: bw, h: 16}); // top wall
-            boxes.push({x:-16, y:bh-16, w: bw, h: 16}); // bottom wall
+
+            if (this.hasSpaceRight) {
+                boxes.push({x:bw-16, y:-16, w: 16, h: bh}); // right wall
+            } else {
+                boxes.push({x:bw-32, y:-16, w: 16, h: bh}); // right wall
+            }
+
+            if (this.hasSpaceLeft) {
+                boxes.push({x:-32, y:-16, w: 16, h: bh}); // left wall
+            } else {
+                boxes.push({x:-16, y:-16, w: 16, h: bh}); // left wall
+            }
+            
+            if (this.hasSpaceAbove) {
+                boxes.push({x:-16, y:-32, w: bw, h: 16}); // top wall
+            } else {
+                boxes.push({x:-16, y:-16, w: bw, h: 16}); // top wall
+            }
+
+            if (this.hasSpaceBelow) {
+                boxes.push({x:-16, y:bh-16, w: bw, h: 16}); // bottom wall
+            } else {
+                boxes.push({x:-16, y:bh-32, w: bw, h: 16}); // bottom wall
+            }
         }
 
         // add tile collissions
@@ -242,7 +320,9 @@ class Space {
                                 boxes.push({x:x*16, y:y*16+8, h:8, w:16});
                             } else if (collision == "bottom-small") {
                                 boxes.push({x:x*16, y:y*16+10, h:6, w:16});
-                            } else if (collision == "bottom-outside") {
+                            } else if (collision == "bottom-xsmall") {
+                                boxes.push({x:x*16, y:y*16+13, h:3, w:16});
+                            }  else if (collision == "bottom-outside") {
                                 boxes.push({x:x*16, y:y*16+16, h:8, w:16});
                             }
                         }
@@ -252,7 +332,7 @@ class Space {
         }
         // todo: add entity collissions ( not enemies and such, only doors, tile entities, etc)
         this.entities.forEach(entity => {
-            if (entity.getCollisionBox) {
+            if (entity.noCollide !== true && entity.getCollisionBox) {
                 boxes.push(entity.getCollisionBox());
             }
         });

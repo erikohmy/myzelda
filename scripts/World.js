@@ -25,9 +25,14 @@ class World {
     }
 
     async transitionTo(space, transition="none", callback) {
+        if (typeof transition !== "string") {
+            console.error("transition must be a string", transition);
+        }
         if (this.transitioning) {
             return;
         }
+        this.transitioning = true;
+        this.transition = null; // reset transition
 
         // take a snapshot of the current space, without the player
         if (transition === "slideup" || transition === "slidedown" || transition === "slideleft" || transition === "slideright") {
@@ -40,12 +45,11 @@ class World {
             this.snapshot = await this.game.snapshot();
         }
         this.game.hideplayer = false;
-
-        this.transitioning = true;
-        this.game.skipframe = true; // skip one frame of animation
         this.transition = transition;
         this.transitionStart = this.game.gametick;
         this.transitionCallback = callback || (() => {});
+
+        this.game.skipframe = true; // skip one frame of animation
 
         if (this.currentSpace) { // todo: sometimes we dont want to destroy the current space, like in dungeons
             this.currentSpace._destroy();
@@ -63,14 +67,15 @@ class World {
                 }
             });
         }
-        if (space.onleave) {
-            space.onleave();
+        if (this.currentSpace && this.currentSpace.onleave) {
+            this.currentSpace.onleave();
         }
 
         space.safeSpot = null;
         this.currentSpace = space;
         this.currentLayer = space.layer;
         this.player.space = space;
+        this.player.previousTile = null;
         this.game.noRender = false; // re-enable rendering
     }
 
@@ -90,8 +95,47 @@ class World {
         if(px) {this.player.position[0] = px;}
         if(py) {this.player.position[1] = py;}
         if(dir) {this.player.direction = dir;}
-        this.transitionTo(space, transition, callback);
-    } 
+        await this.transitionTo(space, transition, callback);
+    }
+
+    goToString(str) {
+        let parts = str.split(":");
+        let layer = parts[0];
+        let coords = parts[1].split(",");
+        let space = this.layers[layer].getSpace(coords[0], coords[1]);
+
+        if(!space) {
+            console.error("space not found", layer, coords);
+            return false;
+        }
+        
+        if (parts.length === 2) { // layer:space
+            this.game.sound.play('appear_vanish');
+            this.transitionTo(space, "none");
+        } else if(parts.length === 3 || parts.length === 4) { // layer:space:target, or layer:space:target:animation
+            let target = parts[2];
+            let animation = parts.length == 4 ? parts[3] : null;
+            this.game.sound.play('stairs');
+            let fn = () => {
+                this.transitionTo(space, "building").then(()=>{
+                    let targetEntity = space.entities.filter(e => e instanceof EntityTransitionTarget && e.targetName === target)[0];
+                    this.player.setPosition(targetEntity.x, targetEntity.y);
+                    this.player.direction = targetEntity.direction;
+                    if (targetEntity.onenter) {
+                        this.transitionCallback = targetEntity.onenter;
+                    }
+                });
+            };
+            if (animation && this.game.animations[animation]) {
+                this.game.animations[animation]().then(fn);
+            } else {
+                fn();
+            }
+        } else {
+            console.warn("format not implemented yet", str);
+        }
+        return true;
+    }
 }
 
 class WorldLayer {
@@ -148,10 +192,11 @@ class WorldLayer {
         return space;
     }
 
-    createSpace(x, y, w, h, build) {
+    createSpace(x, y, w, h, build, init) {
         let space = new Space(this.game, w, h);
         this.addSpace(space, x, y);
         space.build = build;
+        space.init = init;
     }
 
     getSpace(x, y) {

@@ -17,6 +17,7 @@ class Game {
     world = null;
     sound = null;
     dialog = null;
+    map = null;
     animations = {};
 
     ticking = false;
@@ -30,7 +31,7 @@ class Game {
     skipframe = false;
     noRender = false;
     hideplayer = false;
-    paused = false;
+    paused = false; // game state paused entierly
 
     camFollowPlayer = true;
 
@@ -43,6 +44,10 @@ class Game {
     loader = null;
 
     issues = [];
+
+    // menu states
+    menuOpen = false;
+    mapOpen = false;
 
     constructor(canvas) {
         this.canvas = canvas;
@@ -77,16 +82,17 @@ class Game {
                 return;
             }
             if (this.paused) {
-                if (control === "start") {
-                    this.resume();
-                }
+                if (control === "start") {this.resume();}
                 return;
             } else {
-                if (control === "start") {
-                    this.pause();
-                    return;
-                }
+                if (control === "start") {this.pause();return;}
             }
+            if (control === "select") {
+                this.toggleMap();
+            }
+
+            if (this.mapOpen) {return;}
+
             if (control === "a") {
                 if (this.dialog.show) {
                     this.dialog.next();
@@ -115,6 +121,7 @@ class Game {
 
         this.sound = new SoundHandler(this);
         this.dialog = new Dialog(this);
+        this.map = new GameMap(this);
 
         this._fpsInterval = 1000/60;
         this._lastFrame = 0;
@@ -164,12 +171,14 @@ class Game {
             return new Promise((resolve) => {
                 let game = this;
                 game.everyTick(24, (t, total) => {
+                    game.player.noCollide = true;
                     game.cutscene = true;
-                    game.world.player.direction = 0;
-                    game.world.player.walking = true;
-                    game.world.player.move(0, -1);
+                    game.player.direction = 0;
+                    game.player.walking = true;
+                    game.player.move(0, -1);
                     if (t==total) {
-                        game.world.player.walking = false;
+                        game.player.walking = false;
+                        game.player.noCollide = false;
                         game.cutscene = false;
                         resolve();
                     }
@@ -180,12 +189,14 @@ class Game {
             return new Promise((resolve) => {
                 let game = this;
                 game.everyTick(24, (t, total) => {
+                    game.player.noCollide = true;
                     game.cutscene = true;
                     game.world.player.direction = 2;
                     game.world.player.walking = true;
                     game.world.player.move(0, 1);
                     if (t==total) {
                         game.world.player.walking = false;
+                        game.player.noCollide = false;
                         game.cutscene = false;
                         resolve();
                     }
@@ -274,10 +285,13 @@ class Game {
 
         await this.sound.addSound("text_letter", "./assets/sound/Text_Letter.wav");
         await this.sound.addSound("text_done", "./assets/sound/Text_Done.wav");
+        await this.sound.addSound("menu_open", "./assets/sound/menu_open.wav");
+        await this.sound.addSound("menu_close", "./assets/sound/menu_close.wav");
 
         // music
         await this.sound.addMusic("overworld", "./assets/sound/music/overworld.mp3", 6.42);
         await this.sound.addMusic("house", "./assets/sound/music/house.mp3");
+        await this.sound.addMusic("lynna-city-present", "./assets/sound/music/lynna-city-present.mp3");
         this.events.trigger('sounds-added');
     }
 
@@ -339,6 +353,9 @@ class Game {
 
         let effects = await this.loadImage("./assets/effects.png");
         this.spritesheets.effects = new SpriteSheet(effects, 8);
+
+        let mapOverworld = await this.loadImage("./assets/map-overworld.png");
+        this.spritesheets.mapOverworld = new SpriteSheet(mapOverworld, 8);
     }
 
     async addTiles() {
@@ -353,11 +370,14 @@ class Game {
         await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
         await this.addTile("road", "TileRoad");
+        await this.addTile("bridge", "TileBridge");
         await this.addTile("stairs", "TileStairs");
         await this.addTile("obstacle", "TileObstacle");
         await this.addTile("hole", "TileHole");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
+        await this.addTile("waterfall", "TileWaterfall");
+        await this.addTile("waterfallBottom", "TileWaterfallBottom");
 
         await this.addTile("tree", "TileTree");
         await this.addTile("cliff", "TileCliff");
@@ -392,6 +412,18 @@ class Game {
         this.events.trigger('world-generating');
         await LayerOverworld(this);
         await LayerBuildings(this);
+
+        // loop through all layers and their spaces, and init them
+        for (let name in this.world.layers) {
+            let layer = this.world.layers[name];
+            layer.spaces.forEach(col => {
+                col.forEach(space => {
+                    if (space.init) {
+                        space.init(space);
+                    }
+                });
+            });
+        }
         this.events.trigger('world-generated');
     }
 
@@ -405,6 +437,15 @@ class Game {
 
     async tick() {
         if (this.paused) {return;}
+
+        if (this.mapOpen) {
+            this.ticking = true;
+            this.map.tick();
+            this.renderMap();
+            this.ticking = false;
+            return;
+        }
+
         this.ticking = true;
         // for testing
         //this.offset[0] += 1;
@@ -507,7 +548,11 @@ class Game {
                     if (player.inPuddle && (this.walkticks+1)%20 === 0) {
                         this.sound.play("link_wade",0.04);
                     }
-                    player.move(mx, my, false, !c_multidir);
+                    try {
+                        player.move(mx, my, false, !c_multidir);
+                    } catch (e) {
+                        console.error(e);
+                    }
                     this.walkticks++;
                 } else {
                     this.walkticks = 0;
@@ -559,7 +604,7 @@ class Game {
                     await this.world.transitionTo(prevspace, "slidedown");
                 }
             }
-        } else if(this.world.transitioning) {
+        } else if(this.world.transitioning && this.world.transition !== null) {
             // disable all triggers we are inside ( they get reenabled by not being triggered)
             for (let i=0; i<space.entities.length; i++) {
                 let entity = space.entities[i];
@@ -686,6 +731,17 @@ class Game {
             'resolve': () => {},
             'every': callback
         });
+    }
+
+    // actions
+    toggleMap() {
+        if (this.map.isBusy) return;
+
+        if (this.mapOpen) {
+            this.map.hide();
+        } else {
+            this.map.show();
+        }
     }
 
     // graphics
@@ -856,7 +912,7 @@ class Game {
 
         this.renderUi(); 
         // if we are transitioning, draw that!
-        if (this.world.transitioning) {
+        if (this.world.transitioning && this.world.transition) {
             let transition = this.world.transition;
             if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
                 let snapshot = this.world.snapshot;
@@ -903,6 +959,12 @@ class Game {
         // reset offset to what it was
         this.offset[1] = offsetY;
     }
+
+    renderMap() {
+        this.clear();
+        this.map.draw();
+    }
+
     async snapshot() {
         // get imagedata of the canvas, excluding the ui
         let data = this.ctx.getImageData(0, 16, this.canvas.width, this.canvas.height-16);
@@ -938,19 +1000,19 @@ class SpriteSheet {
         downloadURI(this.pallets[name].src, name+".png");
     }
     // context, sprite x, sprite y, position x, position y
-    drawSprite(ctx, x, y, px, py, h=undefined, w=undefined, pallet=undefined) {
+    drawSprite(ctx, x, y, px, py, w=undefined, h=undefined, pallet=undefined) {
         h = h || this.spritesize;
         w = w || this.spritesize;
         let image = this.image;
         if (pallet) {
             image = this.pallets[pallet];
         }
-        ctx.drawImage(image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize, this.spritesize, px, py, h, w);
+        ctx.drawImage(image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize, this.spritesize, px, py, w, h);
     }
-    drawRegion(ctx, x, y, px, py, h=undefined, w=undefined) {
+    drawRegion(ctx, x, y, px, py, w=undefined, h=undefined) {
         h = h || this.spritesize;
         w = w || this.spritesize;
-        ctx.drawImage(this.image, x, y, h, w, px, py, h, w);
+        ctx.drawImage(this.image, x, y, h, w, px, py, w, h);
     }
 }
 

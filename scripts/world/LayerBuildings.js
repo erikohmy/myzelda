@@ -34,7 +34,7 @@ function LayerBuildings(game) {
             '04050505050505050506',
             '090a0a0a0b0c0a0a0a0d',
         ]);
-        space.addEntity(new EntityTransitioner(game, 16*4+8, 16*7+8, 16, 8, (e,t) => {
+        space.addEntity(new EntityTrigger(game, 16*4+8, 16*7+8, 16, 8, (e,t) => {
             e.direction = 0; // look down
             game.sound.play('stairs');
             game.animations.exitDown().then(()=>{
@@ -43,5 +43,31 @@ function LayerBuildings(game) {
                 game.world.transitionTo(space, "building");
             });
         }));
+    });
+
+    // recreate
+    layer.createSpace(5,5, 10, 8, function(space) { // Know-It-All birds' hut
+        space.setTilesB64(
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3dhbGxXb29kJyx2YXJpYW50
+            Oid0bCd9LCcwMSc6e25hbWU6J3dhbGxXb29kJyx2YXJpYW50Oid0J30sJzAy
+            Jzp7bmFtZTond2FsbFdvb2QnLHZhcmlhbnQ6J3RyJ30sJzAzJzp7bmFtZTon
+            d2FsbFdvb2QnLHZhcmlhbnQ6J2wnfSwnMDQnOntuYW1lOidmbG9vcldvb2Qn
+            fSwnMDUnOntuYW1lOid3YWxsV29vZCcsdmFyaWFudDoncid9LCcwNic6e25h
+            bWU6J3dhbGxXb29kJyx2YXJpYW50OidibCd9LCcwNyc6e25hbWU6J3dhbGxX
+            b29kJyx2YXJpYW50OidiJ30sJzA4Jzp7bmFtZTonaW5uZXJEb29yd2F5Jyx2
+            YXJpYW50OidsZWZ0J30sJzA5Jzp7bmFtZTonaW5uZXJEb29yd2F5Jyx2YXJp
+            YW50OidyaWdodCd9LCcwYSc6e25hbWU6J3dhbGxXb29kJyx2YXJpYW50Oidy
+            Yid9LH0sWycwMDAxMDEwMTAxMDEwMTAxMDEwMicsJzAzMDQwNDA0MDQwNDA0
+            MDQwNDA1JywnMDMwNDA0MDQwNDA0MDQwNDA0MDUnLCcwMzA0MDQwNDA0MDQw
+            NDA0MDQwNScsJzAzMDQwNDA0MDQwNDA0MDQwNDA1JywnMDMwNDA0MDQwNDA0
+            MDQwNDA0MDUnLCcwMzA0MDQwNDA0MDQwNDA0MDQwNScsJzA2MDcwNzA3MDgw
+            OTA3MDcwNzBhJyxdKTs=`
+        );
+        space.addEntity(new EntityTransitionTarget(game, 5*16, space.height, 0, "entrance", () => {
+            game.animations.enterUp().then(()=>{
+                game.dialog.display("Level 1\nA dusty home", true, true);
+            });
+        }));
+        space.createEntity("transitioner", {x: 16*4+8, y: 16*7+8, w: 16, h: 8, target: "overworld:5,5:knowitall:exitDown"});
     });
 }

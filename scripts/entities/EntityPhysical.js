@@ -18,6 +18,7 @@ class EntityPhysical extends EntityBase {
     canBePushed = true; // can this entity be pushed by other entities?
     canGoOutside = false; // can this entity go outside the screen?
     blockFilter = null; // function to filter which entities can block this entity, if canBeBlocked is false, it acts as a blacklist
+    noCollide = false; // if true, this entity will not collide with anything, not even running the collision checks
 
     colliding = [0,0,0,0]; // top, right, bottom, left
 
@@ -183,6 +184,11 @@ class EntityPhysical extends EntityBase {
         return couldMoveX || couldMoveY;
     }
     _move(sx, sy, justTest = false, allownudge = true) {
+        if (this.noCollide && !justTest) {
+            this.x += sx;
+            this.y += sy;
+            return true;
+        }
         let oldx = this.x;
         let oldy = this.y;
         let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes("solid", (box) => {

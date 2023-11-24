@@ -19,7 +19,6 @@ class EntityTrigger {
     }
 
     logic() {
-        let entity = undefined;
         if (this.subject === "player") {
             let player = this.game.world.player;
             if (player.x > this.x && player.x < this.x+this.w &&

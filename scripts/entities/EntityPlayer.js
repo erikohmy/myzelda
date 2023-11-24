@@ -175,7 +175,13 @@ class EntityPlayer extends EntityPhysical {
 
         let beneath = this.tileBeneath();
         let tile = this.game.tile(beneath)
-        if (tile && !this.inAir) {
+        if (beneath && beneath.goesTo) {
+            if (this.previousTile !== null && !this.isBusy) {
+                this.previousTile = beneath;
+                this.game.world.goToString(beneath.goesTo);
+            }
+        } else if (tile && !this.inAir) {
+            this.previousTile = beneath;
             if (tile.wet) {
                 this.inPuddle = true;
             } else {
@@ -274,7 +280,7 @@ class EntityPlayer extends EntityPhysical {
         }
 
         // animate walking or swimming
-        if (!this.isBusy && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
+        if ((!this.isBusy || this.game.cutscene) && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
             sox += 4;
         }
 
