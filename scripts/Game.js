@@ -1012,7 +1012,7 @@ class SpriteSheet {
     drawRegion(ctx, x, y, px, py, w=undefined, h=undefined) {
         h = h || this.spritesize;
         w = w || this.spritesize;
-        ctx.drawImage(this.image, x, y, h, w, px, py, w, h);
+        ctx.drawImage(this.image, x, y, w, h, px, py, w, h);
     }
 }
 

@@ -221,7 +221,7 @@ class Space {
             } else if (entity === "sign") {
                 return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
             } else if (entity === "splash") {
-                return this.addEntity(new EntitySplash(this.game, args.x, args.y));
+                return this.addEntity(new EntityEffectSplash(this.game, args.x, args.y));
             } else if (entity === "transitioner") {
                 return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
             }
