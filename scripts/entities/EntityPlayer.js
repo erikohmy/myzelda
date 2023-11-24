@@ -16,14 +16,19 @@ class EntityPlayer extends EntityPhysical {
     falling = false;
     drowning = false;
     actionStart = 0; // animation start tick, for squishing, falling, drowning, etc
+    jumpStart = 0; // animation start tick, for jumping, because we can do stuff while jumping
+    jumpTime = 30;
     damageFlash = 0;
 
     canSwim = true;
 
-    inAir = false;
     inPuddle = false;
     onRoughGround = false;
     isSwimming = false;
+    isJumping = false;
+
+    inventoryItems = {}; // all items that the player can have (including ones not available/found yet)
+    hotbarItems = [null, null]; // items equipped in A and B slot
 
     constructor(game, x, y) {
         super(game);
@@ -41,19 +46,25 @@ class EntityPlayer extends EntityPhysical {
 
         this.maxHealth = 14*4;
         this.health = this.maxHealth;
+
+        this.registerItems();
     }
 
-    get isBusy() {
-        if (this.game.dialog.show || this.game.cutscene) {
+    get isBusy() { // player cannot take action, due to dying, dialog, cutscene, etc
+        if (this.game.dialog.show || this.game.cutscene || this.game.world.transitioning) {
             return true;
         }
         // if animating a move, or dying etc.
         return this.squishing || this.falling || this.drowning;
     }
 
+    get inAir() {
+        return this.isJumping;
+    }
+
     get isPushing() {
         // but also if we push a solid tile...
-        return this.pushingEntity !== null || (this.isColliding() && this.walking);
+        return this.pushingEntity !== null || (this.isColliding() && this.walking && !this.isJumping);
     }
 
     get moveSpeed() {
@@ -61,6 +72,10 @@ class EntityPlayer extends EntityPhysical {
             return 0.5;
         }
         return 1;
+    }
+
+    registerItems() {
+        this.inventoryItems.rocs_feather = new ItemJumpFeather(this.game);
     }
 
     setPushingEntity(entity) {
@@ -161,8 +176,28 @@ class EntityPlayer extends EntityPhysical {
         });
     }
 
+    jump() {
+        if (this.isJumping) {
+            return;
+        }
+        this.isJumping = true;
+        this.jumpStart = this.game.logictick;
+        this.game.sound.play("link_jump");
+        this.game.waitTicks(this.jumpTime, "logic").then(() => {
+            this.isJumping = false;
+            this.landed();
+        });
+    }
+
     tick() {
         super.tick();
+        for (let i=0; i<this.hotbarItems.length; i++) {
+            let item = this.inventoryItems[this.hotbarItems[i]];
+            if (item) {
+                item.whileEquipped();
+            }
+        }
+
         if (this.damageFlash > 0) {
             this.damageFlash--;
         }
@@ -219,7 +254,55 @@ class EntityPlayer extends EntityPhysical {
         }
     }
 
-    actionMain() {
+    landed() {
+        // landed on a tile, from jumping or falling
+        let beneath = this.tileBeneath();
+        let tile = this.game.tile(beneath)
+        if (tile) {
+            if(!tile.hole && !tile.swim && !tile.wet) {
+                this.game.sound.play("link_land_run");
+            } else if(tile.wet) {
+                this.game.sound.play("link_wade");
+            }
+        }
+    }
+
+    // Items and actions
+    equipItem(itemName, slot) {
+        if(this.hotbarItems[slot] === undefined) {
+            console.error("Trying to equip", itemName, "into an invalid hotbar slot", slot);
+            return;
+        }
+        if (itemName === null) {
+            if (this.hotbarItems[slot]) {
+                this.inventoryItems[this.hotbarItems[slot]].onUnequip();
+            }
+            this.hotbarItems[slot] = null;
+            return;
+        }
+        let item = this.inventoryItems[itemName];
+        if (item) {
+            // if this item is already equipped in another slot, unequip it
+            for (let i=0; i<this.hotbarItems.length; i++) {
+                if (this.hotbarItems[i] === itemName) {
+                    this.equipItem(null, i);
+                }
+            }
+            this.hotbarItems[slot] = itemName;
+            item.onEquip();
+        } else {
+            console.error("Trying to equip", itemName, "that does not exist");
+        }
+    }
+    getItem(slot) {
+        if(this.hotbarItems[slot] === undefined) {
+            console.error("Trying to get item from invalid hotbar slot", slot);
+            return null;
+        }
+        return this.inventoryItems[this.hotbarItems[slot]];
+    }
+
+    actionA() {
         // interact with entity in front of us
         let bx = this.x-8+this.game.offset[0];
         let by = this.y-8+this.game.offset[1];
@@ -233,7 +316,39 @@ class EntityPlayer extends EntityPhysical {
             return true;
         }
         // if no entity, use main item
-        console.log("using main item")
+        if (!this.isBusy && !this.isSwimming) {
+            let equipped = this.inventoryItems[this.hotbarItems[0]];
+            if (equipped) {
+                equipped.actionPress();
+            }
+        } else if (!this.isBusy && this.isSwimming) {
+            // play swim sound and nudge forward a little bit
+            console.log("swimstroke", this.direction);
+        }
+    }
+    releasedA() {
+        let equipped = this.inventoryItems[this.hotbarItems[0]];
+        if (equipped) {
+            equipped.actionRelease();
+        }
+    }
+    actionB() {
+        // use secondary item
+        if (!this.isBusy && !this.isSwimming) {
+            let equipped = this.inventoryItems[this.hotbarItems[1]];
+            if (equipped) {
+                equipped.actionPress();
+            }
+        } else if (!this.isBusy && this.isSwimming) {
+            // play dive sound and put the player in diving state
+            console.log("dive");
+        }
+    }
+    releasedB() {
+        let equipped = this.inventoryItems[this.hotbarItems[1]];
+        if (equipped) {
+            equipped.actionRelease();
+        }
     }
 
     draw() {
@@ -243,6 +358,7 @@ class EntityPlayer extends EntityPhysical {
         let sheet = this.game.spritesheets.player;
         let x = this.x;
         let y = this.y;
+        let zo = 0; // y offset, for jumping/falling etc
         let wo = 8; // width offset
         let ho = 11; // height offset
         let sox = 0; // sprite offset x
@@ -287,7 +403,23 @@ class EntityPlayer extends EntityPhysical {
 
         // animate walking or swimming
         if ((!this.isBusy || this.game.cutscene) && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
-            sox += 4;
+            if (!this.isJumping) {
+                sox += 4;
+            }
+        }
+
+        if (this.isJumping) {
+            let ticks = this.game.logictick - this.jumpStart;
+            // jump up and down, ease in and out
+            let jumpHeight = 16;
+            let p = ticks/(this.jumpTime/2);
+            if (p>1) {p=2-p;}
+            //let pe = 1-((1-p)*(1-p)*(1-p));
+            let pe = 1-((1-p)*(1-p));
+            let j = Math.ceil(jumpHeight * pe);
+            j = Math.min(j, jumpHeight)+1;
+            zo = -j;
+            Graphics.drawShadow(this.game.ctx, x+ox, y+oy, 8, 8);
         }
 
         let filterBefore = this.game.ctx.filter;
@@ -305,9 +437,9 @@ class EntityPlayer extends EntityPhysical {
         // draw player
         if (this.squishing) {
             let reduction = Math.min(12, 12*(this.game.gametick - this.actionStart)/30);
-            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox + reduction/2, y-ho+oy, 16-reduction, 16);
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox + reduction/2, y-ho+oy+zo, 1, 1, 16-reduction, 16);
         } else {
-            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox, y-ho+oy);
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox, y-ho+oy+zo);
         }
         this.game.ctx.filter = filterBefore;
 

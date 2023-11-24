@@ -59,7 +59,7 @@ class GameMap {
         this.animationTick = 0;
         if(this.type === 'overworld') {
             this.currentCoords = this.game.world.player.space.position;
-            this.selectedCoors = this.currentCoords;
+            this.selectedCoords = this.game.world.player.space.position;
         }
         this.game.sound.play('menu_open');
         await new Promise((resolve) => {
@@ -171,7 +171,7 @@ class GameMap {
             }
         }
         // end of grid
-        this.game.ctx.fillRect(ol, 8 * sizey + ot, 8*sizex, 1);
+        this.game.ctx.fillRect(ol, 8 * sizey + ot, 8*sizex+1, 1);
         this.game.ctx.fillRect(8 * sizex + ol, ot, 1, 8*sizey);
 
         // draw selection rectangle

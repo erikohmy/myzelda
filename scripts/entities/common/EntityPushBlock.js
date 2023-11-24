@@ -80,6 +80,6 @@ class EntityPushBlock extends EntityPhysical {
         let oy = this.game.offset[1];
         //let sheet = this.game.spritesheets.dungeonCommon;
         let sheet = this.game.spritesheets.dungeonCommon;
-        sheet.drawSprite(this.game.ctx, 1, 7, this.x-8+ox, this.y-8+oy, undefined, undefined, "red");
+        sheet.drawSprite(this.game.ctx, 1, 7, this.x-8+ox, this.y-8+oy);
     }
 }

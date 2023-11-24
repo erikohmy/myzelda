@@ -143,4 +143,12 @@ class Graphics {
         }
         return newMap;
     }
+
+    static drawShadow(ctx, x, y, width=8, height=8) {
+        // draw an ellipse
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.ellipse(x, y, width/2, height/2, 0, 0, 2 * Math.PI);
+        ctx.fill();
+    }
 }

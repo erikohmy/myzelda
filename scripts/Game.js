@@ -22,6 +22,7 @@ class Game {
 
     ticking = false;
     gametick = 0;
+    logictick = 0;
     animationtick = 0;
     walkticks = 0;
 
@@ -97,9 +98,6 @@ class Game {
                 if (this.dialog.show) {
                     this.dialog.next();
                     return;
-                }
-                if (!this.player.isBusy) {
-                    this.player.actionMain();
                 }
             }
             if (this.dialog.show && this.dialog.anyNext) {
@@ -297,6 +295,8 @@ class Game {
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
         await this.sound.addSound("link_fall", "./assets/sound/Link_Fall.wav");
+        await this.sound.addSound("link_jump", "./assets/sound/Link_Jump.wav");
+        await this.sound.addSound("link_land_run", "./assets/sound/Link_LandRun.wav");
         await this.sound.addSound("link_wade", "./assets/sound/Link_Wade.wav");
 
         await this.sound.addSound("text_letter", "./assets/sound/Text_Letter.wav");
@@ -336,12 +336,18 @@ class Game {
                 this.tick();
             }
         }, 8);
+
+        // testing, no inventory yet, equip rocs feather to B button
+        this.player.equipItem("rocs_feather", 1);
     }
 
     async loadSpritesheets() {
         this.events.trigger('sprites-adding');
         let ui = await this.loadImage("./assets/ui.png");
         this.spritesheets.ui = new SpriteSheet(ui, 8);
+
+        let items = await this.loadImage("./assets/items.png");
+        this.spritesheets.items = new SpriteSheet(items, 8);
 
         let player = await this.loadImage("./assets/player.png");
         this.spritesheets.player = new SpriteSheet(player, 16);
@@ -504,8 +510,50 @@ class Game {
             this.dialog.tick();
         }
 
-        if (this.doGameLogic && !this.cutscene && !this.world.transitioning && !this.dialog.show) {
+        if (this.doGameLogic && !this.dialog.show && !this.cutscene && !this.world.transitioning) {
+            // update entities
+            player.tick();
+            for (let i=0; i<space.entities.length; i++) {
+                let entity = space.entities[i];
+                if (!!entity.logic) {
+                    entity.logic();
+                }
+                if (!!entity.tick) {
+                    entity.tick();
+                }
+            }
+            this.tickEvents.forEach(event => {
+                if (event.type === "logic") {
+                    event.left--;
+                    if (event.left <= 0) {
+                        event.resolve();
+                    }
+                    if(!!event.every) {
+                        event.dead = false === event.every(event.ticks - event.left, event.ticks);
+                    }
+                }
+            });
+        }
 
+        if (this.doGameLogic && !player.isBusy) {
+            if (this.interface.inputsPressed.indexOf("a") !== -1) {
+                // pressed a this tick
+                this.player.actionA();
+            }
+            if (this.interface.inputsPressed.indexOf("b") !== -1) {
+                // pressed b this tick
+                this.player.actionB();
+            }
+
+            if (this.interface.inputsReleased.indexOf("a") !== -1) {
+                // released a this tick
+                this.player.releasedA();
+            }
+            if (this.interface.inputsReleased.indexOf("b") !== -1) {
+                // released b this tick
+                this.player.releasedB();
+            }
+            
             // set space safeSpot if not set
             if (!space.safeSpot) {
                 space.safeSpot = [player.x, player.y];
@@ -518,77 +566,52 @@ class Game {
             let c_anydir = !!this.interface.dpad;
             let c_multidir = (c_up || c_down) && (c_left || c_right);
 
-            // update entities
-            player.tick();
-            for (let i=0; i<space.entities.length; i++) {
-                let entity = space.entities[i];
-                if (!!entity.logic) {
-                    entity.logic();
-                }
-                if (!!entity.tick) {
-                    entity.tick();
-                }
-            }
-
-            if (!player.isBusy) {
-                // pushing
-                if (c_anydir && !c_multidir) {
-                    if (player.collideEntity) {
-                        player.setPushingEntity(player.collideEntity);
-                    } else if (!player.collideEntity && player.pushingEntity) {
-                        player.setPushingEntity(null);
-                    }
-                } else {
+            
+            // pushing
+            if (c_anydir && !c_multidir) {
+                if (player.collideEntity) {
+                    player.setPushingEntity(player.collideEntity);
+                } else if (!player.collideEntity && player.pushingEntity) {
                     player.setPushingEntity(null);
                 }
+            } else {
+                player.setPushingEntity(null);
+            }
 
-                // direction
-                if (c_anydir) {
-                    player.direction = dirIndex(this.interface.dpad);
-                }
-                
-                // walking
-                player.walking = c_anydir;
-                let mx = 0;
-                let my = 0;
-
-                if (c_up) {
-                    my = -player.moveSpeed;
-                } else if (c_down) {
-                    my = player.moveSpeed;
-                }
-                if (c_left) {
-                    mx = -player.moveSpeed;  
-                } else if (c_right) {
-                    mx = player.moveSpeed;  
-                }
-                if (mx !== 0 || my !== 0) {
-                    if (player.inPuddle && (this.walkticks+1)%20 === 0) {
-                        this.sound.play("link_wade",0.04);
-                    }
-                    try {
-                        // overworld 6,5, player 80,64 still crashes
-                        player.move(mx, my, false, !c_multidir);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                    this.walkticks++;
-                } else {
-                    this.walkticks = 0;
-                }
+            // direction
+            if (c_anydir) {
+                player.direction = dirIndex(this.interface.dpad);
             }
             
-            this.tickEvents.forEach(event => {
-                if (event.type === "logic") {
-                    event.left--;
-                    if (event.left <= 0) {
-                        event.resolve();
-                    }
-                    if(!!event.every) {
-                        event.dead = false === event.every(event.ticks - event.left, event.ticks);
-                    }
+            // walking
+            player.walking = c_anydir;
+            let mx = 0;
+            let my = 0;
+
+            if (c_up) {
+                my = -player.moveSpeed;
+            } else if (c_down) {
+                my = player.moveSpeed;
+            }
+            if (c_left) {
+                mx = -player.moveSpeed;  
+            } else if (c_right) {
+                mx = player.moveSpeed;  
+            }
+            if (mx !== 0 || my !== 0) {
+                if (player.inPuddle && (this.walkticks+1)%20 === 0) {
+                    this.sound.play("link_wade",0.04);
                 }
-            });
+                
+                // overworld 6,5, player 80,64 still crashes
+                player.move(mx, my, false, !c_multidir);
+                this.walkticks++;
+                if(player.isJumping) {
+                    this.walkticks = 0;
+                }
+            } else {
+                this.walkticks = 0;
+            }
 
             // if player is outside the space to the rigt, transition to the next space
             if (player.x > space.size[0]*this.tilesize) {
@@ -691,6 +714,10 @@ class Game {
             }
         }
 
+        if (this.doGameLogic && !this.world.transitioning) {
+            this.logictick++;
+        }
+
         if (this.doAnimation && !this.world.transitioning) {
             this.animationtick++;
             this.tickEvents.forEach(event => {
@@ -728,6 +755,10 @@ class Game {
                 this.tickEvents.splice(this.tickEvents.indexOf(event), 1);
             }
         });
+        // cleanup controls
+        if (this.doGameLogic && !this.player.isBusy) {
+            this.interface.tick();
+        }
         this.ticking = false;
     }
 
@@ -802,8 +833,26 @@ class Game {
         // draw the white bar
         this.setColor(Graphics.colors.ui);
         this.ctx.fillRect(0, 0, this.canvas.width, 16);
-
         let player = this.world.player;
+
+        // B item
+        this.spritesheets.ui.drawSprite(this.ctx, 1, 3, 0, 0, 1, 2);
+        this.spritesheets.ui.drawSprite(this.ctx, 2, 3, 32, 0, 1, 2); 
+        let itemB = player.getItem(1);
+        if (itemB) {
+            itemB.renderIcon(this.ctx, 8, 0);
+        }
+        
+        // A item
+        this.spritesheets.ui.drawSprite(this.ctx, 0, 3, 40, 0, 1, 2);
+        this.spritesheets.ui.drawSprite(this.ctx, 2, 3, 32+40, 0, 1, 2); 
+        let itemA = player.getItem(0);
+        if (itemA) {
+            itemA.renderIcon(this.ctx, 48, 0);
+        }
+        
+
+        // draw the hearts
         let maxHealth = player.maxHealth;
         let health = player.health;
         
@@ -1012,21 +1061,17 @@ class SpriteSheet {
         this.spritesize = spritesize;
         this.gutter = gutter;
     }
-    async generatePallet(name, colors) {
+    async generatePallet(name, colors) { // not used, thinking of a way to do this better
         this.pallets[name] = await Graphics.palletChange(this.image, colors);
     }
     downloadPallet(name) {
         downloadURI(this.pallets[name].src, name+".png");
     }
     // context, sprite x, sprite y, position x, position y
-    drawSprite(ctx, x, y, px, py, w=undefined, h=undefined, pallet=undefined) {
-        h = h || this.spritesize;
-        w = w || this.spritesize;
-        let image = this.image;
-        if (pallet) {
-            image = this.pallets[pallet];
-        }
-        ctx.drawImage(image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize, this.spritesize, px, py, w, h);
+    drawSprite(ctx, x, y, px, py, sw=1, sh=1, w=undefined, h=undefined) {
+        h = h || this.spritesize*sh;
+        w = w || this.spritesize*sw;
+        ctx.drawImage(this.image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize*sw, this.spritesize*sh, px, py, w, h);
     }
     drawRegion(ctx, x, y, px, py, w=undefined, h=undefined) {
         h = h || this.spritesize;

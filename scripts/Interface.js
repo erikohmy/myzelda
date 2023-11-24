@@ -4,6 +4,8 @@ class Interface {
 		this.events = new EasyEvents();
 		this.heldKeys = [];
 		this.inputs = []; // the actual gameboy inputs: up, right, down, left, a, b, start, select
+		this.inputsReleased = []; // inputs that were released this tick
+		this.inputsPressed = []; // inputs that were pressed this tick
 		
 		this.keyboardControls = {
 			"KeyW": "up",
@@ -53,6 +55,9 @@ class Interface {
 			this.inputs.push(name);
 			this.game.events.trigger('input', name);
 			this.game.events.trigger('input.'+name);
+			if (this.inputsPressed.indexOf(name) === -1) {
+				this.inputsPressed.push(name);
+			}
 		}
 	}
 
@@ -62,7 +67,14 @@ class Interface {
 			this.inputs.splice(index, 1);
 			this.game.events.trigger('input.released', name);
 			this.game.events.trigger('input.'+name+'.released');
+			if (this.inputsReleased.indexOf(name) === -1) {
+				this.inputsReleased.push(name);
+			}
 		}
+	}
+	tick() {
+		this.inputsPressed = [];
+		this.inputsReleased = [];
 	}
 	get up() {return this.inputs.indexOf("up") !== -1;}
 	get down() {return this.inputs.indexOf("down") !== -1;}
