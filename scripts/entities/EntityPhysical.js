@@ -266,7 +266,7 @@ class EntityPhysical extends EntityBase {
             if (collidingY) {
                 if (!justTest && this.pushesEntities && collidingWithY && collidingWithY.entity && collidingWithY.entity.move && collidingWithY.entity.canBePushed) {
                     // move the entity the same amount
-                    blockedY = !collidingWithY.entity.move(0, sy, this.squishesEntities);
+                    blockedY = !collidingWithY.entity.move(0, sy);
                     if (this.squishesEntities && blockedY && collidingWithY.entity.squish) {
                         collidingWithY.entity.squish();
                     }

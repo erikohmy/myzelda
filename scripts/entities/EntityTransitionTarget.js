@@ -1,5 +1,5 @@
 class EntityTransitionTarget extends EntityBase {
-    constructor(game, x, y, d, name, onenter) {
+    constructor(game, x, y, d=2, name, onenter) {
         super(game);
         this.x = x;
         this.y = y;

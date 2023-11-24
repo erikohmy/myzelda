@@ -153,10 +153,9 @@ class Dialog {
         if (this.isMore && !this.isBusy) {
             // flash arrow
             if ( this.game.gametick % 60 < 30) {
-                let arrowX = offsetX + width - 12;
-                let arrowY = offsetY + height - 12;
-                this.game.ctx.fillStyle = "#f00";
-                this.game.ctx.fillRect(arrowX, arrowY, 8, 8);
+                let arrowX = offsetX + width - 10;
+                let arrowY = offsetY + height - 10;
+                this.game.spritesheets.ui.drawSprite(this.game.ctx, 4, 1, arrowX, arrowY);
             }
         }
     }

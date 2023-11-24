@@ -203,6 +203,22 @@ class Game {
                 });
             });
         };
+        this.animations.appear = () => {
+            return new Promise((resolve) => {
+                let game = this;
+                game.player.opacity = 0;
+                game.waitTicks(1).then(()=>{
+                    game.world.currentSpace.createEntity("poof", {x:game.player.x, y:game.player.y});
+                    game.everyTick(16, (t, total) => {
+                        game.player.opacity = t/total;
+                        if(t==total) {
+                            game.player.opacity = 1;
+                            resolve();
+                        }
+                    });
+                });
+            });
+        };
     }
 
     pause() {
@@ -287,6 +303,8 @@ class Game {
         await this.sound.addSound("text_done", "./assets/sound/Text_Done.wav");
         await this.sound.addSound("menu_open", "./assets/sound/menu_open.wav");
         await this.sound.addSound("menu_close", "./assets/sound/menu_close.wav");
+        await this.sound.addSound("menu_cursor", "./assets/sound/menu_cursor.wav");
+        await this.sound.addSound("menu_select", "./assets/sound/menu_select.wav");
 
         // music
         await this.sound.addMusic("overworld", "./assets/sound/music/overworld.mp3", 6.42);
@@ -549,6 +567,7 @@ class Game {
                         this.sound.play("link_wade",0.04);
                     }
                     try {
+                        // overworld 6,5, player 80,64 still crashes
                         player.move(mx, my, false, !c_multidir);
                     } catch (e) {
                         console.error(e);
@@ -1024,7 +1043,7 @@ function tileSnap(x,y) {
 // sort entities by zindex, or if same, y position
 function entitySort(a,b) {
     if (a.zindex == b.zindex && a.hasOwnProperty("y") && b.hasOwnProperty("y")) {
-            return a.y - b.y;
+        return a.y - b.y;
     }
     return a.zindex - b.zindex;
 }

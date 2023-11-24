@@ -11,6 +11,7 @@ function LayerOverworld(game) {
     layer.music = "overworld";
     
     layer.createSpace(0, 0, 10, 8, function(space) {
+        space.createEntity('transitionTarget', {name:'warp', tx:4, ty:4});
         space.fill({name:"sand"});
         space.border({name:"obstacle", variant:"rock",  background:"sand"});
         space.setTile(3,4,{name:"obstacle", variant:"coconut"});
@@ -264,6 +265,7 @@ function LayerOverworld(game) {
         let sign = space.createEntity('sign',{ x:1, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
         space.setTile(2, 4, {name:"doorway", 'goesTo': "buildings:5,5:entrance"});
         space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
+        space.createEntity('transitionTarget', {name:'warp', tx:3, ty:1});
     }, function(space) {
         space.minimap = (ctx, x, y) => {
             ctx.fillStyle = "#ffbd10";

@@ -214,7 +214,13 @@ class Space {
     }
     createEntity(entity, args) {
         // todo, automate this?
-        let entities = ["pushblock", "sign", "splash", "interval", "timer", "tick", "transitioner", "trigger"];
+        let entities = ["pushblock", "sign", "splash", "poof", "interval", "timer", "tick", "transitioner", "transitionTarget", "trigger"];
+        if (args.tx) {
+            args.x = args.tx*16+8;
+        }
+        if (args.ty) {
+            args.y = args.ty*16+8;
+        }
         if (entities.includes(entity)) {
             if (entity === "pushblock") {
                 return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
@@ -222,8 +228,12 @@ class Space {
                 return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
             } else if (entity === "splash") {
                 return this.addEntity(new EntityEffectSplash(this.game, args.x, args.y));
+            } else if (entity === "poof") {
+                return this.addEntity(new EntityEffectPoof(this.game, args.x, args.y));
             } else if (entity === "transitioner") {
                 return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
+            } else if (entity === "transitionTarget") {
+                return this.addEntity(new EntityTransitionTarget(this.game, args.x, args.y, args.direction, args.name, args.init));
             }
             console.error("Not implemented yet", entity);
         } else {

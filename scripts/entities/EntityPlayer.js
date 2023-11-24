@@ -1,5 +1,6 @@
 class EntityPlayer extends EntityPhysical {
     zindex = 10;
+    opacity = 1;
 
     direction;
     walking = false;
@@ -247,6 +248,11 @@ class EntityPlayer extends EntityPhysical {
         let sox = 0; // sprite offset x
         let soy = 0; // sprite offset y
 
+        let opacityBefore = this.game.ctx.globalAlpha;
+        if (this.opacity !== 1) {
+            this.game.ctx.globalAlpha = this.opacity;
+        }
+
         if (this.falling) {
             let ticks = this.game.gametick - this.actionStart;
             let falltime = 60;
@@ -309,6 +315,10 @@ class EntityPlayer extends EntityPhysical {
         if (this.inPuddle) {
             //let sheet = this.game.spritesheets.overworld;
             //sheet.drawRegion(this.game.ctx, 48, 48, this.x-8+ox, this.y-8+oy, 16,16);
+        }
+
+        if (this.opacity !== 1) {
+            this.game.ctx.globalAlpha = opacityBefore;
         }
 
         // draw tile we are inside

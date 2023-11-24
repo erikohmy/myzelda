@@ -2,6 +2,7 @@ class GameMap {
     game;
 
     transitionTimer = 0;
+    animationTick=0;
     opening = false;
     closing = false;
     open = false;
@@ -15,6 +16,9 @@ class GameMap {
 
         this.game.events.on('input', (e) => {
             if (this.isBusy || !this.open) return;
+            if (e === "left" || e === "right" || e === "up" || e === "down") {
+                this.game.sound.play('menu_cursor', 0.016);
+            }
             if(e === "left") {this.selectedCoords[0]--;}
             if(e === "right") {this.selectedCoords[0]++;}
             if(e === "up") {this.selectedCoords[1]--;}
@@ -24,8 +28,14 @@ class GameMap {
             if(this.selectedCoords[0] >= 14) {this.selectedCoords[0] = 14-1;}
             if(this.selectedCoords[1] >= 14) {this.selectedCoords[1] = 14-1;}
             if(e === "a") {
-                let couldgo = this.game.world.goToString(`overworld:${this.selectedCoords[0]},${this.selectedCoords[1]}`);
-                if(couldgo) {
+                // check if space exists
+                let space = this.game.world.layers.overworld.getSpace(this.selectedCoords[0], this.selectedCoords[1]);
+                if (space) {
+                    setTimeout(()=>{
+                        this.game.world.goToString(`overworld:${this.selectedCoords[0]},${this.selectedCoords[1]}:warp:none:appear:none:none`);
+                    }, 100)
+                    
+                    this.game.sound.play('menu_select');
                     this.hide();
                 }
             }
@@ -46,6 +56,7 @@ class GameMap {
         this.open = true;
         this.opening = true;
         this.transitionTimer = 0;
+        this.animationTick = 0;
         if(this.type === 'overworld') {
             this.currentCoords = this.game.world.player.space.position;
             this.selectedCoors = this.currentCoords;
@@ -93,6 +104,7 @@ class GameMap {
                 }
             }
         }
+        this.animationTick++;
     }
 
     draw() {
@@ -147,9 +159,9 @@ class GameMap {
                         this.game.ctx.fillRect(8 * x + ol+1, 8 * y + ot+1, 7, 7);
                     }
                 } else {
-                    this.game.ctx.fillStyle = "#444";
+                    this.game.ctx.fillStyle = "#555";
                     this.game.ctx.fillRect(8 * x + ol+1, 8 * y + ot+1, 7, 7);
-                    this.game.ctx.fillStyle = "#777";
+                    this.game.ctx.fillStyle = "#333";
                     this.game.ctx.fillRect(8 * x + ol+2, 8 * y + ot+2, 5, 5);
                 }
                 // grid lines
@@ -165,10 +177,18 @@ class GameMap {
         // draw selection rectangle
         let x = this.selectedCoords[0];
         let y = this.selectedCoords[1];
-        this.game.ctx.fillStyle = "#F00";
-        this.game.ctx.fillRect(8 * x +ol, 8 * y+ot, 8, 1);
-        this.game.ctx.fillRect(8 * x +ol, 8 * y+ot+8, 8, 1);
-        this.game.ctx.fillRect(8 * x +ol, 8 * y+ot, 1, 8);
-        this.game.ctx.fillRect(8 * x +ol+8, 8 * y+ot, 1, 9);
+
+        let cursoroffset = 4;// + Math.floor(this.animationTick/30)%2;
+        this.game.spritesheets.ui.drawSprite(this.game.ctx, 0, 1, 8 * x +ol-cursoroffset, 8 * y+ot-cursoroffset);
+        this.game.spritesheets.ui.drawSprite(this.game.ctx, 1, 1, 8 * x +ol+cursoroffset, 8 * y+ot-cursoroffset);
+        this.game.spritesheets.ui.drawSprite(this.game.ctx, 0, 2, 8 * x +ol-cursoroffset, 8 * y+ot+cursoroffset);
+        this.game.spritesheets.ui.drawSprite(this.game.ctx, 1, 2, 8 * x +ol+cursoroffset, 8 * y+ot+cursoroffset);
+
+        // draw player
+        let px = this.currentCoords[0];
+        let py = this.currentCoords[1];
+        if (Math.floor(this.animationTick/100)%2 > 0) {
+            this.game.spritesheets.ui.drawSprite(this.game.ctx, 4, 1, 8 * px +ol+1, 8 * py+ot-5);
+        }
     }
 }

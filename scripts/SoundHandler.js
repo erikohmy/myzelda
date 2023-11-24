@@ -25,6 +25,7 @@ class SoundHandler {
         return new Promise((resolve, reject) => {
             let sound = new Audio(src);
             this.sounds[name] = sound;
+            sound.preload = 'auto';
             this.game.events.trigger('sound-adding', name, sound)
             sound.addEventListener('canplaythrough', () => {
                 this.game.events.trigger('sound-added', name, sound)
@@ -35,6 +36,7 @@ class SoundHandler {
     addMusic(name, src, start=0) {
         return new Promise((resolve, reject) => {
             let music = new Audio(src);
+            music.preload = 'auto';
             this.music[name] = {
                 name: name,
                 audio: music,
@@ -70,6 +72,10 @@ class SoundHandler {
     play(name, starttime=0) {
         //this.sounds[name].play();
         // clone sound, so we can play multiple at once
+        if (! this.sounds[name]) {
+            console.error("Sound not found: " + name);
+            return;
+        }
         let clone = this.sounds[name].cloneNode();
         clone.volume = this.volume;
         clone.currentTime = starttime;

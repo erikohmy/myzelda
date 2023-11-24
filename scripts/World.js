@@ -110,19 +110,35 @@ class World {
         }
         
         if (parts.length === 2) { // layer:space
-            this.game.sound.play('appear_vanish');
             this.transitionTo(space, "none");
-        } else if(parts.length === 3 || parts.length === 4) { // layer:space:target, or layer:space:target:animation
+        } else if(parts.length === 3 || parts.length === 4 || parts.length === 5 || parts.length === 6 || parts.length === 7) {
+            // layer:space:target
+            // layer:space:target:animation
+            // layer:space:target:animation:animationOut
+            // layer:space:target:animation:animationOut:sound
+            // layer:space:target:animation:animationOut:sound:transition
             let target = parts[2];
-            let animation = parts.length == 4 ? parts[3] : null;
-            this.game.sound.play('stairs');
+            let animation = parts.length >= 4 ? parts[3] : null;
+            let animationOut = parts.length >= 5 ? parts[4] : null;
+            let sound = parts.length >= 6 ? parts[5] : "stairs";
+            let transition = parts.length >= 7 ? parts[6] : "building";
+            if (sound !== "none") {
+                this.game.sound.play(sound);
+            }
             let fn = () => {
-                this.transitionTo(space, "building").then(()=>{
+                this.transitionTo(space, transition).then(()=>{
+                    
                     let targetEntity = space.entities.filter(e => e instanceof EntityTransitionTarget && e.targetName === target)[0];
-                    this.player.setPosition(targetEntity.x, targetEntity.y);
-                    this.player.direction = targetEntity.direction;
-                    if (targetEntity.onenter) {
-                        this.transitionCallback = targetEntity.onenter;
+                    if (targetEntity) {
+                        this.player.setPosition(targetEntity.x, targetEntity.y);
+                        this.player.direction = targetEntity.direction;
+                        if (targetEntity.onenter) {
+                            this.transitionCallback = targetEntity.onenter;
+                        } else if(animationOut && this.game.animations[animationOut]) {
+                            this.transitionCallback = () => this.game.animations[animationOut]();
+                        }
+                    } else if(animationOut && this.game.animations[animationOut]) {
+                        this.game.animations[animationOut]();
                     }
                 });
             };
