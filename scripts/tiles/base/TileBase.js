@@ -1,4 +1,4 @@
-class TileBase {
+class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
     game;
 
     name;
@@ -11,6 +11,7 @@ class TileBase {
     drown = false;
     wet = false;
     dig = false;
+    rough = false; // slows speed (on those who care)
 
     collision = undefined;
 
@@ -160,6 +161,7 @@ class TileBase {
     drawTile(ctx, x, y, options={}) {
         let name = this.name;
         if (options?.edges) name += "-" + options.edges;
+        if (options?.part) name += "-" + options.part;
         if (options?.variant) name += "-" + options.variant;
         if (! this.sprites.hasOwnProperty(name)) {
             let issue = {

@@ -181,6 +181,11 @@ class EntityPlayer extends EntityPhysical {
             } else {
                 this.inPuddle = false;
             }
+            if (tile.rough) {
+                this.onRoughGround = true;
+            } else {
+                this.onRoughGround = false;
+            }
 
             if (tile.swim) {
                 if (this.canSwim) {

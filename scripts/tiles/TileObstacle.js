@@ -1,14 +1,16 @@
 class TileObstacle extends TileBase {
     spriteOffsetX = 0;
     spriteOffsetY = 6;
-    variants = 6;
+    variants = 8;
     variantNames = [
         "fence",
         "poles1",
         "poles2",
         "block",
         "coconut",
-        "rock"
+        "rock",
+        "block2",
+        "block2double"
     ]
 
     solid = true;

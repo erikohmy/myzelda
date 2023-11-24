@@ -73,6 +73,25 @@ class World {
         this.player.space = space;
         this.game.noRender = false; // re-enable rendering
     }
+
+    async goTo(layername, sx=undefined, sy=undefined, px=undefined, py=undefined, dir=undefined, transition="none", callback) {
+        let layer = this.layers[layername];
+        if (!layer) {
+            console.error("layer not found", layername);
+            return;
+        }
+        if (!sx) {sx = 0;}
+        if (!sy) {sy = 0;}
+        let space = layer.getSpace(sx, sy);
+        if (!space) {
+            console.error("space not found", sx, sy);
+            return;
+        }
+        if(px) {this.player.position[0] = px;}
+        if(py) {this.player.position[1] = py;}
+        if(dir) {this.player.direction = dir;}
+        this.transitionTo(space, transition, callback);
+    } 
 }
 
 class WorldLayer {

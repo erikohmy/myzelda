@@ -9,6 +9,7 @@ class TileFloorWood extends TileSimple {
         tiles[this.name+"-alt"]     = [1,0]; 
         tiles[this.name+"-carpet1"] = [2,0]; 
         tiles[this.name+"-carpet2"] = [3,0];
+        tiles[this.name+"-slats"]   = [4,0];
         return tiles;
     }
 }

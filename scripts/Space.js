@@ -162,6 +162,9 @@ class Space {
             }
         }
     }
+    setTilesB64(data) {
+        Function("space", atob(data))(this);
+    }
 
     addEntity(entity) {
         entity.space = this;
@@ -225,14 +228,22 @@ class Space {
                             let collision = tile.collision[cname];
                             if (collision == "left") {
                                 boxes.push({x:x*16, y:y*16, h:16, w:8});
+                            } else if (collision == "left-small") {
+                                boxes.push({x:x*16, y:y*16, h:16, w:6});
                             } else if (collision == "right") {
                                 boxes.push({x:x*16+8, y:y*16, h:16, w:8});
+                            } else if (collision == "right-small") {
+                                boxes.push({x:x*16+10, y:y*16, h:16, w:6});
                             } else if (collision == "top") {
                                 boxes.push({x:x*16, y:y*16, h:8, w:16});
                             } else if (collision == "top-small") {
                                 boxes.push({x:x*16, y:y*16, h:6, w:16});
                             } else if (collision == "bottom") {
                                 boxes.push({x:x*16, y:y*16+8, h:8, w:16});
+                            } else if (collision == "bottom-small") {
+                                boxes.push({x:x*16, y:y*16+10, h:6, w:16});
+                            } else if (collision == "bottom-outside") {
+                                boxes.push({x:x*16, y:y*16+16, h:8, w:16});
                             }
                         }
                     }

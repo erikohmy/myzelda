@@ -97,6 +97,7 @@
         background-image: var(--tile-sheet);
         background-size: calc(var(--tile-sheetwidth) * 3) calc(var(--tile-sheetheight) * 3);
         cursor: pointer;
+        image-rendering: pixelated;
       }
       .editor .tile.empty {
         background-image: none
@@ -147,18 +148,21 @@
       .editor .pallet .tile .variants {
         position: absolute;
         bottom: var(--tilesize);
-        left:0;
+        left:50%;
         width: max-content;
         box-shadow: #000f 0 0 16px;
         padding: 4px;
         background: white;
+        transform: translateX(-50%);
       }
       .editor .pallet .tile .variants .variants-wrap {
+        max-width: calc(var(--tilesize) * 8);
+        background-color: #aaa;
+      }
+      .editor .pallet .tile .variants .variants-wrap .variants-group {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        max-width: calc(var(--tilesize) * 8);
-        background-color: #aaa;
       }
       .editor .pallet .tile:not(:hover) .variants {
         display: none;
@@ -186,6 +190,10 @@
       .editor .toolbar button {}
       .editor .toolbar button:not(:last-child) {
         margin-right: 8px;
+      }
+      /* special for variants */
+      .editor .pallet .tile.tile-class-TileCliff .variants .variants-wrap {
+        max-width: calc(var(--tilesize) * 14);
       }
 
     </style>

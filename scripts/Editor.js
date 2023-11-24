@@ -114,6 +114,20 @@ class Editor {
             this.element.style.setProperty('--tile-sheetwidth', `${sheet.width}px`);
             this.element.style.setProperty('--tile-sheetheight', `${sheet.height}px`);
 
+            let copyb64btn = document.createElement('button');
+            copyb64btn.innerText = "Copy B64";
+            copyb64btn.classList.add('btn-edit-copy');
+            copyb64btn.addEventListener('click', () => {
+                let code = this.tileDataToCode();
+                // remove spaces and newlines
+                code = code.replace(/ /g, '').replace(/\n/g, '');
+                let codeb64 = btoa(code);
+                // add a linebreak every 60 chars
+                codeb64 = codeb64.match(/.{1,60}/g).join("\n    ");
+                codeb64 = "space.setTilesB64(\n    `"+codeb64+"`\n);";
+                this.copyToClipboard(codeb64);
+            });
+
             let copybtn = document.createElement('button');
             copybtn.innerText = "Copy to Clipboard";
             copybtn.classList.add('btn-edit-copy');
@@ -132,9 +146,10 @@ class Editor {
             cancelbtn.innerText = "Cancel";
             cancelbtn.classList.add('btn-edit-cancel');
             cancelbtn.addEventListener('click', () => {
-                game.saveEdit();
+                game.cancelEdit();
             });
 
+            this.element.querySelector('.toolbar').appendChild(copyb64btn);
             this.element.querySelector('.toolbar').appendChild(copybtn);
             this.element.querySelector('.toolbar').appendChild(savebtn);
             this.element.querySelector('.toolbar').appendChild(cancelbtn);
@@ -207,14 +222,21 @@ class Editor {
                 let index = y*sizeX+x;
                 let tiledata = tiles[index];
                 let classname = "sprite-"+tiledata.name;
+                let tile = this.game.tiles[tiledata.name];
                 if (tiledata.edges) {
                     classname += "-" + tiledata.edges;
+                }
+                if (tiledata.part) {
+                    classname += "-" + tiledata.part;
                 }
                 if (tiledata.variant) {
                     classname += "-" + tiledata.variant;
                 }
+                if (tile instanceof TileAnimated4) {
+                    classname += "-" + tile.variantNames[0];
+                }
                 let el = this.grid.querySelector('.tile-'+x+'-'+y);
-                
+
                 el.classList.remove('empty');
                 el.classList.add(classname);
                 
@@ -240,7 +262,7 @@ class Editor {
     buildPallet() {
         this.sprites.forEach(sprite => {
             let el = document.createElement("div");
-            el.classList.add("tile", 'sprite-'+sprite.sprites[0]);
+            el.classList.add("tile", 'sprite-'+sprite.sprites[0], 'tile-class-'+sprite.class, 'tile-subtype-'+sprite.subtype);
             el.setAttribute('data-name', sprite.name);
             el.setAttribute('data-type', sprite.type);
             el.setAttribute('data-class', sprite.class);
@@ -261,37 +283,58 @@ class Editor {
                 let varwrap = document.createElement("div");
                 varwrap.classList.add("variants-wrap");
                 variants.appendChild(varwrap);
+
+                let groups = {};
                 sprite.sprites.forEach(spritename => {
+                    let parts = this.spritenameToParts(spritename);
+                    let groupname = parts.variant ? parts.variant : "default";
+                    
+                    let group = groups[groupname] ? groups[groupname] : null;
+                    if (!group) {
+                        group = document.createElement("div");
+                        group.classList.add("variants-group");
+                        groups[groupname] = group;
+                    }
+                    
                     let el = document.createElement("div");
                     el.classList.add("tile", 'sprite-'+spritename);
                     el.setAttribute('title', spritename);
-                    varwrap.appendChild(el);
+                    group.appendChild(el);
 
                     el.addEventListener('click', (e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        let prefix = sprite.name + "-";
-                        let variant = spritename.substring(prefix.length);
-                        this.paletteSelection =  {'name': sprite.name};
-                        this.paletteSelection.class = 'sprite-'+spritename;
-                        if (sprite.subtype === "edged") {
-                            // set edges, and remove them from selection
-                            if(this.variantIsEdge(variant)) {
-                                this.paletteSelection.edges = variant;
-                                variant = "";
-                            } else {
-                                let parts = variant.split("-");
-                                if (parts.length > 1) { // we probably have an edge!
-                                    this.paletteSelection.edges = parts[0];
-                                    variant = parts[1];
-                                }
-                            }
+                        let tile = this.spritenameToParts(spritename);
+                        tile.class = 'sprite-'+tile.name;
+                        if (tile.edges) {
+                            tile.class += "-" + tile.edges;
                         }
-                        if (variant) {
-                            this.paletteSelection.variant = variant;
+                        if (tile.part) {
+                            tile.class += "-" + tile.part;
                         }
+                        if (tile.variant) {
+                            tile.class += "-" + tile.variant;
+                        }
+                        console.log(tile);
+                        this.paletteSelection =  tile;
                     });
                 });
+                // group for singles
+                let sgroup = document.createElement("div");
+                sgroup.classList.add("variants-group");
+                Object.keys(groups).forEach(groupname => {
+                    let group = groups[groupname];
+                    // if there is only one variant, dont show the group
+                    if (group.querySelectorAll('.tile').length > 1) {
+                        varwrap.appendChild(group);
+                    } else {
+                        sgroup.appendChild(group.querySelector('.tile'));
+                    }
+                });
+                // if sgoup has children, add it
+                if (sgroup.querySelectorAll('.tile').length > 0) {
+                    varwrap.appendChild(sgroup);
+                }
                 el.appendChild(variants);
             } else {
                 el.addEventListener('click', () => {
@@ -299,6 +342,56 @@ class Editor {
                 });
             }
         });
+    }
+
+    spritenameToParts(spritename) {
+        // split into name, edges and variant
+        let parts = spritename.split("-");
+        if (parts.length === 1) {
+            return {name: parts[0]};
+        }
+        let name = parts[0];
+        let edge = null;
+        let part = null;
+        let variant = null;
+        let tile = this.game.tiles[name];
+        if (tile instanceof TileEdged) {
+            // name-edge, name-edge-variant, or name-part-variant
+            if (parts.length === 2) {
+                if (this.variantIsEdge(parts[1])) {
+                    // name && edge
+                    return {name: name, edges: parts[1]};
+                } else {
+                    // name && part
+                    return {name: name, variant: parts[1]};
+                }
+            } else {
+                // 3 or longer
+                if (this.variantIsEdge(parts[1])) {
+                    // name && edge && variant
+                    return {name: name, edges: parts[1], variant: parts[2]};
+                } else {
+                    // name && part && variant
+                    name = parts.shift();
+                    // part is all but last
+                    part = parts.slice(0, parts.length-1).join("-");
+                    variant = parts[parts.length-1];
+                    return {name: name, part: part, variant: variant};
+                }
+            }
+        } else {
+            if (parts.length === 2) {
+                // name && variant
+                return {name: name, variant: parts[1]};
+            } else {
+                // name && part && variant
+                name = parts.shift();
+                // part is all but last
+                part = parts.slice(0, parts.length-1).join("-");
+                variant = parts[parts.length-1];
+                return {name: name, part: part, variant: variant};
+            }
+        }
     }
 
     variantIsEdge(variant) {
@@ -350,6 +443,9 @@ class Editor {
                         if (this.paletteSelection.variant) {
                             tiledata.variant = this.paletteSelection.variant;
                         }
+                        if (this.paletteSelection.part) {
+                            tiledata.part = this.paletteSelection.part;
+                        }
                         if (this.paletteSelection.edges) {
                             tiledata.edges = this.paletteSelection.edges;
                         }
@@ -380,8 +476,9 @@ class Editor {
                 if (tile) {
                     let name = tile.name;
                     let variant = tile.variant;
+                    let part = tile.part;
                     let edges = tile.edges;
-                    let map = maps.findIndex(m => m.name === name && m.variant === variant && m.edges === edges);
+                    let map = maps.findIndex(m => m.name === name && m.variant === variant && m.part === part && m.edges === edges);
                     let id = null;
                     if (map === -1) {
                         id = maps.length.toString(16);
@@ -391,6 +488,7 @@ class Editor {
                         map = {
                             name: name,
                             variant: variant,
+                            part: part,
                             edges: edges,
                             id: id,
                         };
@@ -411,6 +509,9 @@ class Editor {
             code += "    '"+map.id+"': {name:'" + map.name+"', ";
             if (map.edges) {
                 code += "edges: '"+map.edges+"', ";
+            }
+            if (map.part) {
+                code += "part: '"+map.part+"', ";
             }
             if (map.variant) {
                 code += "variant: '"+map.variant+"', ";

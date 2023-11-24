@@ -317,6 +317,9 @@ class Game {
         let overworld = await this.loadImage("./assets/overworld8x8.png");
         this.spritesheets.overworld = new SpriteSheet(overworld, 8);
 
+        let cliffs = await this.loadImage("./assets/cliffs.png");
+        this.spritesheets.cliffs = new SpriteSheet(cliffs, 8, 1);
+
         let trees = await this.loadImage("./assets/trees.png");
         this.spritesheets.trees = new SpriteSheet(trees, 16);
 
@@ -340,6 +343,9 @@ class Game {
 
     async addTiles() {
         this.events.trigger('tiles-adding');
+
+        await this.addTile("solid", "TileSolid");
+
         await this.addTile("grass", "TileGrass");
         await this.addTile("grass2", "TileGrassVariant");
         await this.addTile("flowers", "TileFlowers");
@@ -347,12 +353,16 @@ class Game {
         await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
         await this.addTile("road", "TileRoad");
+        await this.addTile("stairs", "TileStairs");
         await this.addTile("obstacle", "TileObstacle");
         await this.addTile("hole", "TileHole");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
 
         await this.addTile("tree", "TileTree");
+        await this.addTile("cliff", "TileCliff");
+        await this.addTile("opening", "TileOpening");
+        await this.addTile("openingBlocked", "TileOpeningBlocked");
 
         await this.addTile("roof", "TileRoof");
         await this.addTile("roofShack", "TileRoofShack");
@@ -360,6 +370,7 @@ class Game {
         await this.addTile("doorway", "TileDoorway");
         await this.addTile("chimney", "TileChimney");
         await this.addTile("wallWood", "TileWallWood");
+        await this.addTile("wallRoot", "TileWallRoot");
         await this.addTile("floorWood", "TileFloorWood");
         await this.addTile("innerDoorway", "TileInnerDoorway");
         this.events.trigger('tiles-added');
@@ -913,10 +924,12 @@ class Game {
 class SpriteSheet {
     image;
     spritesize;
+    gutter;
     pallets = {};
-    constructor(image, spritesize) {
+    constructor(image, spritesize, gutter=0) {
         this.image = image;
         this.spritesize = spritesize;
+        this.gutter = gutter;
     }
     async generatePallet(name, colors) {
         this.pallets[name] = await Graphics.palletChange(this.image, colors);
@@ -932,7 +945,7 @@ class SpriteSheet {
         if (pallet) {
             image = this.pallets[pallet];
         }
-        ctx.drawImage(image, x*this.spritesize, y*this.spritesize, this.spritesize, this.spritesize, px, py, h, w);
+        ctx.drawImage(image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize, this.spritesize, px, py, h, w);
     }
     drawRegion(ctx, x, y, px, py, h=undefined, w=undefined) {
         h = h || this.spritesize;
