@@ -1,7 +1,7 @@
 class ItemJumpFeather extends ItemBase {
     constructor(game) {
         super(game);
-        this.name = "jumpFeather";
+        this.name = "Roc's Feather";
         this.description = "Roc's Feather\nA nice lift.";
     }
     actionPress() {

@@ -91,23 +91,6 @@ class Game {
             if (control === "select") {
                 this.toggleMap();
             }
-
-            if (this.mapOpen) {return;}
-
-            if (control === "a") {
-                if (this.dialog.show) {
-                    this.dialog.next();
-                    return;
-                }
-            }
-            if (this.dialog.show && this.dialog.anyNext) {
-                this.dialog.next();
-                return;
-            }
-        });
-
-        this.events.on('input.select', () => {
-            // open / close map in the future
         });
 
         // create interface
@@ -471,9 +454,6 @@ class Game {
         }
 
         this.ticking = true;
-        // for testing
-        //this.offset[0] += 1;
-        //this.offset[1] -= 1;
 
         let now = Date.now();
         let elapsed = now - this._lastFrame;
@@ -509,6 +489,7 @@ class Game {
         if (this.gametick % 4 == 0) {
             this.dialog.tick();
         }
+        
 
         if (this.doGameLogic && !this.dialog.show && !this.cutscene && !this.world.transitioning) {
             // update entities
@@ -533,6 +514,88 @@ class Game {
                     }
                 }
             });
+        }
+
+        if (this.doGameLogic && !player.isBusy) {
+            // too tired to think
+        } else if (this.world.transitioning && this.world.transition !== null) {
+            // disable all triggers we are inside ( they get reenabled by not being triggered)
+            for (let i=0; i<space.entities.length; i++) {
+                let entity = space.entities[i];
+                if (entity instanceof EntityTrigger) {
+                    entity.tempDisabled = true;
+                }
+            }
+            let transition = this.world.transition;
+            if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
+                let tick = this.gametick - this.world.transitionStart;
+                let stepsize = 4;
+                let steps = 0;
+                if (transition=="slideleft") {
+                    steps = this.canvas.width/stepsize;
+                    if(player.x < 8) {
+                        player.x+=0.25;
+                    }
+                    this.offset[0] = this.canvas.width - tick*stepsize;
+                } else if (transition=="slideright") {
+                    steps = this.canvas.width/stepsize;
+                    if(player.x > this.world.currentSpace.size[0]*this.tilesize-8) {
+                        player.x-=0.25;
+                    }
+                    this.offset[0] = -this.canvas.width + tick*stepsize;
+                } else if (transition=="slideup") {
+                    steps = (this.canvas.height-16)/stepsize;
+                    if(player.y < 8) {
+                        player.y+=0.25;
+                    }
+                    this.offset[1] = (this.canvas.height-16) - tick*stepsize;
+                } else if (transition=="slidedown") {
+                    steps = (this.canvas.height-16)/stepsize;
+                    if(player.y > this.world.currentSpace.size[1]*this.tilesize-8) {
+                        player.y-=0.25;
+                    }
+                    this.offset[1] = -(this.canvas.height-16) + tick*stepsize;
+                }
+                if(tick == Math.floor(steps/2)) {
+                    this.events.trigger('space-transition-mid', this.world.currentSpace);
+                }
+                if (tick >= steps) {
+                    this.world.transitioning = false;
+                    this.world.transitionCallback();
+                    this.events.trigger('space-transitioned', this.world.currentSpace);
+                }
+            } else if(transition == "building") { // fade out, then "open" white screen
+                let tick = this.gametick - this.world.transitionStart;
+                // half second fade, and quarter second "open"
+                if(tick == 30) {
+                    this.events.trigger('space-transition-mid', this.world.currentSpace);
+                }
+                if (tick > 45) {
+                    this.world.transitioning = false;
+                    this.world.transitionCallback();
+                    this.events.trigger('space-transitioned', this.world.currentSpace);
+                }
+            } else {
+                this.events.trigger('space-transition-mid', this.world.currentSpace);
+                this.world.transitioning = false;
+                this.world.transitionCallback();
+                this.events.trigger('space-transitioned', this.world.currentSpace);
+                if (transition !== "none") {
+                    console.error('unknown transition', transition);
+                }
+            }
+            this.interface.clearPressed();
+        }
+
+        // if we are in dialog, then we want to interact with the dialog
+        if (this.doGameLogic && this.dialog.show) {
+            if (this.interface.inputsPressed.indexOf("a") !== -1 || this.interface.inputsPressed.indexOf("b") !== -1) {
+                this.dialog.next();
+                this.interface.clearPressed();
+            } else if (this.dialog.anyNext && this.interface.inputsPressed.length > 0) {
+                this.dialog.next();
+                this.interface.clearPressed();
+            }
         }
 
         if (this.doGameLogic && !player.isBusy) {
@@ -646,73 +709,7 @@ class Game {
                     await this.world.transitionTo(prevspace, "slidedown");
                 }
             }
-        } else if(this.world.transitioning && this.world.transition !== null) {
-            // disable all triggers we are inside ( they get reenabled by not being triggered)
-            for (let i=0; i<space.entities.length; i++) {
-                let entity = space.entities[i];
-                if (entity instanceof EntityTrigger) {
-                    entity.tempDisabled = true;
-                }
-            }
-            let transition = this.world.transition;
-            if (transition == "slideleft" || transition == "slideright" || transition == "slideup" || transition == "slidedown") {
-                let tick = this.gametick - this.world.transitionStart;
-                let stepsize = 4;
-                let steps = 0;
-                if (transition=="slideleft") {
-                    steps = this.canvas.width/stepsize;
-                    if(player.x < 8) {
-                        player.x+=0.25;
-                    }
-                    this.offset[0] = this.canvas.width - tick*stepsize;
-                } else if (transition=="slideright") {
-                    steps = this.canvas.width/stepsize;
-                    if(player.x > this.world.currentSpace.size[0]*this.tilesize-8) {
-                        player.x-=0.25;
-                    }
-                    this.offset[0] = -this.canvas.width + tick*stepsize;
-                } else if (transition=="slideup") {
-                    steps = (this.canvas.height-16)/stepsize;
-                    if(player.y < 8) {
-                        player.y+=0.25;
-                    }
-                    this.offset[1] = (this.canvas.height-16) - tick*stepsize;
-                } else if (transition=="slidedown") {
-                    steps = (this.canvas.height-16)/stepsize;
-                    if(player.y > this.world.currentSpace.size[1]*this.tilesize-8) {
-                        player.y-=0.25;
-                    }
-                    this.offset[1] = -(this.canvas.height-16) + tick*stepsize;
-                }
-                if(tick == Math.floor(steps/2)) {
-                    this.events.trigger('space-transition-mid', this.world.currentSpace);
-                }
-                if (tick >= steps) {
-                    this.world.transitioning = false;
-                    this.world.transitionCallback();
-                    this.events.trigger('space-transitioned', this.world.currentSpace);
-                }
-            } else if(transition == "building") { // fade out, then "open" white screen
-                let tick = this.gametick - this.world.transitionStart;
-                // half second fade, and quarter second "open"
-                if(tick == 30) {
-                    this.events.trigger('space-transition-mid', this.world.currentSpace);
-                }
-                if (tick > 45) {
-                    this.world.transitioning = false;
-                    this.world.transitionCallback();
-                    this.events.trigger('space-transitioned', this.world.currentSpace);
-                }
-            } else {
-                this.events.trigger('space-transition-mid', this.world.currentSpace);
-                this.world.transitioning = false;
-                this.world.transitionCallback();
-                this.events.trigger('space-transitioned', this.world.currentSpace);
-                if (transition !== "none") {
-                    console.error('unknown transition', transition);
-                }
-            }
-        }
+        } 
 
         if (this.doGameLogic && !this.world.transitioning) {
             this.logictick++;

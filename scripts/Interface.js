@@ -72,6 +72,9 @@ class Interface {
 			}
 		}
 	}
+	clearPressed() {
+		this.inputsPressed = [];
+	}
 	tick() {
 		this.inputsPressed = [];
 		this.inputsReleased = [];

@@ -76,6 +76,7 @@ class EntityPlayer extends EntityPhysical {
 
     registerItems() {
         this.inventoryItems.rocs_feather = new ItemJumpFeather(this.game);
+        this.inventoryItems.grab = new ItemGrab(this.game);
     }
 
     setPushingEntity(entity) {
