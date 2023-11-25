@@ -8,6 +8,9 @@ class EntityTestPhysical extends EntityPhysical {
         this.squishesEntities = true;
         this.canBePushed = false;
         this.canBeBlocked = true;
+
+        this.disallowGrab = true;
+
         this.blockFilter = (e) => {
             return !(e instanceof EntityPlayer);
         }

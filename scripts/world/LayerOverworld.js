@@ -18,8 +18,8 @@ function LayerOverworld(game) {
         space.setTile(4,5,{name:"obstacle", variant:"coconut"});
         space.fill({name:"sand"}, 1, 7, 8);
         space.setTile(9,4,{name:"sand"});
-        space.setTile(1,3,{name:"gravelRough", goesTo: "buildings:5,5"});
 
+        /*
         let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 1, 1));
         let blockRight = space.addEntity(new EntityTestPhysical(space.game, 8, 1));
 
@@ -41,6 +41,7 @@ function LayerOverworld(game) {
                 blockBlocker.moveToTile(8,1);
             });
         }));
+        
         let player  = space.game.world.player;
         let px, py;
         [px, py] = player.position;
@@ -48,7 +49,8 @@ function LayerOverworld(game) {
             blockBlocker.remove();
         } else {
             timer.start();
-        } 
+        }
+        */
 
         // pushblock test
         space.addEntity(new EntityPushBlock(space.game, 2, 4));

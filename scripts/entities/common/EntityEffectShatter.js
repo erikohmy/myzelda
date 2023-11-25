@@ -1,4 +1,4 @@
-class EntityEffectPoof extends EntityBase {
+class EntityEffectShatter extends EntityBase {
     effectFrames = 2;
     effectTicksPerFranme = 6;
     
@@ -9,7 +9,7 @@ class EntityEffectPoof extends EntityBase {
         this._ticks = 0;
         this.zindex = zindex;
         if (sound) {
-            this.game.sound.play("appear_vanish");
+            this.game.sound.play("shatter");
         }
     }
     get effectFrame() {

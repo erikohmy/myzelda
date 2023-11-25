@@ -1,5 +1,4 @@
 class EntityEffectSplash extends EntityBase {
-    zindex = 9;// right before player
     effectFrames = 3;
     effectTicksPerFranme = 4;
     constructor(game, x, y, sound=true, zindex=9) {

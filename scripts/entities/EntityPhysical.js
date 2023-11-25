@@ -23,6 +23,7 @@ class EntityPhysical extends EntityBase {
     colliding = [0,0,0,0]; // top, right, bottom, left
 
     collideEntity = null; // entity we are currently colliding with
+    _lastCollidedWith = null; // last entity we collided with (be careful how used)
     moveNudge = false;
 
     getCollisionBox() {
@@ -184,7 +185,7 @@ class EntityPhysical extends EntityBase {
         return couldMoveX || couldMoveY;
     }
     _move(sx, sy, justTest = false, allownudge = true) {
-        if (this.noCollide && !justTest) {
+        if ((this.noCollide || this.isCarried) && !justTest) {
             this.x += sx;
             this.y += sy;
             return true;
@@ -192,7 +193,7 @@ class EntityPhysical extends EntityBase {
         let oldx = this.x;
         let oldy = this.y;
         let collisionBoxes = this.game.world.currentSpace.getCollisionBoxes("solid", (box) => {
-            return box.entity !== this;
+            return box.entity !== this && !(this instanceof EntityPlayer && box.entity && box.entity.playerCollisions === false);
         });
         if (this.playerCollisions) {
             if (this instanceof EntityPlayer) {
@@ -278,11 +279,13 @@ class EntityPhysical extends EntityBase {
         }
 
         let wasBlocked = (blockedX || blockedY); // todo: work with canBeBlocked
-        if (!justTest) {
-            if (wasBlocked) {
-                this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
-            } else {
-                this._clearCollideEntity();
+        if (true) {
+            if(!justTest) {
+                if (wasBlocked) {
+                    this._setCollideEntity(collidingWithX ? collidingWithX.entity : (collidingWithY ? collidingWithY.entity: null));
+                } else {
+                    this._clearCollideEntity();
+                }
             }
 
             let canBeBlockedX = this.canBeBlocked;
@@ -312,30 +315,37 @@ class EntityPhysical extends EntityBase {
                     let nudgeUp = false;
                     let nudgeDown = false;
                     for (let i = 1; i <= checks; i++) {
-                        if (this._move(0, -i, true)) {
+                        if (this._move(0, -i, true, false)) {
                             nudgeUp = i;
                             break;
                         }
-                        if (this._move(0, i, true)) {
+                        if (this._move(0, i, true, false)) {
                             nudgeDown = i;
                             break;
                         }
                     }
-                    if (nudgeUp) {
-                        //console.log('could walk, if we nudged up by', nudgeUp, 'px')
+                    if(!justTest) {
+                        if (nudgeUp) {
+                            //console.log('could walk, if we nudged up by', nudgeUp, 'px')
+                            this.x -= sx;
+                            return this.move(0,-1)
+                        } else if (nudgeDown) {
+                            //console.log('could walk, if we nudged down by', nudgeDown, 'px')
+                            this.x -= sx;
+                            return this.move(0,1)
+                        }
+                    } else if(nudgeUp || nudgeDown) {
                         this.x -= sx;
-                        return this.move(0,-1)
-                    } else if (nudgeDown) {
-                        //console.log('could walk, if we nudged down by', nudgeDown, 'px')
-                        this.x -= sx;
-                        return this.move(0,1)
+                        return true;
                     }
                 }
-                this.x -= sx;
-                if (sx > 0) {
-                    this.colliding[1] = 1;
-                } else if (sx < 0) {
-                    this.colliding[3] = 1;
+                if(!justTest) {
+                    this.x -= sx;
+                    if (sx > 0) {
+                        this.colliding[1] = 1;
+                    } else if (sx < 0) {
+                        this.colliding[3] = 1;
+                    }
                 }
             }
 
@@ -345,35 +355,50 @@ class EntityPhysical extends EntityBase {
                     let nudgeLeft = false;
                     let nudgeRight = false;
                     for (let i = 1; i <= checks; i++) {
-                        if (this._move(-i, 0, true)) {
+                        if (this._move(-i, 0, true, false)) {
                             nudgeLeft = i;
                             break;
                         }
-                        if (this._move(i, 0, true)) {
+                        if (this._move(i, 0, true, false)) {
                             nudgeRight = i;
                             break;
                         }
                     }
-                    if (nudgeLeft) {
-                        //console.log('could walk, if we nudged left by', nudgeLeft, 'px')
+                    if(!justTest) {
+                        if (nudgeLeft) {
+                            //console.log('could walk, if we nudged left by', nudgeLeft, 'px')
+                            this.y -= sy;
+                            return this.move(-1,0)
+                        } else if (nudgeRight) {
+                            //console.log('could walk, if we nudged right by', nudgeRight, 'px')
+                            this.y -= sy;
+                            return this.move(1,0)
+                        }
+                    } else if(nudgeLeft || nudgeRight) {
                         this.y -= sy;
-                        return this.move(-1,0)
-                    } else if (nudgeRight) {
-                        //console.log('could walk, if we nudged right by', nudgeRight, 'px')
-                        this.y -= sy;
-                        return this.move(1,0)
+                        return true;
                     }
                 }
-                this.y -= sy;
-                if (sy > 0) {
-                    this.colliding[2] = 1;
-                } else if (sy < 0) {
-                    this.colliding[0] = 1;
+                if(!justTest) {
+                    this.y -= sy;
+                    if (sy > 0) {
+                        this.colliding[2] = 1;
+                    } else if (sy < 0) {
+                        this.colliding[0] = 1;
+                    }
                 }
             }
-        } else { // just a test, reset position
+        }
+        if(justTest) { // just a test, reset position
             this.x = oldx;
             this.y = oldy;
+        }
+        if (collidingWithX) {
+            this._lastCollidedWith = collidingWithX;
+        } else if(collidingWithY) {
+            this._lastCollidedWith = collidingWithY;
+        } else {
+            this._lastCollidedWith = null;
         }
         return !wasBlocked;
     }

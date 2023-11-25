@@ -1,5 +1,4 @@
 class EntityPlayer extends EntityPhysical {
-    zindex = 10;
     opacity = 1;
 
     direction;
@@ -9,8 +8,8 @@ class EntityPlayer extends EntityPhysical {
     maxHealth;
     lastDamaged = 0;
     invincibilityTime = 30; // ticks, half a second
-    timePushed = 0;
     pushingEntity = null;
+    carriedEntity = null;
 
     squishing = false;
     falling = false;
@@ -26,6 +25,8 @@ class EntityPlayer extends EntityPhysical {
     onRoughGround = false;
     isSwimming = false;
     isJumping = false;
+    isGrabbing = false;
+    isPulling = false;
 
     inventoryItems = {}; // all items that the player can have (including ones not available/found yet)
     hotbarItems = [null, null]; // items equipped in A and B slot
@@ -33,6 +34,7 @@ class EntityPlayer extends EntityPhysical {
     constructor(game, x, y) {
         super(game);
         this.game = game;
+        this.zindex = 10;
         this.x = x;
         this.y = y;
         this.size = 10; // 10x10 collision box
@@ -67,11 +69,19 @@ class EntityPlayer extends EntityPhysical {
         return this.pushingEntity !== null || (this.isColliding() && this.walking && !this.isJumping);
     }
 
+    get isCarrying() {
+        return this.carriedEntity !== null;
+    }
+
     get moveSpeed() {
         if (this.isSwimming||this.onRoughGround) {
             return 0.5;
         }
         return 1;
+    }
+
+    get oppositeDirection() {
+        return (this.direction+2)%4;
     }
 
     registerItems() {
@@ -82,18 +92,15 @@ class EntityPlayer extends EntityPhysical {
     setPushingEntity(entity) {
         if (!entity) {
             if (this.pushingEntity) {
-                this.timePushed = 0;
                 this.pushingEntity = null;
             }
         } else if(entity !== this.pushingEntity) {
-            this.timePushed = 0;
             this.pushingEntity = entity;
-        } else if(entity === this.pushingEntity) {
-            this.timePushed++;
         }
     }
 
     respawn() {
+        this.game.interface.clearPressed();
         // respawn in space safe location
         let space = this.game.world.currentSpace;
         let x, y;
@@ -140,6 +147,7 @@ class EntityPlayer extends EntityPhysical {
         this.actionStart = this.game.gametick;
         this.size = 2;
         this.game.waitTicks(30).then(() => {
+            this.throw(false);// release any carried item
             this.damage(4);
             this.game.waitTicks(30).then(() => {
                 this.respawn();
@@ -153,6 +161,7 @@ class EntityPlayer extends EntityPhysical {
         if (this.falling) {
             return;
         }
+        this.throw(false);// release any carried item
         this.falling = true;
         this.walking=false;
         this.actionStart = this.game.gametick;
@@ -168,6 +177,7 @@ class EntityPlayer extends EntityPhysical {
         if (this.drowning) {
             return;
         }
+        this.throw(false);// release any carried item
         this.drowning = true;
         this.walking=false;
         this.game.waitTicks(30).then(() => {
@@ -192,6 +202,11 @@ class EntityPlayer extends EntityPhysical {
 
     tick() {
         super.tick();
+        if (this.isCarrying) {
+            // if we are carrying something, move it with us
+            this.carriedEntity.x = this.x;
+            this.carriedEntity.y = this.y-16;
+        }
         for (let i=0; i<this.hotbarItems.length; i++) {
             let item = this.inventoryItems[this.hotbarItems[i]];
             if (item) {
@@ -203,11 +218,10 @@ class EntityPlayer extends EntityPhysical {
             this.damageFlash--;
         }
 
-        if (this.pushingEntity && this.timePushed >= 30) {
+        if (this.pushingEntity) {
             if (this.pushingEntity.push){
                 this.pushingEntity.push(this.direction);
             }
-            this.timePushed = 0;
         }
 
         let beneath = this.tileBeneath();
@@ -221,6 +235,9 @@ class EntityPlayer extends EntityPhysical {
             this.previousTile = beneath;
             if (tile.wet) {
                 this.inPuddle = true;
+                if ((this.game.walkticks+1)%20 === 0) {
+                    this.game.sound.play("link_wade", 0.04);
+                }
             } else {
                 this.inPuddle = false;
             }
@@ -231,6 +248,9 @@ class EntityPlayer extends EntityPhysical {
             }
 
             if (tile.swim) {
+                if(this.isCarrying) {
+                    this.throw(false);
+                }
                 if (this.canSwim) {
                     if (this.isSwimming === false) {
                         this.isSwimming = true;
@@ -249,8 +269,36 @@ class EntityPlayer extends EntityPhysical {
             }
 
             if (tile.hole) {
-                // check if we should fall to lower layer?
-                this.fall();
+                // check how close to the center we are
+                let tx, ty;
+                [tx, ty] = tileSnap(this.x, this.y);
+                tx += 8;
+                ty += 8;
+                let dx = Math.abs(this.x - tx);
+                let dy = Math.abs(this.y - ty);
+                
+                if (dx < 4 && dy < 4) {
+                    this.throw(false);
+                    // check if we should fall to lower layer?
+                    this.fall();
+                } else {
+                    // nudge towards center
+                    let xnudge = 0;
+                    let ynudge = 0;
+                    if (this.x < tx) {
+                        xnudge = 1;
+                    } else if (this.x > tx) {
+                        xnudge = -1;
+                    }
+                    if (this.y < ty) {
+                        ynudge = 1;
+                    } else if (this.y > ty) {
+                        ynudge = -1;
+                    }
+                    let nudgestrength = 0.2;
+                    this.move(xnudge*nudgestrength, ynudge*nudgestrength);
+                }
+                
             }
         }
     }
@@ -304,6 +352,11 @@ class EntityPlayer extends EntityPhysical {
     }
 
     actionA() {
+        if (this.isCarrying) {
+            // throw carried item
+            this.throw();
+            return;
+        }
         // interact with entity in front of us
         let bx = this.x-8+this.game.offset[0];
         let by = this.y-8+this.game.offset[1];
@@ -334,6 +387,11 @@ class EntityPlayer extends EntityPhysical {
         }
     }
     actionB() {
+        if (this.isCarrying) {
+            // throw carried item
+            this.throw();
+            return;
+        }
         // use secondary item
         if (!this.isBusy && !this.isSwimming) {
             let equipped = this.inventoryItems[this.hotbarItems[1]];
@@ -351,6 +409,26 @@ class EntityPlayer extends EntityPhysical {
             equipped.actionRelease();
         }
     }
+    pickUp(entity) {
+        // todo: do animation
+        this.carriedEntity = entity;
+    }
+    throw() {
+        if (!this.isCarrying) return false
+        // todo: actually throw the entity
+        // wrap entity in a "EntityThrown" entity, that will handle the throwing
+        // inherits position and size from the carried entity, and draw simply passes through to the carried entity
+        let thrown = new EntityThrown(this.game, this.carriedEntity);
+        thrown.playerCollisions = false;
+        thrown.x = this.x;
+        thrown.y = this.y;
+        this.space.addEntity(thrown);
+        this.carriedEntity = null;
+    }
+    forceDrop() {
+        // immediately stop carrying
+        this.carriedEntity = null;
+    }
 
     draw() {
         let ox = this.game.offset[0];
@@ -361,9 +439,11 @@ class EntityPlayer extends EntityPhysical {
         let y = this.y;
         let zo = 0; // y offset, for jumping/falling etc
         let wo = 8; // width offset
-        let ho = 11; // height offset
+        let ho = 10; // height offset
         let sox = 0; // sprite offset x
         let soy = 0; // sprite offset y
+        let nx = 0; // nudge x
+        let ny = 0; // nudge y
 
         let opacityBefore = this.game.ctx.globalAlpha;
         if (this.opacity !== 1) {
@@ -409,6 +489,19 @@ class EntityPlayer extends EntityPhysical {
             }
         }
 
+        if (this.isGrabbing) {
+            sox = this.direction;
+            soy = 3;
+            if(this.isPulling) {
+                sox += 4;
+                // nudge player backwards a bit
+                if (this.direction == 0) {ny = 1;}
+                else if (this.direction == 1) {nx = -2;}
+                else if (this.direction == 2) {ny = -1;}
+                else if (this.direction == 3) {nx = 2;}
+            }
+        }
+
         if (this.isJumping) {
             let ticks = this.game.logictick - this.jumpStart;
             // jump up and down, ease in and out
@@ -440,7 +533,7 @@ class EntityPlayer extends EntityPhysical {
             let reduction = Math.min(12, 12*(this.game.gametick - this.actionStart)/30);
             sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox + reduction/2, y-ho+oy+zo, 1, 1, 16-reduction, 16);
         } else {
-            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox, y-ho+oy+zo);
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox+nx, y-ho+oy+zo+ny);
         }
         this.game.ctx.filter = filterBefore;
 

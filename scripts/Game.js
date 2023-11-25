@@ -119,12 +119,10 @@ class Game {
         }, 1000/tpsInterval);
         
         this.animations.test1 = () => {
+            this.cutscene = true;
             return new Promise((resolve) => {
                 let game = this;
                 game.everyTick(120, (t, total) => {
-                    if (t == 1) {
-                        game.cutscene = true;
-                    }
                     if (t <= 30) { // walk down
                         game.world.player.walking = true;
                         game.world.player.move(0, 1);
@@ -149,11 +147,11 @@ class Game {
             });
         };
         this.animations.enterUp = () => {
+            this.cutscene = true;
             return new Promise((resolve) => {
                 let game = this;
                 game.everyTick(24, (t, total) => {
                     game.player.noCollide = true;
-                    game.cutscene = true;
                     game.player.direction = 0;
                     game.player.walking = true;
                     game.player.move(0, -1);
@@ -167,11 +165,11 @@ class Game {
             });
         };
         this.animations.exitDown = () => {
+            this.cutscene = true;
             return new Promise((resolve) => {
                 let game = this;
                 game.everyTick(24, (t, total) => {
                     game.player.noCollide = true;
-                    game.cutscene = true;
                     game.world.player.direction = 2;
                     game.world.player.walking = true;
                     game.world.player.move(0, 1);
@@ -275,6 +273,8 @@ class Game {
         await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
         await this.sound.addSound("block_push", "./assets/sound/Block_Push.wav");
         await this.sound.addSound("appear_vanish", "./assets/sound/AppearVanish.wav");
+        await this.sound.addSound("shatter", "./assets/sound/shatter.wav");
+        await this.sound.addSound("chest", "./assets/sound/Chest.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
         await this.sound.addSound("link_fall", "./assets/sound/Link_Fall.wav");
@@ -320,7 +320,8 @@ class Game {
             }
         }, 8);
 
-        // testing, no inventory yet, equip rocs feather to B button
+        // testing, no inventory yet, equip grab to A, and rocs feather to B button
+        this.player.equipItem("grab", 0);
         this.player.equipItem("rocs_feather", 1);
     }
 
@@ -619,6 +620,7 @@ class Game {
             
             // set space safeSpot if not set
             if (!space.safeSpot) {
+                console.log('setting safe spot');
                 space.safeSpot = [player.x, player.y];
             }
 
@@ -631,7 +633,7 @@ class Game {
 
             
             // pushing
-            if (c_anydir && !c_multidir) {
+            if (c_anydir && !c_multidir && !player.isGrabbing) {
                 if (player.collideEntity) {
                     player.setPushingEntity(player.collideEntity);
                 } else if (!player.collideEntity && player.pushingEntity) {
@@ -642,12 +644,12 @@ class Game {
             }
 
             // direction
-            if (c_anydir) {
+            if (c_anydir && !player.isGrabbing) {
                 player.direction = dirIndex(this.interface.dpad);
             }
             
             // walking
-            player.walking = c_anydir;
+            player.walking = c_anydir && !player.isGrabbing;
             let mx = 0;
             let my = 0;
 
@@ -661,11 +663,7 @@ class Game {
             } else if (c_right) {
                 mx = player.moveSpeed;  
             }
-            if (mx !== 0 || my !== 0) {
-                if (player.inPuddle && (this.walkticks+1)%20 === 0) {
-                    this.sound.play("link_wade",0.04);
-                }
-                
+            if (!player.isGrabbing && (mx !== 0 || my !== 0)) {
                 // overworld 6,5, player 80,64 still crashes
                 player.move(mx, my, false, !c_multidir);
                 this.walkticks++;

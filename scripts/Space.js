@@ -115,14 +115,17 @@ class Space {
         //console.log("building space", this.layer.name, this.position)
         if (this.build) {
             this.build(this);
+            if (this.game.player.isCarrying) {
+                console.log("player brought something to this space", this.game.player.carriedEntity)
+                this.addEntity(this.game.player.carriedEntity);
+            }
         }
         this.built = true;
     }
     _destroy() {
-        //console.log("destroying space", this.layer.name, this.position)
         this.entities.forEach(entity => {
-            if (entity.destroy) {
-                entity.destroy();
+            if (!entity.isCarriedByPlayer && entity.remove) {
+                entity.remove();
             }
         });
         this.entities = [];
@@ -213,32 +216,29 @@ class Space {
         return entity;
     }
     createEntity(entity, args) {
-        // todo, automate this?
-        let entities = ["pushblock", "sign", "splash", "poof", "interval", "timer", "tick", "transitioner", "transitionTarget", "trigger"];
         if (args.tx) {
             args.x = args.tx*16+8;
         }
         if (args.ty) {
             args.y = args.ty*16+8;
         }
-        if (entities.includes(entity)) {
-            if (entity === "pushblock") {
-                return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
-            } else if (entity === "sign") {
-                return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
-            } else if (entity === "splash") {
-                return this.addEntity(new EntityEffectSplash(this.game, args.x, args.y));
-            } else if (entity === "poof") {
-                return this.addEntity(new EntityEffectPoof(this.game, args.x, args.y));
-            } else if (entity === "transitioner") {
-                return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
-            } else if (entity === "transitionTarget") {
-                return this.addEntity(new EntityTransitionTarget(this.game, args.x, args.y, args.direction, args.name, args.init));
-            }
-            console.error("Not implemented yet", entity);
-        } else {
-            console.error("Unknown entity type", entity);
+        
+        if (entity === "pushblock") {
+            return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
+        } else if (entity === "sign") {
+            return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
+        } else if (entity === "splash") {
+            return this.addEntity(new EntityEffectSplash(this.game, args.x, args.y));
+        } else if (entity === "poof") {
+            return this.addEntity(new EntityEffectPoof(this.game, args.x, args.y));
+        } else if (entity === "shatter") {
+            return this.addEntity(new EntityEffectShatter(this.game, args.x, args.y));
+        } else if (entity === "transitioner") {
+            return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
+        } else if (entity === "transitionTarget") {
+            return this.addEntity(new EntityTransitionTarget(this.game, args.x, args.y, args.direction, args.name, args.init));
         }
+        console.error("entity doesnt exist, or not implemented yet", entity);
     }
     removeEntity(entity) {
         let index = this.entities.indexOf(entity);
@@ -246,10 +246,10 @@ class Space {
             this.entities.splice(index, 1);
         }
     }
-    entitiesWithinRect(x, y, w, h) {// return all entities with an ORIGIN within the rect
+    entitiesWithinRect(x, y, w, h) {// return all entities with an ORIGIN within the rect, IGNORES CARRIED ENTITIES
         let entities = [];
         this.entities.forEach(entity => {
-            if (entity.hasOwnProperty("x") ) {
+            if (!entity.isCarried && entity.hasOwnProperty("x") ) {
                 if (entity.hasOwnProperty("size") || entity.hasOwnProperty("width")) {
                     let ew = entity.size ? entity.size[0] : entity.width;
                     let eh = entity.size ? entity.size[1] : entity.height;
@@ -302,38 +302,44 @@ class Space {
         // add tile collissions
         for (let y=0; y<this.size[1]; y++) {
             for (let x=0; x<this.size[0]; x++) {
-                let name = this.tile(x, y)?.name;
+                let tileinfo = this.tile(x, y);
+                let name = tileinfo?.name;
                 if (name) {
                     let tile = this.game.tiles[name];
                     if (tile) {
                         if (tile[condition]) {
-                            boxes.push({x:x*16, y:y*16, h:16, w:16});
+                            boxes.push({tile:tileinfo, x:x*16, y:y*16, h:16, w:16});
                         }
                         if(condition == "solid" && !!tile.collision) {
                             // special collisions
                             let variant = this.tile(x, y)?.variant;
                             let cname = name + (variant ? "-" + variant : "");
                             let collision = tile.collision[cname];
+                            let box = null;
                             if (collision == "left") {
-                                boxes.push({x:x*16, y:y*16, h:16, w:8});
+                                box = {x:x*16, y:y*16, h:16, w:8};
                             } else if (collision == "left-small") {
-                                boxes.push({x:x*16, y:y*16, h:16, w:6});
+                                box = {x:x*16, y:y*16, h:16, w:6};
                             } else if (collision == "right") {
-                                boxes.push({x:x*16+8, y:y*16, h:16, w:8});
+                                box = {x:x*16+8, y:y*16, h:16, w:8};
                             } else if (collision == "right-small") {
-                                boxes.push({x:x*16+10, y:y*16, h:16, w:6});
+                                box = {x:x*16+10, y:y*16, h:16, w:6};
                             } else if (collision == "top") {
-                                boxes.push({x:x*16, y:y*16, h:8, w:16});
+                                box = {x:x*16, y:y*16, h:8, w:16};
                             } else if (collision == "top-small") {
-                                boxes.push({x:x*16, y:y*16, h:6, w:16});
+                                box = {x:x*16, y:y*16, h:6, w:16};
                             } else if (collision == "bottom") {
-                                boxes.push({x:x*16, y:y*16+8, h:8, w:16});
+                                box = {x:x*16, y:y*16+8, h:8, w:16};
                             } else if (collision == "bottom-small") {
-                                boxes.push({x:x*16, y:y*16+10, h:6, w:16});
+                                box = {x:x*16, y:y*16+10, h:6, w:16};
                             } else if (collision == "bottom-xsmall") {
-                                boxes.push({x:x*16, y:y*16+13, h:3, w:16});
+                                box = {x:x*16, y:y*16+13, h:3, w:16};
                             }  else if (collision == "bottom-outside") {
-                                boxes.push({x:x*16, y:y*16+16, h:8, w:16});
+                                box = {x:x*16, y:y*16+16, h:8, w:16};
+                            }
+                            if (box) {
+                                box.tile = tileinfo;
+                                boxes.push(box);
                             }
                         }
                     }
@@ -342,7 +348,7 @@ class Space {
         }
         // todo: add entity collissions ( not enemies and such, only doors, tile entities, etc)
         this.entities.forEach(entity => {
-            if (entity.noCollide !== true && entity.getCollisionBox) {
+            if (entity.noCollide !== true && entity.isCarried !== true && entity.getCollisionBox) {
                 boxes.push(entity.getCollisionBox());
             }
         });
