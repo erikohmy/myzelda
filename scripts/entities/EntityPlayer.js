@@ -4,7 +4,7 @@ class EntityPlayer extends EntityPhysical {
     direction;
     walking = false;
 
-    feetOffset = 5;
+    feetOffset = 4;
 
     health;
     maxHealth;
@@ -674,11 +674,11 @@ class EntityPlayer extends EntityPhysical {
         // draw tile we are inside
         if (this.game.debug) {
             let tx, ty;
-            [tx, ty] = tileSnap(this.x, this.y);
+            [tx, ty] = tileSnap(this.x, this.y+this.feetOffset);
             this.game.setColor("#FF0000"); // red
             this.game.ctx.strokeRect(tx+ox, ty+oy, 16, 16);
             this.game.setColor("#000"); // black
-            this.game.ctx.fillRect(this.x+ox-1, this.y+oy-1, 2, 2);
+            this.game.ctx.fillRect(this.x+ox-1, this.y+this.feetOffset+oy-1, 2, 2);
         }
 
         /*
