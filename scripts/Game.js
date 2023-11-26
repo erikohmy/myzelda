@@ -272,6 +272,7 @@ class Game {
         this.events.trigger('sounds-adding');
         await this.sound.addSound("stairs", "./assets/sound/Stairs.wav");
         await this.sound.addSound("block_push", "./assets/sound/Block_Push.wav");
+        await this.sound.addSound("block_fall", "./assets/sound/block_fall.wav");
         await this.sound.addSound("appear_vanish", "./assets/sound/AppearVanish.wav");
         await this.sound.addSound("shatter", "./assets/sound/shatter.wav");
         await this.sound.addSound("chest", "./assets/sound/Chest.wav");
@@ -620,7 +621,6 @@ class Game {
             
             // set space safeSpot if not set
             if (!space.safeSpot) {
-                console.log('setting safe spot');
                 space.safeSpot = [player.x, player.y];
             }
 

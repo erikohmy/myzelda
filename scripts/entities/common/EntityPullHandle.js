@@ -7,8 +7,8 @@ class EntityPullHandle extends EntityPhysical {
         
         // settings
         this.lineLength = 24;
-        this.drawSpeed = 0.10;
-        this.returnSpeed = 0.05;
+        this.drawSpeed = 1;
+        this.returnSpeed = 2;
         this.direction = 0; // currently only works for pulling downwards (handle on upper wall)
 
         this.handleSetup(x, y);
@@ -91,7 +91,7 @@ class EntityPullHandle extends EntityPhysical {
             else if(direction == 2) yd = 1;
             else if(direction == 3) xd = -1;
             else if(direction == 1) xd = 1;
-            let ms = this.drawSpeed;
+            let ms = 0.10 * this.drawSpeed;
             let could = this.game.player.move(xd*ms,yd*ms);
             if(could) {
                 this.move(xd*ms,yd*ms);
@@ -114,7 +114,7 @@ class EntityPullHandle extends EntityPhysical {
                 else if(this.direction == 2) yd = 1;
                 else if(this.direction == 3) xd = -1;
                 else if(this.direction == 1) xd = 1;
-                let ms = this.returnSpeed;
+                let ms = 0.10 * this.returnSpeed;
                 this.move(xd*ms,yd*ms);
             } 
         }

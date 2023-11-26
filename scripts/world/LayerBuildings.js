@@ -48,6 +48,8 @@ function LayerBuildings(game) {
         let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 4, 1));
         let blockRight = space.addEntity(new EntityTestPhysical(space.game, 5, 1));
         let handle = space.addEntity(new EntityPullHandle(space.game, 1, 2));
+        //handle.returnSpeed = 1;
+        handle.lineLength = 48;
         handle.onLengthChanged = function(progress) {
             let movedist = Math.round(progress*16);
             blockLeft.moveTo(4*16+8-movedist, 1*16+8);

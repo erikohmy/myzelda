@@ -223,16 +223,18 @@ class Space {
             args.y = args.ty*16+8;
         }
         
-        if (entity === "pushblock") {
-            return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
-        } else if (entity === "sign") {
-            return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
-        } else if (entity === "splash") {
+        if (entity === "splash") {
             return this.addEntity(new EntityEffectSplash(this.game, args.x, args.y));
         } else if (entity === "poof") {
             return this.addEntity(new EntityEffectPoof(this.game, args.x, args.y));
         } else if (entity === "shatter") {
             return this.addEntity(new EntityEffectShatter(this.game, args.x, args.y));
+        } else if (entity === "fall") {
+            return this.addEntity(new EntityEffectFall(this.game, args.x, args.y));
+        } else if (entity === "pushblock") {
+            return this.addEntity(new EntityPushBlock(this.game, args.x, args.y));
+        } else if (entity === "sign") {
+            return this.addEntity(new EntitySign(this.game, args.x, args.y, args.text));
         } else if (entity === "transitioner") {
             return this.addEntity(new EntityTransitioner(this.game, args.x, args.y, args.w, args.h, args.target));
         } else if (entity === "transitionTarget") {

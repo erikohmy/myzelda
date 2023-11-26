@@ -58,8 +58,8 @@ class EntityBase {
             } else if(tile.hole) {
                 // should be block fall effect
                 let x,y;
-                [x,y] = tileSnap(x,y)
-                this.space.createEntity("splash", {x: x, y: y});
+                [x,y] = tileSnap(this.x, this.y);
+                this.space.createEntity("fall", {x: x+8, y: y+8});
             } else {
                 this.space.createEntity("shatter", {x: this.x, y: this.y});
             }

@@ -4,6 +4,8 @@ class EntityPlayer extends EntityPhysical {
     direction;
     walking = false;
 
+    feetOffset = 5;
+
     health;
     maxHealth;
     lastDamaged = 0;
@@ -22,6 +24,9 @@ class EntityPlayer extends EntityPhysical {
     canSwim = true;
 
     inPuddle = false;
+    onHole = false;
+    skirtingHoles = false;
+    willFall = false; // indicates the player WILL fall
     onRoughGround = false;
     isSwimming = false;
     isJumping = false;
@@ -77,11 +82,32 @@ class EntityPlayer extends EntityPhysical {
         if (this.isSwimming||this.onRoughGround) {
             return 0.5;
         }
+        if (this.onHole) {
+            if (this.willFall) {
+                return 0.025;// barely move!
+            }
+            if (this.skirtingHoles) {
+                return 0.1;
+            }
+            return 0.5;
+        }
         return 1;
     }
 
     get oppositeDirection() {
         return (this.direction+2)%4;
+    }
+
+    tileBeneath(set=null) {
+        let tile = this.space.tileAt(this.x, this.y+this.feetOffset);
+        if (set) {
+            if (typeof set === "string"){
+                this.space.setTileAt(this.x, this.y+this.feetOffset, {name: set})
+            } else {
+                this.space.setTileAt(this.x, this.y+this.feetOffset, set)
+            } 
+        }
+        return tile;
     }
 
     registerItems() {
@@ -187,7 +213,7 @@ class EntityPlayer extends EntityPhysical {
         });
     }
 
-    jump() {
+    jump() { // TODO: lock player movement while jumping, at least for a few ticks like in the real game
         if (this.isJumping) {
             return;
         }
@@ -224,82 +250,171 @@ class EntityPlayer extends EntityPhysical {
             }
         }
 
-        let beneath = this.tileBeneath();
+        // check tiles beneath us THIS CONTAINS RETURN STATEMENTS, DONT PUT ANYTHING AFTER IT
+        let beneath = this.tileBeneath();// TODO: override this with feet offset
         let tile = this.game.tile(beneath)
-        if (beneath && beneath.goesTo) {
+
+        if (beneath && beneath.goesTo) { // are we standing DIRECTLY on a tile that goes somewhere?
             if (this.previousTile !== null && !this.isBusy) {
                 this.previousTile = beneath;
                 this.game.world.goToString(beneath.goesTo);
             }
-        } else if (tile && !this.inAir) {
-            this.previousTile = beneath;
-            if (tile.wet) {
-                this.inPuddle = true;
-                if ((this.game.walkticks+1)%20 === 0) {
-                    this.game.sound.play("link_wade", 0.04);
+        } else if (!this.inAir) { // dont care about ground if we are in the are
+            this.previousTile = beneath; // just to make sure we dont get teleported instantly if transitioning onto a tile that goes somewhere
+
+            // are we really close other tiles?
+            let feetoffset = this.feetOffset;
+            let x = this.x;;
+            let y = this.y+feetoffset;
+            let tx, ty;
+            [tx, ty] = tileSnap(x, y);
+            tx += 8;
+            ty += 8;
+            let ox = this.x - tx;
+            let oy = this.y - ty;
+            let dx = Math.abs(ox);
+            let dy = Math.abs(oy);
+            let adjacentX = dx > 6; // are we practically standing on both this and the next tile? (horizontally)
+            let adjacentY = dy > 2; // are we practically standing on both this and the next tile? (vertically)
+
+            let closeToUp = adjacentY && oy <= -7;
+            let closeToDown = adjacentY && oy >= 5;
+            let closeToLeft = adjacentX && ox < 0;
+            let closeToRight = adjacentX && !closeToLeft;
+
+            let points = [
+                [tx, ty], // center
+                [tx, ty-16], // up
+                [tx+16, ty], // right
+                [tx, ty+16], // down
+                [tx-16, ty], // left
+                [tx+16, ty-16], // top right
+                [tx+16, ty+16], // bottom right
+                [tx-16, ty+16], // bottom left
+                [tx-16, ty-16], // top left
+            ];
+
+            // all 9 tiles we are "touching", center, up down right left, top right, bottom right, bottom left, top left
+            let tiles = (new Array(5)).fill(null)
+            tiles[0] = tile;
+            tiles[1] = this.game.tile(this.space.tileAt(points[1][0], points[1][1]));
+            tiles[2] = this.game.tile(this.space.tileAt(points[2][0], points[2][1]));
+            tiles[3] = this.game.tile(this.space.tileAt(points[3][0], points[3][1]));
+            tiles[4] = this.game.tile(this.space.tileAt(points[4][0], points[4][1]));
+            tiles[5] = this.game.tile(this.space.tileAt(points[5][0], points[5][1]));
+            tiles[6] = this.game.tile(this.space.tileAt(points[6][0], points[6][1]));
+            tiles[7] = this.game.tile(this.space.tileAt(points[7][0], points[7][1]));
+            tiles[8] = this.game.tile(this.space.tileAt(points[8][0], points[8][1]));
+
+            let holes = [];
+            tiles.forEach((tile, i) => {
+                if (tile && tile.hole) {
+                    let dx = Math.abs(x - points[i][0]);
+                    let dy = Math.abs(y - points[i][1]);
+                    holes.push({position: points[i], direction: i, distance: Math.sqrt(dx*dx + dy*dy)});
                 }
-            } else {
-                this.inPuddle = false;
-            }
-            if (tile.rough) {
-                this.onRoughGround = true;
-            } else {
-                this.onRoughGround = false;
+            });
+            holes.sort((a,b) => a.distance - b.distance);
+
+            // if we are only close to 1 hole, use normal nudging and falling logic
+            let holeAvgDistance = null;
+            if (holes.length > 1) {
+                // check diagonally? dont think its needed
+                holeAvgDistance = (holes[0].distance + holes[1].distance) / 2;
             }
 
-            if (tile.swim) {
-                if(this.isCarrying) {
-                    this.throw(false);
-                }
-                if (this.canSwim) {
-                    if (this.isSwimming === false) {
-                        this.isSwimming = true;
-                        let splash = new EntityEffectSplash(this.game, this.x, this.y);
-                        this.space.addEntity(splash);
+            if (tile) { // if we are standing on a tile
+                // puddle
+                if (tile.wet) {
+                    this.inPuddle = true;
+                    if ((this.game.walkticks+1)%20 === 0) {
+                        this.game.sound.play("link_wade", 0.04);
                     }
                 } else {
-                    if (! this.drowning) {
-                        let splash = new EntityEffectSplash(this.game, this.x, this.y);
-                        this.space.addEntity(splash);
-                        this.drown();
-                    }
+                    this.inPuddle = false;
                 }
-            } else {
-                this.isSwimming = false;
-            }
 
-            if (tile.hole) {
-                // check how close to the center we are
-                let tx, ty;
-                [tx, ty] = tileSnap(this.x, this.y);
-                tx += 8;
-                ty += 8;
-                let dx = Math.abs(this.x - tx);
-                let dy = Math.abs(this.y - ty);
-                
-                if (dx < 4 && dy < 4) {
-                    this.throw(false);
-                    // check if we should fall to lower layer?
-                    this.fall();
+                // stairs
+                if (tile.rough) {
+                    this.onRoughGround = true;
                 } else {
-                    // nudge towards center
-                    let xnudge = 0;
-                    let ynudge = 0;
-                    if (this.x < tx) {
-                        xnudge = 1;
-                    } else if (this.x > tx) {
-                        xnudge = -1;
-                    }
-                    if (this.y < ty) {
-                        ynudge = 1;
-                    } else if (this.y > ty) {
-                        ynudge = -1;
-                    }
-                    let nudgestrength = 0.2;
-                    this.move(xnudge*nudgestrength, ynudge*nudgestrength);
+                    this.onRoughGround = false;
                 }
-                
+
+                // water
+                if (tile.swim) {
+                    if(this.isCarrying) {
+                        this.throw(false);
+                    }
+                    if (this.canSwim) {
+                        if (this.isSwimming === false) {
+                            this.isSwimming = true;
+                            let splash = new EntityEffectSplash(this.game, this.x, this.y);
+                            this.space.addEntity(splash);
+                        }
+                    } else {
+                        if (! this.drowning) {
+                            let splash = new EntityEffectSplash(this.game, this.x, this.y);
+                            this.space.addEntity(splash);
+                            this.drown();
+                        }
+                    }
+                } else {
+                    this.isSwimming = false;
+                }
+
+                // Hole HAS to be last, we have a continue in it, gotta change that if we want to check stuff after holes
+                if (tile.hole) { // all holes we are really close to
+                    this.onHole = true;
+                    // check how close to the center we are
+                    let hx,hy;
+                    [hx,hy] = tileSnap(points[0][0], points[0][1]);
+                    hx += 8;
+                    hy += 8;
+                    let dx = Math.abs(x - hx);
+                    let dy = Math.abs(y - hy);
+                    let lowest = Math.min(dx, dy);
+
+                    let skirtingHoles = false;
+                    if(holeAvgDistance!==null && holeAvgDistance < 8.3 && lowest <= 2 ) {
+                        // player is trying to walk between two holes, nudge towards closest hole!
+                        skirtingHoles = true;
+                        this.skirtingHoles = true;
+                    } else {
+                        this.skirtingHoles = false;
+                    }
+        
+                    if (!this.willFall && dx < 5 && dy < 5) { // fall immediately if we are this close to the center,
+                        this.willFall = true; // cripple player movement, and allow player to be nudged to center
+                    } else {
+                        if (this.willFall && dx < 2.5 && dy < 2.5) {
+                            // basically in center, fall
+                            this.fall();
+                        }
+                        // nudge towards center
+                        let xnudge = 0;
+                        let ynudge = 0;
+                        if (x < tx) {
+                            xnudge = 1;
+                        } else if (x > tx) {
+                            xnudge = -1;
+                        }
+                        if (y < ty) {
+                            ynudge = 1;
+                        } else if (y > ty) {
+                            ynudge = -1;
+                        }
+                        let nudgestrength = skirtingHoles ? 0.25 : 0.1;
+                        this.move(xnudge*nudgestrength, ynudge*nudgestrength);
+                    }
+                } else {
+                    this.onHole = false;
+                    this.skirtingHoles = false;
+                    this.willFall = false; // if player somehow gets out? good for you!
+                }
             }
+        } else {
+            // in air, care about something?
         }
     }
 
@@ -312,7 +427,15 @@ class EntityPlayer extends EntityPhysical {
                 this.game.sound.play("link_land_run");
             } else if(tile.wet) {
                 this.game.sound.play("link_wade");
+            } else if(tile.hole) {
+                // be a bit evil, and try to prevent the player from jumping two tiles
+                this.onHole = true;
+                this.skirtingHoles = true;
+                this.willFall = true;
             }
+        }
+        if (this.inventoryItems.rocs_feather && this.inventoryItems.rocs_feather.jumped) {
+            this.inventoryItems.rocs_feather.landed();
         }
     }
 
@@ -421,7 +544,8 @@ class EntityPlayer extends EntityPhysical {
         let thrown = new EntityThrown(this.game, this.carriedEntity);
         thrown.playerCollisions = false;
         thrown.x = this.x;
-        thrown.y = this.y;
+        thrown.y = this.y+this.feetOffset;
+        thrown.z = 16 + this.feetOffset;
         this.space.addEntity(thrown);
         this.carriedEntity = null;
     }
@@ -513,7 +637,7 @@ class EntityPlayer extends EntityPhysical {
             let j = Math.ceil(jumpHeight * pe);
             j = Math.min(j, jumpHeight)+1;
             zo = -j;
-            Graphics.drawShadow(this.game.ctx, x+ox, y+oy, 8, 8);
+            Graphics.drawShadow(this.game.ctx, x+ox, y+oy+this.feetOffset/2, 8, 8);
         }
 
         let filterBefore = this.game.ctx.filter;
@@ -553,6 +677,8 @@ class EntityPlayer extends EntityPhysical {
             [tx, ty] = tileSnap(this.x, this.y);
             this.game.setColor("#FF0000"); // red
             this.game.ctx.strokeRect(tx+ox, ty+oy, 16, 16);
+            this.game.setColor("#000"); // black
+            this.game.ctx.fillRect(this.x+ox-1, this.y+oy-1, 2, 2);
         }
 
         /*

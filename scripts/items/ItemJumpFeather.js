@@ -3,9 +3,17 @@ class ItemJumpFeather extends ItemBase {
         super(game);
         this.name = "Roc's Feather";
         this.description = "Roc's Feather\nA nice lift.";
+        this.jumped = false;
     }
     actionPress() {
-        this.game.player.jump();
+        let player = this.game.player;
+        if (!player.onHole) {
+            player.jump();
+            this.jumped = true;
+        }
+    }
+    landed() {
+        this.jumped = false;
     }
     renderIcon(ctx, x, y) { // icon for the inventory, and hotbar
         let sheet = this.game.spritesheets.items;

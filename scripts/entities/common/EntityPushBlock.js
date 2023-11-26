@@ -143,7 +143,9 @@ class EntityPushBlock extends EntityPhysical {
         let tile = this.game.tile(beneath)
         if (tile) {
             if(tile.hole || tile.swim) {
-                this.onLanded();
+                this.game.waitTicks(6).then(() => {
+                    this.onLanded();
+                });
             }
         }
     }
