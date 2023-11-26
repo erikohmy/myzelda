@@ -75,4 +75,14 @@ class EntityBase {
         }
         this.space.removeEntity(this);
     }
+
+    getDebugInfo() {
+        let info = {
+            class: this.constructor.name,
+            isCarried: this.isCarried,
+            zindex: this.zindex,
+        }
+        return info;
+    }
+
 }

@@ -34,15 +34,17 @@ class World {
         this.transitioning = true;
         this.transition = null; // reset transition
 
-        // take a snapshot of the current space, without the player
-        if (transition === "slideup" || transition === "slidedown" || transition === "slideleft" || transition === "slideright") {
-            this.game.hideplayer = true;
-            this.game.render();
-        } else {
-            this.game.noRender = true; // skip rendering
-        }
-        if (transition !== "none") {
-            this.snapshot = await this.game.snapshot();
+        if (this.currentSpace) { // if we have a newly started game, no previous space, then we cant snapshot
+            // take a snapshot of the current space, without the player
+            if (transition === "slideup" || transition === "slidedown" || transition === "slideleft" || transition === "slideright") {
+                this.game.hideplayer = true;
+                this.game.render();
+            } else {
+                this.game.noRender = true; // skip rendering
+            }
+            if (transition !== "none") {
+                this.snapshot = await this.game.snapshot();
+            }
         }
         this.game.hideplayer = false;
         this.transition = transition;
@@ -76,6 +78,7 @@ class World {
         this.currentLayer = space.layer;
         this.player.space = space;
         this.player.previousTile = null;
+        this.player.setPushingEntity(null);
         this.game.noRender = false; // re-enable rendering
     }
 

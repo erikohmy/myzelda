@@ -406,4 +406,11 @@ class EntityPhysical extends EntityBase {
     isColliding() {
         return !!(this.colliding[0] || this.colliding[1] || this.colliding[2] || this.colliding[3]);
     }
+
+    getDebugInfo() {
+        let info = super.getDebugInfo();
+        let position = this.position;
+        info.position = position[0] + "," + position[1];
+        return info;
+    }
 }

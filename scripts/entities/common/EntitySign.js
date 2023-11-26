@@ -24,7 +24,7 @@ class EntitySign extends EntityBase {
         }
     }
     lift() {
-        this.game.player.pickUp(this);
+        return true;
     }
     draw() {
         let ox = this.game.offset[0];

@@ -14,4 +14,5 @@ class ItemBase { // inventory item that the player uses with action buttons
     onEquip() {} // called when the item is equipped
     onUnequip() {} // called when the item is unequipped
     whileEquipped() {} // called every tick while the item is equipped
+    animation() {} // if this doesnt return anything, or returns undefined, player handles animation, otherwise item does it! 
 }

@@ -9,9 +9,12 @@ class ItemGrab extends ItemBase {
         this.description = "Power Bracelet\nA strength booster.";
 
         this.holding = false; // holding button
+
         this.grabbed = false; // if we have grabbed something
-        this.pulling = false;
-        this.grabbedInfo = null; // the entity we have grabbed
+        this.pulling = false; // if we are pulling something
+        this.lifting = false; // if we are lifting something up (not true WHILE we are carying something, thats handled by player)
+
+        this.grabbedInfo = null; // the collision box we have grabbed currently
     }
 
     actionPress() {
@@ -19,11 +22,13 @@ class ItemGrab extends ItemBase {
         this.holding = true;
     }
     actionRelease() {
+        if(this.lifting) return; // cannot abort lifting on our own
         if(!this.holding) return;
         this.holding = false;
         if (this.grabbed) {
             this.grabbed = false;
             this.pulling = false;
+            this.lifting = false;
             this.game.player.isGrabbing = false;
             this.game.player.isPulling = false;
             this.grabRelease();
@@ -31,6 +36,7 @@ class ItemGrab extends ItemBase {
         }
     }
     grabStart() {
+        if(this.lifting) return; // if we are playing lifting animation, we cant change what we are grabbing 
         // player started grabbing something
         //console.log("grab start");
         // if we are grabbing an entity, call its grab method
@@ -42,6 +48,7 @@ class ItemGrab extends ItemBase {
         }
     }
     grabRelease() {
+        if(this.lifting) return; // cannot release while playing lifting animation
         // player released something
         //console.log("grab release");
         // if we are grabbing an entity, call its release method
@@ -60,7 +67,7 @@ class ItemGrab extends ItemBase {
             if (e.pull) {
                 // entity can be pulled!
                 let res = e.pull(this.game.player.oppositeDirection)
-                if (res===null) {
+                if (res===null||res===undefined) {
                     // ignore pull method, and try lifting instead
                 } else if (res==="release") {
                     // pull ordered us to release
@@ -74,8 +81,43 @@ class ItemGrab extends ItemBase {
             if (e.lift) {
                 // entity can be lifted!
                 let res = e.lift(this.game.player.oppositeDirection)
+                if (res===null||res===undefined) {
+                    // ignore lift method
+                } else if (res==="heavy") {
+                    // check what level the grab is
+                    console.log("heavy", this.level);
+                    return;
+                } else if (res===true) {
+                    // pick up the thing!
+                    this.lift(e)
+                    return;
+                }
             }
         }
+    }
+    lift(entity) {
+        if (this.lifting) return;
+        let player = this.game.player;
+        this.game.sound.play('link_pickup');
+        this.lifting = true;
+        this.game.everyTick(0, (t)=>{
+            if (!this.lifting) {
+                console.log("aborting lift");
+                return false;
+            }
+            if (t>=30) {
+                this.lifting = false;
+                this.actionRelease();
+                player.carriedEntity = entity;
+                return false;
+            }
+        })
+    }
+    abort() {// abort grabbing, pulling, trying to lift, etc
+        
+        // if we are trying to lift, abort animation and release
+
+        // if we are just grabbing or pulling, just release
     }
     whileEquipped() {
         if (this.grabbed) {
@@ -194,5 +236,45 @@ class ItemGrab extends ItemBase {
             sheet.drawSprite(ctx, 9, 4, x+16, y+8, 1, 1); // 1
         }
         
+    }
+    animation() { // override player animation!
+        if (this.grabbed) {
+            let ox = this.game.offset[0];
+            let oy = this.game.offset[1];
+
+            let sheet = this.game.spritesheets.player;
+            let player = this.game.player;
+            let x = player.x;
+            let y = player.y;
+            let zo = 0; // y offset, for jumping/falling etc
+            let wo = 8; // width offset
+            let ho = 10; // height offset
+            let sox = 0; // sprite offset x
+            let soy = 0; // sprite offset y
+            let nx = 0; // nudge x
+            let ny = 0; // nudge y
+
+            sox = player.direction;
+            soy = 3;
+
+            if (this.lifting) { // do lifting animation
+                console.log("lifting")
+            } else { // do grabbing sprites
+                console.log("grabbing")
+                soy = 3;
+                if (player.isPulling) {
+                    sox += 4;
+                    // nudge player backwards a bit
+                    if (player.direction == 0) {ny = 1;}
+                    else if (player.direction == 1) {nx = -2;}
+                    else if (player.direction == 2) {ny = -1;}
+                    else if (player.direction == 3) {nx = 2;}
+                }
+            }
+
+            sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox+nx, y-ho+oy+zo+ny);
+            return true; // override animation
+        }
+        return undefined; // dont override animation
     }
 }

@@ -3,7 +3,7 @@ class EntityPushBlock extends EntityPhysical {
         TODO: whitelist/blacklist of tiles, like stairs, road etc
         Better collision detection, as now we can slide over the edge of other entities, and ignores signs...
     */
-    isBeingPushed = false;
+    isMoving = false;
     pushTime = 60; // time to move to new position
     pushCooldown = 30; // time to wait before being pushed again
     pushedTimeout = 0;
@@ -35,7 +35,10 @@ class EntityPushBlock extends EntityPhysical {
     }
     
     get isBusy() {
-        return this.isBeingPushed || this.pushedTimeout > 0;
+        return this.isMoving || this.pushedTimeout > 0;
+    }
+    get isBeingPushed() {
+        return this.interactionType === "push";
     }
 
     push(direction) {
@@ -62,8 +65,6 @@ class EntityPushBlock extends EntityPhysical {
     }
     lift() {
         return null;
-        this.game.player.pickUp(this);
-        return true; // we did lift, or tried to
     }
     resetInteraction() {
         this.interactionTicks = 0;
@@ -129,10 +130,10 @@ class EntityPushBlock extends EntityPhysical {
         }
 
         // finally, we can push!
-        this.isBeingPushed = true;
+        this.isMoving = true;
         this.moveToTile(tx,ty, undefined, () => {
             this.pushedTimeout = this.pushCooldown;
-            this.isBeingPushed = false;
+            this.isMoving = false;
             this.movedToTile(tx,ty);
         });
         this.game.sound.play("block_push");
@@ -155,5 +156,14 @@ class EntityPushBlock extends EntityPhysical {
         //let sheet = this.game.spritesheets.dungeonCommon;
         let sheet = this.game.spritesheets.dungeonCommon;
         sheet.drawSprite(this.game.ctx, 1, 7, this.x-8+ox, this.y-8+oy);
+    }
+
+    getDebugInfo() {
+        let info = super.getDebugInfo();
+        info.pushedTimeout = this.pushedTimeout;
+        info.isBeingPushed = this.isBeingPushed;
+        info.isMoving = this.isMoving;
+        info.interactionTicks = this.interactionTicks;
+        return info;
     }
 }

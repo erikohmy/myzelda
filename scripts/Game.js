@@ -213,6 +213,48 @@ class Game {
         }
     }
 
+    showDebug() {
+        let debuginfo = document.querySelector('.debuginfo');
+        debuginfo.classList.remove('hidden');
+        this.debug = true;
+    }
+    hideDebug() {
+        let debuginfo = document.querySelector('.debuginfo');
+        debuginfo.classList.add('hidden');
+        this.debug = false;
+    }
+    updateDebugInfo() {
+        let debug_player = document.querySelector('.js-debuginfo-player');
+
+        // pushingEntity summary
+        let pushingEntity = null;
+        if (this.player.pushingEntity) {
+            if (typeof this.player.pushingEntity === "object") {
+                if (this.player.pushingEntity.getDebugInfo) {
+                    pushingEntity = this.player.pushingEntity.getDebugInfo();
+                } else if(this.player.pushingEntity.constructor.name !== "Object") {
+                    pushingEntity = {
+                        class: this.player.pushingEntity.constructor.name
+                    }
+                } else {
+                    pushingEntity = this.player.pushingEntity;
+                }
+            } else {
+                pushingEntity = this.player.pushingEntity;
+            }
+        }
+
+        let debug_player_data = {
+            position: this.player.x+","+this.player.y,
+            direction: this.player.direction,
+            walking: this.player.walking,
+            isGrabbing: this.player.isGrabbing,
+            isPushing: this.player.isPushing,
+            pushingEntity: pushingEntity ? pushingEntity : "none",
+        }
+        debug_player.innerHTML = JSON.stringify(debug_player_data, null, 2);
+    }
+
     addIssue(issue) {
         let index = this.issues.findIndex(m => m.identifier === issue.identifier);
         if (index === -1) {
@@ -282,6 +324,7 @@ class Game {
         await this.sound.addSound("link_jump", "./assets/sound/Link_Jump.wav");
         await this.sound.addSound("link_land_run", "./assets/sound/Link_LandRun.wav");
         await this.sound.addSound("link_wade", "./assets/sound/Link_Wade.wav");
+        await this.sound.addSound("link_pickup", "./assets/sound/Link_PickUp.wav");
 
         await this.sound.addSound("text_letter", "./assets/sound/Text_Letter.wav");
         await this.sound.addSound("text_done", "./assets/sound/Text_Done.wav");
@@ -617,18 +660,6 @@ class Game {
             let c_anydir = !!this.interface.dpad;
             let c_multidir = (c_up || c_down) && (c_left || c_right);
 
-            
-            // pushing
-            if (c_anydir && !c_multidir && !player.isGrabbing) {
-                if (player.collideEntity) {
-                    player.setPushingEntity(player.collideEntity);
-                } else if (!player.collideEntity && player.pushingEntity) {
-                    player.setPushingEntity(null);
-                }
-            } else {
-                player.setPushingEntity(null);
-            }
-
             // direction
             if (c_anydir && !player.isGrabbing) {
                 player.direction = dirIndex(this.interface.dpad);
@@ -658,6 +689,19 @@ class Game {
                 }
             } else {
                 this.walkticks = 0;
+            }
+
+            // pushing
+            if (c_anydir && !player.isGrabbing) {
+                // find the entity or tile in front of the player
+                let thing = player.inFrontoff();
+                if (thing && typeof thing === "object") {
+                    player.setPushingEntity(thing);
+                } else if (player.pushingEntity) {
+                    player.setPushingEntity(null);
+                }
+            } else {
+                player.setPushingEntity(null);
             }
 
             // if player is outside the space to the rigt, transition to the next space
@@ -758,6 +802,9 @@ class Game {
         // cleanup controls
         if (this.doGameLogic && !this.player.isBusy) {
             this.interface.tick();
+        }
+        if (this.debug) {
+            this.updateDebugInfo();
         }
         this.ticking = false;
     }

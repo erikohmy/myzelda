@@ -78,3 +78,16 @@ div, canvas {
 .application.gbcolors canvas#game {
     filter: sepia(26%) saturate(80%) contrast(110%);
 }
+.debuginfo {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 10000;
+    background: #111;
+}
+.debuginfo.hidden {
+    display: none;
+}
+.debuginfo-group {
+    padding: 16px;
+}

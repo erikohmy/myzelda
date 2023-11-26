@@ -33,6 +33,8 @@ class EntityPlayer extends EntityPhysical {
     isGrabbing = false;
     isPulling = false;
 
+    willTransition = false; // entered a tile that goes somewhere
+
     inventoryItems = {}; // all items that the player can have (including ones not available/found yet)
     hotbarItems = [null, null]; // items equipped in A and B slot
 
@@ -58,7 +60,7 @@ class EntityPlayer extends EntityPhysical {
     }
 
     get isBusy() { // player cannot take action, due to dying, dialog, cutscene, etc
-        if (this.game.dialog.show || this.game.cutscene || this.game.world.transitioning) {
+        if (this.willTransition || this.game.dialog.show || this.game.cutscene || this.game.world.transitioning) {
             return true;
         }
         // if animating a move, or dying etc.
@@ -70,8 +72,7 @@ class EntityPlayer extends EntityPhysical {
     }
 
     get isPushing() {
-        // but also if we push a solid tile...
-        return this.pushingEntity !== null || (this.isColliding() && this.walking && !this.isJumping);
+        return this.pushingEntity !== null;
     }
 
     get isCarrying() {
@@ -98,7 +99,12 @@ class EntityPlayer extends EntityPhysical {
         return (this.direction+2)%4;
     }
 
-    tileBeneath(set=null) {
+    registerItems() {
+        this.inventoryItems.rocs_feather = new ItemJumpFeather(this.game);
+        this.inventoryItems.grab = new ItemGrab(this.game);
+    }
+
+    tileBeneath(set=null) { // override the method from entityBase, to use feet offset
         let tile = this.space.tileAt(this.x, this.y+this.feetOffset);
         if (set) {
             if (typeof set === "string"){
@@ -110,9 +116,30 @@ class EntityPlayer extends EntityPhysical {
         return tile;
     }
 
-    registerItems() {
-        this.inventoryItems.rocs_feather = new ItemJumpFeather(this.game);
-        this.inventoryItems.grab = new ItemGrab(this.game);
+    inFrontoff() { // get entity or tile in front of player (only if whatever it is is blocking player)
+        let player = this;
+        let xd = 0;
+        let yd = 0;
+        if(player.direction == 0) yd = -1;
+        if(player.direction == 2) yd = 1;
+        if(player.direction == 3) xd = -1;
+        if(player.direction == 1) xd = 1;
+        if(player.move(xd, yd, true) === false) {
+            let thing = player._lastCollidedWith;
+            // TODO: try to check from the front and out, to make sure we get the MOST CENTRAL thing, not just the first
+            if (thing) { // collision box with entity or tile
+                if (thing.entity) {
+                    return thing.entity;
+                } else if (thing.tile) {
+                    // clone the tileinfo, so we can modify it
+                    let tileinfo = {...thing.tile};
+                    tileinfo.x = thing.x / this.game.tilesize;
+                    tileinfo.y = thing.y / this.game.tilesize;
+                    return tileinfo;
+                }
+            }
+        }
+        return false; // not in front of anything
     }
 
     setPushingEntity(entity) {
@@ -257,7 +284,12 @@ class EntityPlayer extends EntityPhysical {
         if (beneath && beneath.goesTo) { // are we standing DIRECTLY on a tile that goes somewhere?
             if (this.previousTile !== null && !this.isBusy) {
                 this.previousTile = beneath;
-                this.game.world.goToString(beneath.goesTo);
+                this.setPushingEntity(null);
+                this.willTransition = true;
+                this.game.waitTicks(1).then(() => { // wait a single tick to make sure we arent rendered pushing the door
+                    this.willTransition = false;
+                    this.game.world.goToString(beneath.goesTo);
+                });
             }
         } else if (!this.inAir) { // dont care about ground if we are in the are
             this.previousTile = beneath; // just to make sure we dont get teleported instantly if transitioning onto a tile that goes somewhere
@@ -532,10 +564,6 @@ class EntityPlayer extends EntityPhysical {
             equipped.actionRelease();
         }
     }
-    pickUp(entity) {
-        // todo: do animation
-        this.carriedEntity = entity;
-    }
     throw() {
         if (!this.isCarrying) return false
         // todo: actually throw the entity
@@ -555,6 +583,24 @@ class EntityPlayer extends EntityPhysical {
     }
 
     draw() {
+        // check if any of the currently equipped items overrides our animation
+        for (let i=0; i<this.hotbarItems.length; i++) {
+            let itemName = this.hotbarItems[i];
+            if (itemName) {
+                let item = this.inventoryItems[itemName];
+                if (item && item.animation) {
+                    let override = item.animation();
+                    if (override === true) {
+                        return;
+                    }
+                } else {
+                    console.error("item is missing animation method", item);
+                }
+            } else {
+                console.log("no item in slot", i)
+            }
+        }
+
         let ox = this.game.offset[0];
         let oy = this.game.offset[1];
 
@@ -597,12 +643,6 @@ class EntityPlayer extends EntityPhysical {
             soy += 2;
             ho = 8;
         } else if (this.isPushing) {
-            // todo: do we need to check multiple directions?
-            let collideDir = this.colliding.indexOf(1);
-            if (this.direction !== collideDir && collideDir !== -1) {
-                sox -= this.direction;
-                sox += collideDir;
-            }
             soy += 1;
         }
 
@@ -610,19 +650,6 @@ class EntityPlayer extends EntityPhysical {
         if ((!this.isBusy || this.game.cutscene) && (this.walking || this.isSwimming) && this.game.animationtick % 15 > 7) {
             if (!this.isJumping) {
                 sox += 4;
-            }
-        }
-
-        if (this.isGrabbing) {
-            sox = this.direction;
-            soy = 3;
-            if(this.isPulling) {
-                sox += 4;
-                // nudge player backwards a bit
-                if (this.direction == 0) {ny = 1;}
-                else if (this.direction == 1) {nx = -2;}
-                else if (this.direction == 2) {ny = -1;}
-                else if (this.direction == 3) {nx = 2;}
             }
         }
 
