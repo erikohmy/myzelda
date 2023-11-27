@@ -258,7 +258,11 @@ class EntityPlayer extends EntityPhysical {
         if (this.isCarrying) {
             // if we are carrying something, move it with us
             this.carriedEntity.x = this.x;
-            this.carriedEntity.y = this.y-16;
+            if (this.walking && this.direction%2 && this.game.animationtick % 15 > 7) { // walking left or right
+                this.carriedEntity.y = this.y-15;
+            } else {
+                this.carriedEntity.y = this.y-16;
+            }
         }
         for (let i=0; i<this.hotbarItems.length; i++) {
             let item = this.inventoryItems[this.hotbarItems[i]];
@@ -639,9 +643,11 @@ class EntityPlayer extends EntityPhysical {
         }
 
         sox += this.direction;
-        if(this.isSwimming) {
+        if (this.isSwimming) {
             soy += 2;
             ho = 8;
+        } else if (this.isCarrying) {
+            soy += 4;
         } else if (this.isPushing) {
             soy += 1;
         }
@@ -687,6 +693,10 @@ class EntityPlayer extends EntityPhysical {
             sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox+nx, y-ho+oy+zo+ny);
         }
         this.game.ctx.filter = filterBefore;
+
+        if (this.isCarrying) {
+            this.carriedEntity.draw();
+        }
 
         // if we are standing in a puddle, draw wet effect, actually, handler on ALL entities that are physical instead
         if (this.inPuddle) {

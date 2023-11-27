@@ -2,20 +2,10 @@ class EntityBase {
     game;
     physical = false;
     canBeCarried = false; // can be carried, at all (does not allow carrying on its own)
-    _zindex = 0; // higher zindex means it is drawn on top
+    zindex = 0; // higher zindex means it is drawn on top
 
     constructor(game) {
         this.game = game;
-    }
-
-    get zindex() {
-        if(this.isCarried) {
-            return this.carriedBy.zindex + 1;
-        }
-        return this._zindex;
-    }
-    set zindex(z) {
-        this._zindex = z;
     }
 
     get isCarriedByPlayer() {

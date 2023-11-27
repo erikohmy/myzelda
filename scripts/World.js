@@ -40,6 +40,8 @@ class World {
                 this.game.hideplayer = true;
                 this.game.render();
             } else {
+                // drop any items the player is holding, only allowed to carry items between spaces if we are walking between spaces
+                this.game.player.forceDrop();
                 this.game.noRender = true; // skip rendering
             }
             if (transition !== "none") {

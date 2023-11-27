@@ -519,11 +519,9 @@ class Game {
         if (this.gametick % 4 == 0) {
             this.dialog.tick();
         }
-        
 
         if (this.doGameLogic && !this.dialog.show && !this.cutscene && !this.world.transitioning) {
-            // update entities
-            player.tick();
+            // update entities, player is updated later
             for (let i=0; i<space.entities.length; i++) {
                 let entity = space.entities[i];
                 if (!!entity.logic) {
@@ -737,7 +735,11 @@ class Game {
                     await this.world.transitionTo(prevspace, "slidedown");
                 }
             }
-        } 
+        }
+
+        if (this.doGameLogic && !this.dialog.show && !this.cutscene && !this.world.transitioning) {
+            player.tick();
+        }
 
         if (this.doGameLogic && !this.world.transitioning) {
             this.logictick++;
@@ -965,7 +967,7 @@ class Game {
         }
 
         // draw entities
-        let entitiesToDraw = space.entities.filter(e => !!e.draw);
+        let entitiesToDraw = space.entities.filter(e => !!e.draw && e.isCarried !== true);
         if (!this.hideplayer && !this.world.transitioning) {
             entitiesToDraw.push(player);
             entitiesToDraw.sort(entitySort);

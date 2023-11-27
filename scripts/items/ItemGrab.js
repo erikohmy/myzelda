@@ -13,8 +13,14 @@ class ItemGrab extends ItemBase {
         this.grabbed = false; // if we have grabbed something
         this.pulling = false; // if we are pulling something
         this.lifting = false; // if we are lifting something up (not true WHILE we are carying something, thats handled by player)
+        this.liftingFrame = 0; // frame of lifting animation
+        this.pullStart = null; // gametick we started pulling
 
         this.grabbedInfo = null; // the collision box we have grabbed currently
+    }
+
+    get pullTicks() {
+        return this.game.gametick - this.pullStart;
     }
 
     actionPress() {
@@ -89,7 +95,10 @@ class ItemGrab extends ItemBase {
                     return;
                 } else if (res===true) {
                     // pick up the thing!
-                    this.lift(e)
+                    // wait our lift time, then pick up
+                    if (this.pullTicks >= 20) {
+                        this.lift(e)
+                    }
                     return;
                 }
             }
@@ -100,15 +109,17 @@ class ItemGrab extends ItemBase {
         let player = this.game.player;
         this.game.sound.play('link_pickup');
         this.lifting = true;
-        this.game.everyTick(0, (t)=>{
+        player.carriedEntity = entity;
+        this.liftingFrame = 0;
+        this.game.everyTick(0, (t) => {
+            this.liftingFrame = t;
             if (!this.lifting) {
                 console.log("aborting lift");
                 return false;
             }
-            if (t>=30) {
+            if (t>=20) {
                 this.lifting = false;
                 this.actionRelease();
-                player.carriedEntity = entity;
                 return false;
             }
         })
@@ -116,11 +127,15 @@ class ItemGrab extends ItemBase {
     abort() {// abort grabbing, pulling, trying to lift, etc
         
         // if we are trying to lift, abort animation and release
+        if (this.lifting) {
+            this.lifting = false;
+        }
 
         // if we are just grabbing or pulling, just release
+        this.actionRelease();
     }
     whileEquipped() {
-        if (this.grabbed) {
+        if (this.grabbed && !this.lifting) {
             // sanity check, if we are still in from of the same thing, in case we are pushed
             let infront = this.checkInFront();
             if (infront) {
@@ -162,13 +177,15 @@ class ItemGrab extends ItemBase {
                 direction == 3 && this.game.interface.inputs.includes('right')    
             ) {
                 this.pulling = true;
-                if(player.isPulling != true) {
+                if (player.isPulling != true) {
                     player.isPulling = true;
+                    this.pullStart = this.game.gametick;
                 }
                 this.whilePulling();
             } else {
                 this.pulling = false;
-                if(player.isPulling != false) {
+                this.pullStart = null;
+                if (player.isPulling != false) {
                     player.isPulling = false;
                 }
             }
@@ -257,22 +274,66 @@ class ItemGrab extends ItemBase {
             sox = player.direction;
             soy = 3;
 
+            if (player.isPulling || this.lifting) {
+                sox += 4;
+                // nudge player backwards a bit
+                if (player.direction == 0) {ny = 1;}
+                else if (player.direction == 1) {nx = -2;}
+                else if (player.direction == 2) {ny = -1;}
+                else if (player.direction == 3) {nx = 2;}
+            }
+
             if (this.lifting) { // do lifting animation
-                console.log("lifting")
-            } else { // do grabbing sprites
-                console.log("grabbing")
-                soy = 3;
-                if (player.isPulling) {
-                    sox += 4;
-                    // nudge player backwards a bit
-                    if (player.direction == 0) {ny = 1;}
-                    else if (player.direction == 1) {nx = -2;}
-                    else if (player.direction == 2) {ny = -1;}
-                    else if (player.direction == 3) {nx = 2;}
+                // update carried entity position
+                let lox = 0; // lift offset x
+                let loy = 0; // lift offset y
+
+                if (player.direction===3) { // left
+                    lox = -13;
+                    if (this.liftingFrame < 10) {
+                        loy -= 4;
+                        lox += 4; 
+                    } else {
+                        loy -= 12;
+                        lox += 8; 
+                    }
                 }
+                else if (player.direction===1) { // right
+                    lox = 13;
+                    if (this.liftingFrame < 10) {
+                        loy -= 4;
+                        lox -= 4; 
+                    } else {
+                        loy -= 12;
+                        lox -= 8; 
+                    }
+                } else if (player.direction===2) { // down
+                    if (this.liftingFrame < 10) {
+                        loy += 4;
+                    } else {
+                        loy -= 4;
+                    }
+                } else if (player.direction===0) { // up
+                    loy = -13;
+                    if (this.liftingFrame < 10) {
+                        loy += 2;
+                    } else {
+                        loy += 4;
+                    }
+                }
+                
+                //loy -= (this.liftingFrame/2)
+                // frame 1: p.y-8 + 4px up, 4px left if right or right if left
+                // frame 2: 12px up, 8px left if right or right if left
+
+                player.carriedEntity.x =  player.x+lox;
+                player.carriedEntity.y =  player.y+loy;
             }
 
             sheet.drawSprite(this.game.ctx, sox, soy, x-wo+ox+nx, y-ho+oy+zo+ny);
+            if (this.lifting) {
+                player.carriedEntity.draw();
+            }
             return true; // override animation
         }
         return undefined; // dont override animation

@@ -264,7 +264,7 @@ function LayerOverworld(game) {
             MDkxYTA5MGEwYjA5MDkxYjE4JywnMDYxYzE5MWMxMDBiMDkwOTA5MGEnLCcx
             ZDFlMDkwOTBhMTgxNTE1MTUxMCcsXSk7`
         );
-        let sign = space.createEntity('sign',{ x:1, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
+        space.createEntity('sign',{ x:1+5, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
         space.setTile(2, 4, {name:"doorway", 'goesTo': "buildings:5,5:entrance"});
         space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
         space.createEntity('transitionTarget', {name:'warp', tx:3, ty:1});
