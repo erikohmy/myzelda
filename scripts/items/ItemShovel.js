@@ -25,13 +25,34 @@ class ItemShovel extends ItemBase {
         });
         let player = this.game.player;
 
-        // todo: actually dig a little infront of the player(8px?), instead of at their feet, and if that isnt diggable, dig at feet
-        let beneath = player.tileBeneath();
-        let tile = this.game.tile(beneath)
+        // actually dig 8px infront of the player, and if that isnt diggable, dig at feet
+        let ox = 0;
+        let oy = 0;
+        let digoffset = 8;
+        let tx = 0;
+        let ty = 0;
+
+        if(player.direction == 0) { oy = -(digoffset+player.feetOffset); }
+        else if(player.direction == 1) { ox = digoffset; }
+        else if(player.direction == 2) { oy = digoffset; }
+        else if(player.direction == 3) { ox = -digoffset; }
+
+        let beneath = player.space.tileAt(player.x+ox, player.y+player.feetOffset+oy);
+        let tile = this.game.tile(beneath);
+        tx = Math.floor((player.x+ox)/16);
+        ty = Math.floor((player.y+player.feetOffset+oy)/16);
+
+        if (!tile || !tile.dig) {
+            beneath = player.tileBeneath();
+            tile = this.game.tile(beneath);
+            tx = Math.floor((player.x)/16);
+            ty = Math.floor((player.y+player.feetOffset)/16);
+        }
         if (tile && tile.dig) {
             this.game.sound.play('dig');
             let dug = tile.tileBeneath;
-            player.tileBeneath(dug);
+            console.log('dug tile', tx,ty)
+            player.space.setTile(tx, ty, dug);
             // todo: get dropped item, and spawn it
             let drop = tile.digDropEntity(beneath);
             if (drop) {

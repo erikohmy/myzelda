@@ -155,14 +155,23 @@ class Space {
         return this.tile(tx, ty);
     }
     setTile(x, y, tileinfo) {
+        if(typeof tileinfo === "string") {
+            tileinfo = {name:tileinfo};
+        }
         return this.tiles[y*this.size[0]+x] = tileinfo;
     }
     setTileAt(x, y, tileinfo) {
+        if(typeof tileinfo === "string") {
+            tileinfo = {name:tileinfo};
+        }
         let tx = Math.floor(x/this.game.tilesize);
         let ty = Math.floor(y/this.game.tilesize);
         return this.tiles[ty*this.size[0]+tx] = tileinfo;
     }
     fill(tileinfo, x=0,y=0,w=undefined,h=undefined) {
+        if(typeof tileinfo === "string") {
+            tileinfo = {name:tileinfo};
+        }
         if (h === undefined) {
             h = this.size[1];
         }
@@ -178,6 +187,9 @@ class Space {
         }
     }
     border(tileinfo) {
+        if(typeof tileinfo === "string") {
+            tileinfo = {name:tileinfo};
+        }
         for (let x=0; x<this.size[0]; x++) {
             this.setTile(x, 0, tileinfo);
             this.setTile(x, this.size[1]-1, tileinfo);
