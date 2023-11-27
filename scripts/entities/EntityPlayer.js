@@ -553,6 +553,9 @@ class EntityPlayer extends EntityPhysical {
             this.throw();
             return;
         }
+        // TODO: check if we are doing something already, to prevent using items while using items...
+        // except in special cases like jumping and slashing with sword
+
         // interact with entity in front of us
         let bx = this.x-8+this.game.offset[0];
         let by = this.y-8+this.game.offset[1];
@@ -637,8 +640,6 @@ class EntityPlayer extends EntityPhysical {
                 } else {
                     console.error("item is missing animation method", item);
                 }
-            } else {
-                console.log("no item in slot", i)
             }
         }
 

@@ -32,7 +32,7 @@ class ItemShovel extends ItemBase {
         let tx = 0;
         let ty = 0;
 
-        if(player.direction == 0) { oy = -(digoffset+player.feetOffset); }
+        if(player.direction == 0) { oy = -(digoffset+player.feetOffset); } // if above, take away feet offset
         else if(player.direction == 1) { ox = digoffset; }
         else if(player.direction == 2) { oy = digoffset; }
         else if(player.direction == 3) { ox = -digoffset; }
@@ -51,7 +51,6 @@ class ItemShovel extends ItemBase {
         if (tile && tile.dig) {
             this.game.sound.play('dig');
             let dug = tile.tileBeneath;
-            console.log('dug tile', tx,ty)
             player.space.setTile(tx, ty, dug);
             // todo: get dropped item, and spawn it
             let drop = tile.digDropEntity(beneath);
