@@ -4,7 +4,7 @@ class ItemGrab extends ItemBase {
     constructor(game) {
         super(game);
         // get level, from save data
-        this.level = 2; // todo: save data
+        this.level = 1; // todo: save data
         this.name = this.level == 1 ? "Power Bracelet" : "Titan's Mitt";
         this.description = "Power Bracelet\nA strength booster.";
 
@@ -20,6 +20,10 @@ class ItemGrab extends ItemBase {
     }
 
     get pullTicks() {
+        if (this.game.player.isTired) {
+            this.pullStart = this.game.gametick;
+            return 0;
+        }
         return this.game.gametick - this.pullStart;
     }
 
@@ -107,7 +111,7 @@ class ItemGrab extends ItemBase {
                 let tile = this.game.tile(e);
                 let x = Math.floor(this.grabbedInfo.x / this.game.tilesize);
                 let y = Math.floor(this.grabbedInfo.y / this.game.tilesize);
-                if (tile.liftable&&this.pullTicks >= 20) {
+                if ((tile.liftable===true || (tile.liftable === "heavy" && this.level === 2)) && this.pullTicks >= 20) {
                     // set the tile to grass2
                     let beneath = "grass2";
                     if(e.beneath) {
@@ -119,10 +123,16 @@ class ItemGrab extends ItemBase {
                     if (typeof beneath === "string") beneath = {name: beneath};
 
                     this.game.world.currentSpace.setTile(x, y, beneath);
-                    console.log("set tile", x, y,"to", beneath);
                     let entity = tile.liftEntity(e);
                     this.lift(entity);
+
+                    this.game.world.currentSpace.events.trigger("lift", this.game.world.currentSpace, x, y, e)
                 }
+            }
+
+            if(this.pullTicks >= 120) {
+                // we have pulled for too long and exhausted ourselves!
+                this.game.player.tire(30); // 0.5 seconds of tiredness
             }
         }
     }
@@ -277,7 +287,7 @@ class ItemGrab extends ItemBase {
         
     }
     animation() { // override player animation!
-        if (this.grabbed) {
+        if (this.grabbed && !this.game.player.isTired) {
             let ox = this.game.offset[0];
             let oy = this.game.offset[1];
 

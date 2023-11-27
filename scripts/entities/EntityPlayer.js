@@ -5,6 +5,7 @@ class EntityPlayer extends EntityPhysical {
     walking = false;
 
     feetOffset = 4;
+    previousTile = null; // the tile we last entered
 
     health;
     maxHealth;
@@ -32,6 +33,7 @@ class EntityPlayer extends EntityPhysical {
     isJumping = false;
     isGrabbing = false;
     isPulling = false;
+    tiredTime = 0;
 
     willTransition = false; // entered a tile that goes somewhere
 
@@ -64,7 +66,7 @@ class EntityPlayer extends EntityPhysical {
             return true;
         }
         // if animating a move, or dying etc.
-        return this.squishing || this.falling || this.drowning;
+        return this.squishing || this.falling || this.drowning || this.isTired;
     }
 
     get inAir() {
@@ -77,6 +79,10 @@ class EntityPlayer extends EntityPhysical {
 
     get isCarrying() {
         return this.carriedEntity !== null;
+    }
+
+    get isTired() {
+        return this.tiredTime > 0;
     }
 
     get moveSpeed() {
@@ -190,6 +196,12 @@ class EntityPlayer extends EntityPhysical {
             }
         }
     }
+    
+    tire(ticks) {
+        if (this.tiredTime < ticks) {
+            this.tiredTime = ticks;
+        }
+    }
 
     squish() {
         if (this.squishing) {
@@ -279,6 +291,9 @@ class EntityPlayer extends EntityPhysical {
         if (this.damageFlash > 0) {
             this.damageFlash--;
         }
+        if (this.tiredTime > 0) {
+            this.tiredTime--;
+        }
 
         if (this.pushingEntity) {
             if (this.pushingEntity.push){
@@ -290,9 +305,15 @@ class EntityPlayer extends EntityPhysical {
         let beneath = this.tileBeneath();// TODO: override this with feet offset
         let tile = this.game.tile(beneath)
 
+        let feetoffset = this.feetOffset;
+        let x = this.x;
+        let y = this.y+feetoffset;
+        let tileX = Math.floor(x/16);
+        let tileY = Math.floor(y/16);
+
         if (beneath && beneath.goesTo) { // are we standing DIRECTLY on a tile that goes somewhere?
             if (this.previousTile !== null && !this.isBusy) {
-                this.previousTile = beneath;
+                this.previousTile = {x:tileX, y:tileY, tile:beneath};
                 this.setPushingEntity(null);
                 this.willTransition = true;
                 this.game.waitTicks(1).then(() => { // wait a single tick to make sure we arent rendered pushing the door
@@ -301,14 +322,14 @@ class EntityPlayer extends EntityPhysical {
                 });
             }
         } else if (!this.inAir) { // dont care about ground if we are in the are
-            this.previousTile = beneath; // just to make sure we dont get teleported instantly if transitioning onto a tile that goes somewhere
-
+            // are we standing on a new tile?
+            if (this.previousTile===null || (this.previousTile.x !== tileX || this.previousTile.y !== tileY)) {
+                this.previousTile = {x:tileX, y:tileY, tile:beneath};
+                this.game.world.currentSpace.events.trigger("steppedOn", this.game.world.currentSpace, tileX, tileY, beneath)
+            }
             // are we really close other tiles?
-            let feetoffset = this.feetOffset;
-            let x = this.x;;
-            let y = this.y+feetoffset;
-            let tx, ty;
-            [tx, ty] = tileSnap(x, y);
+            let tx = tileX * 16;
+            let ty = tileY * 16;
             tx += 8;
             ty += 8;
             let ox = this.x - tx;
@@ -653,6 +674,9 @@ class EntityPlayer extends EntityPhysical {
             ho = 8;
         } else if (this.isCarrying) {
             soy += 4;
+        } else if (this.tiredTime > 8) {
+            soy = 0
+            sox = 11;
         } else if (this.isPushing) {
             soy += 1;
         }

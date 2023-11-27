@@ -4,6 +4,7 @@ class Space {
     size;
     tiles;
     entities;
+    events;
     safeSpot = null;
     built = false;
     init = null; // init function
@@ -114,7 +115,9 @@ class Space {
     _build() {
         //console.log("building space", this.layer.name, this.position)
         if (this.build) {
+            this.events = new EasyEvents();
             this.build(this);
+            this.events.trigger("build", this);
             if (this.game.player.isCarrying) {
                 this.addEntity(this.game.player.carriedEntity);
             }

@@ -12,8 +12,8 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
     wet = false;
     dig = false;
     rough = false; // slows speed (on those who care)
-    liftable = false;
-    tileBeneath = "grass2"; 
+    liftable = false; // can be false, true, or heavy
+    tileBeneath = "dug"; // what tile is left behind when this tile is dug or lifted
 
     collision = undefined;
 
@@ -126,6 +126,11 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
         let entity = new LiftableTile(this.game, 0, 0, tileinfo);
         this.game.world.currentSpace.addEntity(entity);
         return entity;
+    }
+
+    digDropEntity(tileinfo) {
+        // should randomly return stuff like rupees or hearts, and ocationally a monster like a snake or a that spider thing
+        return null;
     }
 
     applyFilter(ctx, filter, x, y, stage) {

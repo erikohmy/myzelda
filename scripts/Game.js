@@ -318,6 +318,7 @@ class Game {
         await this.sound.addSound("appear_vanish", "./assets/sound/AppearVanish.wav");
         await this.sound.addSound("shatter", "./assets/sound/shatter.wav");
         await this.sound.addSound("chest", "./assets/sound/Chest.wav");
+        await this.sound.addSound("secret", "./assets/sound/Secret.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
         await this.sound.addSound("link_fall", "./assets/sound/Link_Fall.wav");
@@ -355,7 +356,7 @@ class Game {
     start() {
         this.started = true;
         this.world.player.setPosition(16*5, 16*4);
-        this.world.transitionTo(this.world.layers.overworld.getSpace(0, 0), "none");
+        this.world.transitionTo(this.world.layers.overworld.getSpace(5, 5), "none");
         this.loop();
         // ensure stable tps
         setInterval(() => {
@@ -516,6 +517,8 @@ class Game {
         let player = this.world.player;
         let space = this.world.currentSpace;
 
+        let playerWasBusy = player.isBusy; // in case state changes during tick, so controls are not cleared
+
         let overrideCam = false;
 
         if (this.gametick % 4 == 0) {
@@ -635,6 +638,7 @@ class Game {
             }
         }
 
+        
         if (this.doGameLogic && !player.isBusy) {
             if (this.interface.inputsPressed.indexOf("a") !== -1) {
                 // pressed a this tick
@@ -808,7 +812,7 @@ class Game {
             }
         });
         // cleanup controls
-        if (this.doGameLogic && !this.player.isBusy) {
+        if (this.doGameLogic && !playerWasBusy) {
             this.interface.tick();
         }
         if (this.debug) {

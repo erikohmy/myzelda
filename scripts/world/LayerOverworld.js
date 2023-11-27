@@ -20,6 +20,29 @@ function LayerOverworld(game) {
         space.setTile(9,4,{name:"sand"});
         space.setTile(9, 4, {name:"stone", background:"sand"});
 
+        space.events.on('build', () => {
+            console.log("build event fired!");
+        });
+
+        space.events.on('dig', (space, x, y, tileinfo) => {
+            console.log("dig event fired!", x, y, tileinfo);
+        });
+
+        space.events.on('lift', (space, x, y, tileinfo) => {
+            console.log("lift event fired!", x, y, tileinfo);
+            if(x === 9 && y === 4) { // lifted the rock at 9,4
+                space.setTile(9,4,{name:"sand"});
+                game.sound.play('secret');
+            }
+        });
+
+        space.events.on('steppedOn', (space, x, y, tileinfo) => {
+            console.log("steppedOn event fired!", x, y, tileinfo);
+            if(x === 9 && y === 4) { // we are inside the rock at 9,4
+                space.setTile(9,4,{name:"dug"});
+            }
+        });
+
         /*
         let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 1, 1));
         let blockRight = space.addEntity(new EntityTestPhysical(space.game, 8, 1));
@@ -265,9 +288,10 @@ function LayerOverworld(game) {
             MDkxYTA5MGEwYjA5MDkxYjE4JywnMDYxYzE5MWMxMDBiMDkwOTA5MGEnLCcx
             ZDFlMDkwOTBhMTgxNTE1MTUxMCcsXSk7`
         );
-        space.createEntity('sign',{ x:1+5, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
+        space.createEntity('sign',{ x:1, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
         space.setTile(2, 4, {name:"doorway", 'goesTo': "buildings:5,5:entrance"});
-        space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
+        //space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
+        space.createEntity('transitionTarget', {name:'knowitall', tx:2, y:4*16+8+4, direction: 2});
         space.createEntity('transitionTarget', {name:'warp', tx:3, ty:1});
     }, function(space) {
         space.minimap = (ctx, x, y) => {
