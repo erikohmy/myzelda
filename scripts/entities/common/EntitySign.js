@@ -37,5 +37,6 @@ class EntitySign extends EntityBase {
 
         let sheet = this.game.spritesheets.overworld;
         sheet.drawRegion(this.game.ctx, 6*8, 14*8, this.x-8+ox, this.y-8+oy, 16, 16);
+        //console.log("drawing sign", this.x-8+ox,  this.y-8+oy)
     }
 }

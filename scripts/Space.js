@@ -116,7 +116,6 @@ class Space {
         if (this.build) {
             this.build(this);
             if (this.game.player.isCarrying) {
-                console.log("player brought something to this space", this.game.player.carriedEntity)
                 this.addEntity(this.game.player.carriedEntity);
             }
         }

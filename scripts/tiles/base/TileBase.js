@@ -12,6 +12,8 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
     wet = false;
     dig = false;
     rough = false; // slows speed (on those who care)
+    liftable = false;
+    tileBeneath = "grass2"; 
 
     collision = undefined;
 
@@ -118,6 +120,12 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
         }
 
         this.sprites = tileImages;
+    }
+
+    liftEntity(tileinfo) {
+        let entity = new LiftableTile(this.game, 0, 0, tileinfo);
+        this.game.world.currentSpace.addEntity(entity);
+        return entity;
     }
 
     applyFilter(ctx, filter, x, y, stage) {

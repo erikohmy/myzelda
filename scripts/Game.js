@@ -426,6 +426,8 @@ class Game {
         await this.addTile("stairs", "TileStairs");
         await this.addTile("obstacle", "TileObstacle");
         await this.addTile("hole", "TileHole");
+        await this.addTile("dug", "TileDug");
+        await this.addTile("stone", "TileStone");
         await this.addTile("water", "TileWater");
         await this.addTile("puddle", "TilePuddle");
         await this.addTile("waterfall", "TileWaterfall");
@@ -564,12 +566,18 @@ class Game {
                     steps = this.canvas.width/stepsize;
                     if(player.x < 8) {
                         player.x+=0.25;
+                        if(player.isCarrying) {
+                            player.carriedEntity.x+=0.25;
+                        }
                     }
                     this.offset[0] = this.canvas.width - tick*stepsize;
                 } else if (transition=="slideright") {
                     steps = this.canvas.width/stepsize;
                     if(player.x > this.world.currentSpace.size[0]*this.tilesize-8) {
                         player.x-=0.25;
+                        if(player.isCarrying) {
+                            player.carriedEntity.x-=0.25;
+                        }
                     }
                     this.offset[0] = -this.canvas.width + tick*stepsize;
                 } else if (transition=="slideup") {
@@ -737,9 +745,7 @@ class Game {
             }
         }
 
-        if (this.doGameLogic && !this.dialog.show && !this.cutscene && !this.world.transitioning) {
-            player.tick();
-        }
+        player.tick();
 
         if (this.doGameLogic && !this.world.transitioning) {
             this.logictick++;

@@ -18,6 +18,7 @@ function LayerOverworld(game) {
         space.setTile(4,5,{name:"obstacle", variant:"coconut"});
         space.fill({name:"sand"}, 1, 7, 8);
         space.setTile(9,4,{name:"sand"});
+        space.setTile(9, 4, {name:"stone", background:"sand"});
 
         /*
         let blockLeft = space.addEntity(new EntityTestPhysical(space.game, 1, 1));

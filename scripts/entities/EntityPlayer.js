@@ -254,7 +254,6 @@ class EntityPlayer extends EntityPhysical {
     }
 
     tick() {
-        super.tick();
         if (this.isCarrying) {
             // if we are carrying something, move it with us
             this.carriedEntity.x = this.x;
@@ -264,6 +263,12 @@ class EntityPlayer extends EntityPhysical {
                 this.carriedEntity.y = this.y-16;
             }
         }
+
+        // if game is "paused", dont proceed!
+        if (!(this.game.doGameLogic && !this.game.dialog.show && !this.game.cutscene && !this.game.world.transitioning)) {
+            return;
+        }
+        super.tick();
         for (let i=0; i<this.hotbarItems.length; i++) {
             let item = this.inventoryItems[this.hotbarItems[i]];
             if (item) {

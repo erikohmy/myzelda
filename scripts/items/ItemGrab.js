@@ -67,8 +67,9 @@ class ItemGrab extends ItemBase {
     }
     whilePulling() {
         //console.log("pulling", this.grabbedInfo);
-        if (this.grabbedInfo && this.grabbedInfo.entity) {
-            let e = this.grabbedInfo.entity;
+        if (this.grabbedInfo && (this.grabbedInfo.entity||this.grabbedInfo.tile)) {
+            let e = this.grabbedInfo.entity?this.grabbedInfo.entity:this.grabbedInfo.tile;
+            let isTile = !!this.grabbedInfo.tile;
             
             if (e.pull) {
                 // entity can be pulled!
@@ -83,6 +84,7 @@ class ItemGrab extends ItemBase {
                     return;
                 }
             }
+
 
             if (e.lift) {
                 // entity can be lifted!
@@ -100,6 +102,26 @@ class ItemGrab extends ItemBase {
                         this.lift(e)
                     }
                     return;
+                }
+            } else if(isTile) {
+                let tile = this.game.tile(e);
+                let x = Math.floor(this.grabbedInfo.x / this.game.tilesize);
+                let y = Math.floor(this.grabbedInfo.y / this.game.tilesize);
+                if (tile.liftable&&this.pullTicks >= 20) {
+                    // set the tile to grass2
+                    let beneath = "grass2";
+                    if(e.beneath) {
+                        beneath = e.beneath;
+                    } else if(tile.tileBeneath) {
+                        beneath = tile.tileBeneath;
+                    }
+
+                    if (typeof beneath === "string") beneath = {name: beneath};
+
+                    this.game.world.currentSpace.setTile(x, y, beneath);
+                    console.log("set tile", x, y,"to", beneath);
+                    let entity = tile.liftEntity(e);
+                    this.lift(entity);
                 }
             }
         }
