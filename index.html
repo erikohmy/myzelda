@@ -60,6 +60,7 @@
     <script src="scripts/items/ItemBase.js" type="text/javascript"></script>
     <script src="scripts/items/ItemJumpFeather.js" type="text/javascript"></script>
     <script src="scripts/items/ItemGrab.js" type="text/javascript"></script>
+    <script src="scripts/items/ItemShovel.js" type="text/javascript"></script>
 
     <!-- World Layers -->
     <script src="scripts/world/LayerOverworld.js" type="text/javascript"></script>
@@ -160,9 +161,6 @@
       .editor .pallet:hover > .tile:not(:hover) {
         opacity: 0.4;
       }
-      .editor .pallet > .tile {
-        
-      }
       .editor .pallet .tile .variants {
         position: absolute;
         bottom: var(--tilesize);
@@ -205,7 +203,6 @@
         flex-wrap: wrap;
         align-items: center;
       }
-      .editor .toolbar button {}
       .editor .toolbar button:not(:last-child) {
         margin-right: 8px;
       }

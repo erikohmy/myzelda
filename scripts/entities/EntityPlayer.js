@@ -65,6 +65,16 @@ class EntityPlayer extends EntityPhysical {
         if (this.willTransition || this.game.dialog.show || this.game.cutscene || this.game.world.transitioning) {
             return true;
         }
+        // is an item making us busy?
+        for (let i=0; i<this.hotbarItems.length; i++) {
+            let itemName = this.hotbarItems[i];
+            if (itemName) {
+                let item = this.inventoryItems[itemName];
+                if (item && item.playerBusy()) {
+                    return true;
+                }
+            }
+        }
         // if animating a move, or dying etc.
         return this.squishing || this.falling || this.drowning || this.isTired;
     }
@@ -108,6 +118,7 @@ class EntityPlayer extends EntityPhysical {
     registerItems() {
         this.inventoryItems.rocs_feather = new ItemJumpFeather(this.game);
         this.inventoryItems.grab = new ItemGrab(this.game);
+        this.inventoryItems.shovel = new ItemShovel(this.game);
     }
 
     tileBeneath(set=null) { // override the method from entityBase, to use feet offset

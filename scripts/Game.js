@@ -319,6 +319,8 @@ class Game {
         await this.sound.addSound("shatter", "./assets/sound/shatter.wav");
         await this.sound.addSound("chest", "./assets/sound/Chest.wav");
         await this.sound.addSound("secret", "./assets/sound/Secret.wav");
+        await this.sound.addSound("dig", "./assets/sound/Shovel.wav");
+        await this.sound.addSound("sword_tap", "./assets/sound/sword_tap.wav");
 
         await this.sound.addSound("link_hurt", "./assets/sound/Link_Hurt.wav");
         await this.sound.addSound("link_fall", "./assets/sound/Link_Fall.wav");

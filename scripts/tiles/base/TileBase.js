@@ -129,7 +129,7 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
     }
 
     digDropEntity(tileinfo) {
-        // should randomly return stuff like rupees or hearts, and ocationally a monster like a snake or a that spider thing
+        // todo: should randomly return stuff like rupees or hearts, and ocationally a monster like a snake or a that spider thing
         return null;
     }
 
