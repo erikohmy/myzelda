@@ -6,6 +6,8 @@ class SoundHandler {
         this.music = {};
         this.currentMusic = null;
         this._volume = 1;
+        this._musicVolume = 1;
+        this.musicVolumeConstant = 0.4;
     }
 
     get volume() {
@@ -16,8 +18,19 @@ class SoundHandler {
         for (let sound in this.sounds) {
             this.sounds[sound].volume = volume;
         }
-        for (let music in this.music) {
+        /*for (let music in this.music) {
             this.music[music].audio.volume = volume * this.music[music].volume;
+        }*/
+        this.musicVolume = this._musicVolume; // update music volume
+    }
+
+    get musicVolume() {
+        return this._musicVolume;
+    }
+    set musicVolume(volume) {
+        this._musicVolume = volume;
+        for (let music in this.music) {
+            this.music[music].audio.volume = (this.volume*volume) * this.music[music].volume;
         }
     }
 
@@ -41,7 +54,7 @@ class SoundHandler {
                 name: name,
                 audio: music,
                 start: start,
-                volume: 0.4,
+                volume: this.musicVolumeConstant,
             }
             music.volume = this.music[name].volume;
             this.game.events.trigger('sound-adding', name, music)
@@ -105,7 +118,7 @@ class SoundHandler {
             if (! music.start) {
                 music.audio.loop = true;
             }
-            music.audio.volume = this.volume * music.volume;
+            music.audio.volume = (this.volume*this._musicVolume) * this.musicVolumeConstant;
             music.audio.play();
         }
     }

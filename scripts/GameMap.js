@@ -62,6 +62,7 @@ class GameMap {
             this.selectedCoords = this.game.world.player.space.position;
         }
         this.game.sound.play('menu_open');
+        this.game.sound.musicVolume = 0.2;
         await new Promise((resolve) => {
             let fn = () => {
                 if(!this.isBusy) {
@@ -80,6 +81,7 @@ class GameMap {
         this.closing = true;
         this.transitionTimer = 0;
         this.game.sound.play('menu_close');
+        this.game.sound.musicVolume = 1;
         await new Promise((resolve) => {
             let fn = () => {
                 if(!this.isBusy) {
