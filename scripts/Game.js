@@ -203,12 +203,14 @@ class Game {
     pause() {
         if (this.started) {
             this.paused = true;
+            document.querySelector('.gamewrap').classList.add('paused');
             this.sound.pause();
         }
     }
     resume() {
         if (this.started) {
             this.paused = false;
+            document.querySelector('.gamewrap').classList.remove('paused');
             this.sound.resume();
         }
     }
@@ -1189,6 +1191,7 @@ class NiceLoader {
     constructor(game) {
         this.wrap = document.querySelector('.gamewrap');
         this.wrap.classList.add('loading');
+        this.wrap.classList.remove('standby');
 
         this.stage = "pre";
         // sprites, then tiles, then sound
@@ -1223,10 +1226,13 @@ class NiceLoader {
         // done!
         game.events.on('ready', () => {
             this.stage = "ready"
+            this.currentItem = "press to start";
             this.wrap.classList.remove('loading');
             this.wrap.classList.add('waiting');
             this.wrap.addEventListener('click', () => {
+                this.wrap.classList.add('running');
                 this.wrap.classList.remove('waiting');
+                this.wrap.querySelector('.intro-splash').remove();
                 game.start();
                 let editbtn = document.createElement('button');
                 editbtn.innerText = "Edit";
@@ -1257,5 +1263,6 @@ class NiceLoader {
     updateLoadingText() {
         let text = this.stage + (this.currentItem ? ("\n" + this.currentItem) : "");
         this.wrap.setAttribute('data-loading', text);
+        this.wrap.querySelector('.intro-splash-text').innerText = text;
     }
 }

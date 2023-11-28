@@ -71,7 +71,7 @@
     <script src="scripts/app.js" type="text/javascript"></script>
 </head>
 <body>
-  <div id="main" class="application">
+  <div id="main" class="application development">
     <div class="debuginfo hidden">
       <div class="debuginfo-group">
         <div class="debuginfo-group-title">Player</div>
@@ -80,9 +80,17 @@
         </div>
       </div>
     </div>
-    <div class='gamewrap'>
+    <div class='gamewrap standby'>
       <div class="gameboy">
         <div class="gameboy-margin"></div>
+      </div>
+      <div class="intro-splash">
+        <div class="intro-splash-loader"><div></div><div></div><div></div><div></div></div>
+        <div class="intro-splash-text"></div>
+        <div class="greeble top left"></div>
+        <div class="greeble top right"></div>
+        <div class="greeble bottom left"></div>
+        <div class="greeble bottom right"></div>
       </div>
       <canvas id="game"></canvas>
     </div>

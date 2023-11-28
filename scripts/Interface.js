@@ -28,11 +28,21 @@ class Interface {
 				this.pressInput(input);
 			}
 		});
+
 		this.events.on('key.up', (code, event) => {
 			let input = this.keyboardControls[code];
 			if (input && this.inputs.indexOf(input) !== -1) {
 				this.releaseInput(input);
 			}
+		});
+
+		this.events.on('blur', () => {
+			// add class to application
+			document.querySelector('.application').classList.add('blur');
+		});
+		this.events.on('focus', () => {
+			// remove class to application
+			document.querySelector('.application').classList.remove('blur');
 		});
 
 		/* todo: redo these
@@ -72,6 +82,11 @@ class Interface {
 			}
 		}
 	}
+	releaseAllInputs() {
+		this.inputs.forEach((input) => {
+			this.releaseInput(input);
+		});
+	}
 	clearPressed() {
 		this.inputsPressed = [];
 	}
@@ -110,6 +125,15 @@ class Interface {
 				this.heldKeys.splice(index, 1);
 			}
 			this.events.trigger("key.up", code, event);
+		});
+
+		// detect document losing focus
+		window.addEventListener("blur", () => {
+			this.releaseAllInputs();
+			this.events.trigger("blur");
+		});
+		window.addEventListener("focus", () => {
+			this.events.trigger("focus");
 		});
 	}
 
