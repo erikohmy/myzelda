@@ -278,6 +278,56 @@ div, canvas {
     }
 }
 
+.application.fullscreen {
+    background: #111;
+    padding: 0!important;
+    align-items: center !important;
+    flex-direction: column;
+}
+.application.fullscreen .gameboy {
+    display: none;
+}
+.application.fullscreen .gamewrap {
+    width: auto;
+    height: auto;
+    max-height: 100%;
+    max-width: 100%;
+    aspect-ratio: 10/9;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.application.fullscreen .gamewrap .greeble {
+    display: none;
+}
+/* media fullscreen */
+@media all and (display-mode: fullscreen) {
+    .application {
+        background: #111;
+        padding: 0!important;
+        align-items: center !important;
+        flex-direction: column;
+    }
+    .application .gameboy {
+        display: none;
+    }
+    .application .gamewrap {
+        width: auto;
+        height: auto;
+        max-height: 100%;
+        max-width: 100%;
+        aspect-ratio: 10/9;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .application .gamewrap .greeble {
+        display: none;
+    }
+}
+
 /* EDITOR */
 .editor {
     position: absolute;
