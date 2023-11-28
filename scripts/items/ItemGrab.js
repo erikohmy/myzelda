@@ -15,6 +15,8 @@ class ItemGrab extends ItemBase {
         this.lifting = false; // if we are lifting something up (not true WHILE we are carying something, thats handled by player)
         this.liftingFrame = 0; // frame of lifting animation
         this.pullStart = null; // gametick we started pulling
+        this.pullRumbleStop = null; // function to stop rumble
+        this.doRumble = false; // if we should rumble while pulling
 
         this.grabbedInfo = null; // the collision box we have grabbed currently
     }
@@ -43,6 +45,10 @@ class ItemGrab extends ItemBase {
             this.game.player.isPulling = false;
             this.grabRelease();
             this.grabbedInfo = null;
+            if (this.pullRumbleStop) {
+                this.pullRumbleStop();
+                this.pullRumbleStop = null;
+            }
         }
     }
     grabStart() {
@@ -133,6 +139,14 @@ class ItemGrab extends ItemBase {
             if(this.pullTicks >= 120) {
                 // we have pulled for too long and exhausted ourselves!
                 this.game.player.tire(30); // 0.5 seconds of tiredness
+                if (this.pullRumbleStop) {
+                    this.pullRumbleStop();
+                    this.pullRumbleStop = null;
+                }
+            } else if(this.pullTicks == 0) {
+                if (!this.pullRumbleStop && this.doRumble) {
+                    this.pullRumbleStop = this.game.interface.rumbleRampup(1,100); // max 1, 100ticks to reach max
+                }
             }
         }
     }
@@ -219,6 +233,10 @@ class ItemGrab extends ItemBase {
                 this.pullStart = null;
                 if (player.isPulling != false) {
                     player.isPulling = false;
+                    if (this.pullRumbleStop) {
+                        this.pullRumbleStop();
+                        this.pullRumbleStop = null;
+                    }
                 }
             }
         } else {

@@ -1242,6 +1242,11 @@ class NiceLoader {
                 });
                 document.querySelector('.application').appendChild(editbtn);
             }, {once: true});
+
+            // useful for gamepad! (can also press keyboard start P key)
+            game.events.on('input.start', () => {
+                this.wrap.click();
+            }, {once: true});
         });
     }
     get stage() {

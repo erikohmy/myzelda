@@ -199,9 +199,11 @@ class EntityPlayer extends EntityPhysical {
                 this.damageFlash = 40;
                 if (makeSound) {
                     this.game.sound.play("link_hurt");
+                    this.game.interface.rumble();
                 }
                 if (this.health <= 0) {
                     this.health = 0;
+                    this.game.interface.rumble(1000);
                     // died!
                 }
             }
