@@ -5,9 +5,6 @@ class ItemGrab extends ItemBase {
         super(game);
         // get level, from save data
         this.level = 1; // todo: save data
-        this.name = this.level == 1 ? "Power Bracelet" : "Titan's Mitt";
-        this.description = "Power Bracelet\nA strength booster.";
-
         this.holding = false; // holding button
 
         this.grabbed = false; // if we have grabbed something
@@ -19,6 +16,13 @@ class ItemGrab extends ItemBase {
         this.doRumble = false; // if we should rumble while pulling
 
         this.grabbedInfo = null; // the collision box we have grabbed currently
+    }
+
+    get name() {
+        return this.level == 1 ? "Power Bracelet" : "Titan's Mitt";
+    }
+    get description() {
+        return this.level == 1 ? this.name + "\nA strength booster." : this.name + "\nA strength booster.";
     }
 
     get pullTicks() {

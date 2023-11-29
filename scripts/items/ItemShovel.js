@@ -1,10 +1,14 @@
 class ItemShovel extends ItemBase {
     constructor(game) {
         super(game);
-        this.name = "Shovel";
-        this.description = "Shovel\nA handy tool.";
         this.digging = false;
         this.digFrame = 0;
+    }
+    get name() {
+        return "Shovel";
+    }
+    get description() {
+        return  "Shovel\nA handy tool.";
     }
     playerBusy() {
         return this.digging;

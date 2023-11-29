@@ -1,11 +1,16 @@
 class ItemBase { // inventory item that the player uses with action buttons
     game;
 
-    name = "baseItem";
-    description = "A base item";
-    
     constructor(game) {
         this.game = game;
+    }
+
+    get name() {
+        return "baseItem";
+    }
+    
+    get description() {
+        return "A base item";
     }
     
     // todo: comment these out, so nothing runs if they arent defined

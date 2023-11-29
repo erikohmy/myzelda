@@ -10,6 +10,11 @@ class GameMenu {
 
     currentScreen = 0; // 0 inventory, 1 collectibles, 2 progress/save&quit
     selection = 0; // what index is the cursor at currently
+    descriptionText = ""; // text to display in the description box
+
+    descriptionRegister = "";
+    descriptionSize = 16;
+    descriptionTick = 0;
 
     constructor(game) {
         this.game = game;
@@ -29,6 +34,7 @@ class GameMenu {
                     else if(this.selection >= 4*4) {this.selection = 0;}
                 }
                 if(this.selection < 0) {this.selection = 0;} // actually wraparound later
+                this.updateDescription();
             }
             if(this.currentScreen === 0) {
                 let itemname = this.game.player.inventory.items[this.selection];
@@ -37,10 +43,64 @@ class GameMenu {
                     let currentItem = this.game.player.hotbarItems[hs];
                     this.game.player.inventory.items[this.selection] = currentItem;
                     this.game.player.hotbarItems[hs] = itemname;
-                    this.game.sound.play('menu_select');     
+                    this.game.sound.play('menu_select');
+                    this.updateDescription();
                 }
             }
         });
+    }
+
+    updateDescription() {
+        if(this.currentScreen === 0) {
+            let itemname = this.game.player.inventory.items[this.selection];
+            if (itemname) {
+                let item = this.game.player.inventoryItems[itemname];
+                if (item) {
+                    this.descriptionText = item.description;
+                } else {
+                    console.error("item not found", itemname);
+                }
+            } else {
+                this.descriptionText = "";
+            }
+        } else {
+            this.descriptionText = "unknown screen";
+        }
+        if (this.descriptionText.length > 0) {
+            // center text, and replace \n with spaces enough to push the rest out of the box
+            let parts = this.descriptionText.split("\n");
+            let main = parts[0];
+            let rest = parts.slice(1).join(" ");
+            if (main.length <= this.descriptionSize) {
+                let padding = this.descriptionSize - main.length; // padding, total
+                let pleft = Math.floor(padding / 2); // padding left
+                let pright = padding - pleft; // padding right
+                main = " ".repeat(pleft) + main + " ".repeat(pright);
+                this.descriptionText = main + " " + rest;
+            }
+            this.descriptionText = main + " " + rest;
+            this.descriptionTick = 0;
+        }
+        this.updateDescriptionRegister();
+    }
+
+    updateDescriptionRegister() {
+        if (this.descriptionText.length === 0) {
+            this.descriptionRegister = "";
+            return;
+        }
+        let ticksperstep = 30;
+        let initialDelay = 90;
+        let ticks = Math.max(this.descriptionTick - initialDelay, 0);
+        let step = Math.floor(ticks / ticksperstep);
+        // get the amount of spaces the text starts with
+        let spaces = this.descriptionText.match(/^ */)[0].length;
+        let steps = this.descriptionText.length+this.descriptionSize-spaces;
+        let text = this.descriptionText + (" ".repeat(this.descriptionSize-spaces))+this.descriptionText;
+        this.descriptionRegister = text.substring(step, this.descriptionSize+step);
+        if (step >= steps) {
+            this.descriptionTick = 0;
+        }
     }
 
     get isOpen() { // is the menu currently open or opening/closing
@@ -61,6 +121,9 @@ class GameMenu {
 
         this.game.sound.play('menu_open');
         this.game.sound.musicVolume = 0.2;
+
+        this.updateDescription();
+
         await new Promise((resolve) => {
             let fn = () => {
                 if(!this.isBusy) {
@@ -104,6 +167,9 @@ class GameMenu {
                     this.closing = false;
                 }
             }
+        } else {
+            this.descriptionTick++;
+            this.updateDescriptionRegister();
         }
         this.animationTick++;
     }
@@ -175,6 +241,9 @@ class GameMenu {
                 sheet.drawSprite(this.game.ctx, 3.5, 3, px+slot.width+4, py, 0.5, 2);
             }
         });
+
+        // draw description box
+        Graphics.drawText(this.game.ctx, this.descriptionRegister, 16, 144-20, "black");
     }
 }
 

@@ -1,9 +1,13 @@
 class ItemJumpFeather extends ItemBase {
     constructor(game) {
         super(game);
-        this.name = "Roc's Feather";
-        this.description = "Roc's Feather\nA nice lift.";
         this.jumped = false;
+    }
+    get name() {
+        return "Roc's Feather";
+    }
+    get description() {
+        return "Roc's Feather\nA nice lift.";
     }
     actionPress() {
         let player = this.game.player;
