@@ -24,7 +24,7 @@ class Interface {
 			"KeyS": "down",
 			"Space": "a",
 			"KeyB": "b",
-			"KeyP": "start",
+			"KeyE": "start",
 			"KeyM": "select"
 		};
 

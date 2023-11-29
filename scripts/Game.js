@@ -17,6 +17,7 @@ class Game {
     world = null;
     sound = null;
     dialog = null;
+    menu = null;
     map = null;
     animations = {};
 
@@ -33,6 +34,7 @@ class Game {
     noRender = false;
     hideplayer = false;
     paused = false; // game state paused entierly
+    stepTick = false; // game state paused, but tick once
 
     camFollowPlayer = true;
 
@@ -79,15 +81,12 @@ class Game {
             }
         });
 
-        this.events.on('input', (control) => {
-            if (!this.started) {
+        this.events.on('input', (control) => { // todo: move to tick?
+            if (!this.started || this.paused) {
                 return;
             }
-            if (this.paused) {
-                if (control === "start") {this.resume();}
-                return;
-            } else {
-                if (control === "start") {this.pause();return;}
+            if (control === "start") {
+                this.toggleMenu();
             }
             if (control === "select") {
                 this.toggleMap();
@@ -96,6 +95,14 @@ class Game {
 
         // create interface
         this.interface = new Interface(this, document.getElementById("main"));
+        this.interface.events.on('key.down', (key) => {
+            if (key === "KeyP") {
+                this.togglePause();
+            } else if (key === "KeyN" && this.paused) {
+                this.stepTick = true;
+                this.tick();
+            }
+        });
 
         this.world = new World(this);
         this.world.player = new EntityPlayer(this, 0, 0);
@@ -103,6 +110,7 @@ class Game {
 
         this.sound = new SoundHandler(this);
         this.dialog = new Dialog(this);
+        this.menu = new GameMenu(this);
         this.map = new GameMap(this);
 
         this._fpsInterval = 1000/60;
@@ -213,6 +221,13 @@ class Game {
             this.paused = false;
             document.querySelector('.gamewrap').classList.remove('paused');
             this.sound.resume();
+        }
+    }
+    togglePause() {
+        if (this.paused) {
+            this.resume();
+        } else {
+            this.pause();
         }
     }
 
@@ -523,12 +538,20 @@ class Game {
     }
 
     async tick() {
-        if (this.paused) {return;}
+        if (this.paused && this.stepTick!==true) {return;}
+        else if(this.paused) {this.stepTick=false;}
 
         if (this.mapOpen) {
             this.ticking = true;
             this.map.tick();
             this.renderMap();
+            this.ticking = false;
+            return;
+        }
+        if (this.menuOpen) {
+            this.ticking = true;
+            this.menu.tick();
+            this.renderMenu();
             this.ticking = false;
             return;
         }
@@ -875,6 +898,15 @@ class Game {
     }
 
     // actions
+    toggleMenu() {
+        if (this.menu.isBusy) return;
+
+        if (this.menuOpen) {
+            this.menu.hide();
+        } else {
+            this.menu.show();
+        }
+    }
     toggleMap() {
         if (this.map.isBusy) return;
 
@@ -1127,6 +1159,10 @@ class Game {
     renderMap() {
         this.clear();
         this.map.draw();
+    }
+    renderMenu() {
+        this.clear();
+        this.menu.draw();
     }
 
     // TODO: MOVE ALL RENDERING CODE TO A RENDERER CLASS

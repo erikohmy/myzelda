@@ -42,6 +42,10 @@ class GameMap {
         });
     }
 
+    get isOpen() { // is the map currently open or opening/closing
+        return this.game.mapOpen;
+    }
+
     get isBusy() {
         return this.opening || this.closing;
     }
@@ -51,7 +55,7 @@ class GameMap {
     }
 
     async show() {
-        if(this.open || this.isBusy) return;
+        if(this.open || this.isBusy || this.game.menu.isOpen) return;
         this.game.mapOpen = true;
         this.open = true;
         this.opening = true;
