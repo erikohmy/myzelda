@@ -411,8 +411,9 @@ class Game {
         }, 8);
 
         // testing, no inventory yet, equip grab to A, and rocs feather to B button
-        this.player.equipItem("grab", 0);
-        this.player.equipItem("rocs_feather", 1);
+        this.player.aquireItem("rocs_feather");
+        this.player.aquireItem("grab");
+        this.player.aquireItem("shovel");
     }
 
     async loadSpritesheets() {
@@ -1204,11 +1205,20 @@ class SpriteSheet {
     downloadPallet(name) {
         downloadURI(this.pallets[name].src, name+".png");
     }
-    // context, sprite x, sprite y, position x, position y
-    drawSprite(ctx, x, y, px, py, sw=1, sh=1, w=undefined, h=undefined) {
+    // context, sprite x, sprite y, position x, position y, sprite width(multiple), sprite height(multiple), width, height (to draw the sprite as)
+    drawSpriteOld(ctx, x, y, px, py, sw=1, sh=1, w=undefined, h=undefined) {
         h = h || this.spritesize*sh;
         w = w || this.spritesize*sw;
         ctx.drawImage(this.image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize*sw, this.spritesize*sh, px, py, w, h);
+    }
+    drawSprite(ctx, x, y, px, py, sw=1, sh=1, w=undefined, h=undefined, rx=1, ry=1) { // same as old, but repeat rx and ry times
+        h = h || this.spritesize*sh;
+        w = w || this.spritesize*sw;
+        for (let i=0; i<rx; i++) {
+            for (let j=0; j<ry; j++) {
+                ctx.drawImage(this.image, x*this.spritesize+(this.gutter*(x+1)), y*this.spritesize+(this.gutter*(y+1)), this.spritesize*sw, this.spritesize*sh, px+(i*w), py+(j*h), w, h);
+            }
+        }
     }
     drawRegion(ctx, x, y, px, py, w=undefined, h=undefined) {
         h = h || this.spritesize;

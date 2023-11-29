@@ -89,6 +89,7 @@ class GameMap {
         await new Promise((resolve) => {
             let fn = () => {
                 if(!this.isBusy) {
+                    this.game.interface.clearPressed();
                     this.game.mapOpen = false;
                     resolve();
                 } else {

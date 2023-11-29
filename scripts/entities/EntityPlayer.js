@@ -40,6 +40,13 @@ class EntityPlayer extends EntityPhysical {
     inventoryItems = {}; // all items that the player can have (including ones not available/found yet)
     hotbarItems = [null, null]; // items equipped in A and B slot
 
+    inventory = { // the players entire inventory of collected items
+        items: [], // all items that the player has found, and their position in the inventory
+        collectibles: [],
+        rings: [],
+        essences: [], // the progression items
+    }; 
+
     constructor(game, x, y) {
         super(game);
         this.game = game;
@@ -57,6 +64,8 @@ class EntityPlayer extends EntityPhysical {
 
         this.maxHealth = 14*4;
         this.health = this.maxHealth;
+
+        this.inventory.items = (new Array(16)).fill(null); // 4*4 grid of items is all we have!
 
         this.registerItems();
     }
@@ -515,6 +524,41 @@ class EntityPlayer extends EntityPhysical {
     }
 
     // Items and actions
+    aquireItem(itemName) {
+        let item = this.inventoryItems[itemName];
+        if (item) {
+            if (this.hasItem(itemName)) {
+                console.warn("Tried to aquire item that the player already posessed", itemName)
+                return;
+            }
+            // if the player has an empty hotbar slot, insert into that first(starting from last slot)
+            for (let i=this.hotbarItems.length-1; i>=0; i--) {
+                if (this.hotbarItems[i] === null) {
+                    this.equipItem(itemName, i);
+                    return;
+                }
+            }
+            // insert itemname into first empty slot in inventory.items
+            let index = this.inventory.items.indexOf(null);
+            if (index === -1) {
+                console.error("Trying to aquire item", itemName, "but inventory is full");
+                return;
+            }
+            this.inventory.items[index] = itemName;
+        } else {
+            console.error("Trying to aquire item", itemName, "that does not exist");
+        }
+    }
+    hasItem(itemName) {
+        // check if player has itemname in inventory or hotbar
+        if (this.hotbarItems.indexOf(itemName) !== -1) {
+            return true;
+        }
+        if (this.inventory.items.indexOf(itemName) !== -1) {
+            return true;
+        }
+        return false;
+    }
     equipItem(itemName, slot) {
         if(this.hotbarItems[slot] === undefined) {
             console.error("Trying to equip", itemName, "into an invalid hotbar slot", slot);
