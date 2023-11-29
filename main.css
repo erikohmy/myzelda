@@ -94,6 +94,22 @@ div, canvas {
 .debuginfo-group {
     padding: 16px;
 }
+.debuginfo-item .color {
+    padding: 2px 4px;
+    text-transform: uppercase;
+    color: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.debuginfo-item .color.dark {
+    color: #fff;
+}
+.debuginfo-item .color span:nth-child(2) {
+    font-size: 12px;
+    font-weight: bolder;
+    display: none;
+}
 
 .intro-splash {
     pointer-events: none;

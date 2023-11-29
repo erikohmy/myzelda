@@ -225,7 +225,7 @@ class Graphics {
         if(typeof seen !== "object") {
             return [];
         }
-        return sortColors(seen);
+        return sortColors(seen, true);
     }
 
     // filters

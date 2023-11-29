@@ -105,7 +105,6 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
         ctx.imageSmoothingEnabled = false;
 
         let sheet = this.getSheet();
-        
         for (let tileName in tiles) {
             ctx.clearRect(0, 0, 16, 16);
             let tile = tiles[tileName];

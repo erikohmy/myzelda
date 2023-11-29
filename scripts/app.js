@@ -115,12 +115,47 @@ class Color {
         { name: 'violet', leadColor: [127, 0, 255], colors: [] },
         { name: 'magenta', leadColor: [255, 0, 255], colors: [] },
         { name: 'rose', leadColor: [255, 0, 128], colors: [] },
-        { name: 'black', leadColor: [0, 0, 0], colors: [] },
-        { name: 'grey', leadColor: [235, 235, 235], colors: [] },
         { name: 'white', leadColor: [255, 255, 255], colors: [] },
+        { name: 'grey', leadColor: [235, 235, 235], colors: [] },
+        { name: 'black', leadColor: [0, 0, 0], colors: [] },
+    ];
+    static clustersGrouped = [
+        //reds
+        { name: 'pastelred', leadColor: [255, 200, 200], colors: [] },
+        { name: 'red', leadColor: [255, 0, 0], colors: [] },
+        { name: 'darkred', leadColor: [200, 0, 0], colors: [] },
+        //oranges
+        { name: 'orange', leadColor: [255, 128, 0], colors: [] },
+        //brown
+        { name: 'brown', leadColor: [130, 80, 0], colors: [] },
+        //yellows
+        { name: 'yellow', leadColor: [255, 255, 0], colors: [] },
+
+        // greens
+        { name: 'pastelgreen', leadColor: [200, 255, 200], colors: [] },
+        { name: 'chartreuse', leadColor: [128, 255, 0], colors: [] },
+        { name: 'spring green', leadColor: [0, 255, 128], colors: [] },
+        { name: 'green', leadColor: [0, 255, 0], colors: [] },
+        { name: 'darkgreen', leadColor: [0, 200, 0], colors: [] },
+
+        // blues
+        { name: 'cyan', leadColor: [0, 255, 255], colors: [] },
+        { name: 'pastelblue', leadColor: [200, 200, 255], colors: [] },
+        { name: 'azure', leadColor: [0, 127, 255], colors: [] },
+        { name: 'blue', leadColor: [0, 0, 255], colors: [] },
+        { name: 'darkblue', leadColor: [0, 0, 200], colors: [] },
+
+
+        { name: 'violet', leadColor: [127, 0, 255], colors: [] },
+        { name: 'magenta', leadColor: [255, 0, 255], colors: [] },
+        { name: 'rose', leadColor: [255, 0, 128], colors: [] },
+        { name: 'white', leadColor: [255, 255, 255], colors: [] },
+        
+        { name: 'grey', leadColor: [235, 235, 235], colors: [] },
+        { name: 'black', leadColor: [0, 0, 0], colors: [] },
     ];
     static sortWithClusters(colorsToSort, flatten=true) {
-        const clusters = JSON.parse(JSON.stringify(Color.clusters));
+        const clusters = JSON.parse(JSON.stringify(Color.clustersGrouped));
         const mappedColors = colorsToSort.map((v)=>{return v instanceof Color ? v : new Color(v);});
         mappedColors.forEach((color) => {
             let minDistance;
@@ -136,10 +171,13 @@ class Color {
             clusters[minDistanceClusterIndex].colors.push(color);
         });
         clusters.forEach((cluster) => {
-            const dim = ['white', 'grey', 'black'].includes(cluster.name) ? 2 : 1; // hsl,  2 = l, 1 = s
+            const dim = 0;//['white', 'grey', 'black'].includes(cluster.name) ? 2 : 1; // hsl,  2 = l, 1 = s
             cluster.colors = this.oneDimensionSorting(cluster.colors, dim)
         });
         if (flatten) {
+            clusters.forEach(cl=>{
+                cl.colors.forEach(c=>c.cluster=cl.name);
+            })
             return clusters.reduce((acc, cluster) => {
                 return acc.concat(cluster.colors);
             }, []);
@@ -168,7 +206,7 @@ class Vector3D {
         return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));
     }
 }
-function sortColors(hexArray) {
+function sortColors(hexArray,asObject=false) {
     var colors = [];
     hexArray.forEach(v => {
         colors.push(new Color(v));
@@ -183,6 +221,9 @@ function sortColors(hexArray) {
     });
     */
     colors = Color.sortWithClusters(colors)
+    if (asObject){
+        return colors;
+    }
     return colors.map(v => {
         return v.hex;
     });

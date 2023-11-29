@@ -266,12 +266,16 @@ class Game {
         // PALETTE
         ////////////////////////
         let debug_palette = document.querySelector('.js-debuginfo-palette');
-        let debug_palette_data = Graphics.getPalette(this.ctx);
+        let raw = Graphics.getPalette(this.ctx)
+        let debug_palette_data = raw.map(v => {
+            return v.hex;
+        });;
         if (this._debug_palette_data_old !== debug_palette_data.join(',')) {
             this._debug_palette_data_old = debug_palette_data.join(',');
             debug_palette.innerHTML = "";
-            debug_palette_data.forEach((color, index) => {
-                debug_palette.innerHTML += `<div class="color" style="background-color:${color};">${color}</div>`;
+            raw.forEach((color, index) => {
+                let dark = color.hsl[2] < 20 ? " dark" : "";
+                debug_palette.innerHTML += `<div class="color${dark}" style="background-color:${color.hex};"><span>${color.hex}</span><span>${color.cluster}</span></div>`;
             });
         }
     }
