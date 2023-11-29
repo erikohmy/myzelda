@@ -45,7 +45,15 @@ class World {
                 this.game.noRender = true; // skip rendering
             }
             if (transition !== "none") {
-                this.snapshot = await this.game.snapshot();
+                if (this.game.hasFilters) {
+                    this.game.disableScreenFilters = true;
+                    this.game.render();
+                    this.snapshot = await this.game.snapshot();
+                    this.game.disableScreenFilters = false;
+                    this.game.render();
+                } else {
+                    this.snapshot = await this.game.snapshot();
+                }
             }
         }
         this.game.hideplayer = false;

@@ -9,7 +9,8 @@ class Graphics {
     static colors = {
         ui: "#fce6c6",
         zblue: "#1882ff",
-        zyellow: "#f8e010"
+        zyellow: "#f8e010",
+        zred: "#ee0000",
     };
     static fontMap() {
         return [
@@ -132,6 +133,18 @@ class Graphics {
         const b = parseInt(hex.slice(5, 7), 16);
         return r + "," + g + "," + b;
     }
+    static rgb2hex(rgb) {
+        // if we start with a #, return as is
+        if (rgb[0] === "#") return rgb;
+        let [r, g, b] = rgb.split(",");
+        r = parseInt(r).toString(16);
+        g = parseInt(g).toString(16);
+        b = parseInt(b).toString(16);
+        if (r.length === 1) r = "0" + r;
+        if (g.length === 1) g = "0" + g;
+        if (b.length === 1) b = "0" + b;
+        return "#"+r+g+b;
+    }
     static colorMapProcess(map) {
         // turn all keys and values from hex to rgb
         let newMap = {};
@@ -150,5 +163,96 @@ class Graphics {
         ctx.fillStyle = "rgba(0,0,0,0.5)";
         ctx.ellipse(x, y, width/2, height/3, 0, 0, 2 * Math.PI);
         ctx.fill();
+    }
+
+    static applyFilters(ctx, filtersRaw) {
+        // filters come in as filter:param, we turn that into a filters and params array
+        let filters = [];
+        let params = [];
+        for (let i = 0; i < filtersRaw.length; i++) {
+            let parts = filtersRaw[i].split(":");
+            let filter = parts[0];
+            let param = parts.length > 1 ? parseFloat(parts[1]) : 1;
+            filters.push(filter);
+            params.push(param);
+        }
+        let width = ctx.canvas.width;
+        let height = ctx.canvas.height;
+        let imgData = ctx.getImageData(0, 0, width, height);
+        const data = new Uint8ClampedArray(imgData.data);
+        for (let i = 0; i < data.length; i += 4) {
+            let r = data[i + 0];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            let a = data[i + 3];
+            for (let j = 0; j < filters.length; j++) {
+                let filter = filters[j];
+                let param  = params[j];
+                [r,g,b] = this.applyFilter(filter, param, r, g, b);
+            }
+
+            data[i + 0] = r;
+            data[i + 1] = g;
+            data[i + 2] = b;
+        }
+        const changedData = new ImageData(data, imgData.width, imgData.height)
+        //ctx.clearRect(0, 0, width, height);
+        ctx.putImageData(changedData, 0, 0);
+    }
+
+    static getPalette(ctx) { // get all currently used colors in canvas, sorted by color value
+        let width = ctx.canvas.width;
+        let height = ctx.canvas.height;
+        let imgData = ctx.getImageData(0, 0, width, height);
+        const data = new Uint8ClampedArray(imgData.data);
+        let seen = [];
+        for (let i = 0; i < data.length; i += 4) {
+            let r = data[i + 0];
+            let g = data[i + 1];
+            let b = data[i + 2];
+            let key = this.rgb2hex(r + "," + g + "," + b);
+            if (seen.indexOf(key) === -1) {
+                seen.push(key);
+            }
+        }
+        if(typeof seen !== "object") {
+            return [];
+        }
+        return sortColors(seen);
+    }
+
+    // filters
+    static applyFilter(name, param, r, g, b) {
+        if (name === "invert") {
+            return this.filterInvert(r, g, b, param);
+        } else if (name === "grayscale") {
+            return this.filterGrayscale(r, g, b, param);
+        } else if (name === "brightness") {
+            return this.filterBrightness(r, g, b, param);
+        }
+        let color = new Color(r+","+g+","+b);
+        return [r, g, b];
+    }
+    static filterInvert(r,g,b,m) {
+        let fr, fg, fb;
+        [fr,fg,fb] = [255-r, 255-g, 255-b]
+        if(m === 1) {return [fr,fg,fb];}
+        fr = r + ((fr - r) * m);
+        fg = g + ((fg - g) * m);
+        fb = b + ((fb - b) * m);
+        return [fr,fg,fb];
+    }
+    static filterGrayscale(r,g,b,m) {
+        let fr, fg, fb;
+        let avg = (r + g + b) / 3;
+        [fr,fg,fb] = [avg, avg, avg];
+        if(m === 1) {return [fr,fg,fb];}
+        fr = r + ((fr - r) * m);
+        fg = g + ((fg - g) * m);
+        fb = b + ((fb - b) * m);
+        return [fr,fg,fb];
+    }
+    static filterBrightness(r,g,b,m) {
+        return [r*m,g*m,b*m];
     }
 }

@@ -38,6 +38,7 @@ class Game {
 
     tps = 0;
     debug = false;
+    debuginfo = false;
 
     gameReady = false;
     started = false;
@@ -218,14 +219,19 @@ class Game {
     showDebug() {
         let debuginfo = document.querySelector('.debuginfo');
         debuginfo.classList.remove('hidden');
-        this.debug = true;
+        //this.debug = true;
+        this.debuginfo = true;
     }
     hideDebug() {
         let debuginfo = document.querySelector('.debuginfo');
         debuginfo.classList.add('hidden');
-        this.debug = false;
+        //this.debug = false;
+        this.debuginfo = false;
     }
     updateDebugInfo() {
+        ////////////////////////
+        // PLAYER
+        ////////////////////////
         let debug_player = document.querySelector('.js-debuginfo-player');
 
         // pushingEntity summary
@@ -255,6 +261,19 @@ class Game {
             pushingEntity: pushingEntity ? pushingEntity : "none",
         }
         debug_player.innerHTML = JSON.stringify(debug_player_data, null, 2);
+
+        ////////////////////////
+        // PALETTE
+        ////////////////////////
+        let debug_palette = document.querySelector('.js-debuginfo-palette');
+        let debug_palette_data = Graphics.getPalette(this.ctx);
+        if (this._debug_palette_data_old !== debug_palette_data.join(',')) {
+            this._debug_palette_data_old = debug_palette_data.join(',');
+            debug_palette.innerHTML = "";
+            debug_palette_data.forEach((color, index) => {
+                debug_palette.innerHTML += `<div class="color" style="background-color:${color};">${color}</div>`;
+            });
+        }
     }
 
     addIssue(issue) {
@@ -819,7 +838,7 @@ class Game {
         if (this.doGameLogic && !playerWasBusy) {
             this.interface.tick();
         }
-        if (this.debug) {
+        if (this.debug || this.debuginfo) {
             this.updateDebugInfo();
         }
         this.ticking = false;
@@ -890,6 +909,52 @@ class Game {
             this.ctx.lineTo(ow, i);
             this.ctx.stroke();
         }
+    }
+    drawDebug() {
+        let space = this.world.currentSpace;
+        space.getCollisionBoxes().forEach(box => {
+            this.setColor("#FF0000DD");
+            this.drawHitBox(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+            //this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+            //this.setColor("#FF0000"); // red
+            //this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+        });
+
+        space.entities.forEach(e => {
+            if (e instanceof EntityTrigger) {
+                this.setColor("#0000FFDD");
+                if(e.tempDisabled) {
+                    this.setColor("#FF0000DD");
+                }
+                this.drawHitBox(e.x+this.offset[0], e.y+this.offset[1], e.w, e.h);
+            } else if(e.hasOwnProperty("x")) {
+                this.setColor("#0000FFDD");
+                this.ctx.fillRect(e.x+this.offset[0]-1, e.y+this.offset[1]-1, 2, 2);
+            }
+        });
+
+        /*
+        space.getCollisionBoxes("dig").forEach(box => {
+            this.setColor("#00FF0044"); // transparent green
+            this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+            this.setColor("#00FF00"); // green
+            this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+        });
+        */
+
+        space.getCollisionBoxes("wet").forEach(box => {
+            this.setColor("#0099ff66"); // transparent light blue
+            this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+            this.setColor("#0099FF"); // light blue
+            this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+        });
+
+        space.getCollisionBoxes("swim").forEach(box => {
+            this.setColor("#0000ff77"); // transparent blue
+            this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+            this.setColor("#0000FF"); // blue
+            this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
+        });
     }
 
     renderUi() {
@@ -980,68 +1045,21 @@ class Game {
             }
         }
 
-        // draw entities
+        // draw entities, and player if not transitioning
         let entitiesToDraw = space.entities.filter(e => !!e.draw && e.isCarried !== true);
         if (!this.hideplayer && !this.world.transitioning) {
             entitiesToDraw.push(player);
             entitiesToDraw.sort(entitySort);
         }
-
         entitiesToDraw.forEach(e => {
             e.draw();
         });
 
-        // debug, draw collision boxes
+        // debug, draw collision boxes and entities
         if (this.debug) {
-            space.getCollisionBoxes().forEach(box => {
-                this.setColor("#FF0000DD");
-                this.drawHitBox(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-                //this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-                //this.setColor("#FF0000"); // red
-                //this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-            });
-
-            space.entities.forEach(e => {
-                if(e instanceof EntityTrigger) {
-                    this.setColor("#0000FFDD");
-                    if(e.tempDisabled) {
-                        this.setColor("#FF0000DD");
-                    }
-                    
-                    this.drawHitBox(e.x+this.offset[0], e.y+this.offset[1], e.w, e.h);
-                } else if(e.hasOwnProperty("x")) {
-                    this.setColor("#0000FFDD");
-                    this.ctx.fillRect(e.x+this.offset[0]-1, e.y+this.offset[1]-1, 2, 2);
-                }
-            });
-
-            /*
-            space.getCollisionBoxes("dig").forEach(box => {
-                this.setColor("#00FF0044"); // transparent green
-                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-                this.setColor("#00FF00"); // green
-                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-            });
-            */
-
-            space.getCollisionBoxes("wet").forEach(box => {
-                this.setColor("#0099ff66"); // transparent light blue
-                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-                this.setColor("#0099FF"); // light blue
-                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-            });
-
-            space.getCollisionBoxes("swim").forEach(box => {
-                this.setColor("#0000ff77"); // transparent blue
-                this.ctx.fillRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-                this.setColor("#0000FF"); // blue
-                this.ctx.strokeRect(box.x+this.offset[0], box.y+this.offset[1], box.w, box.h);
-            });
+            this.drawDebug();
         }
 
-        this.dialog.render();
-
-        this.renderUi(); 
         // if we are transitioning, draw that!
         if (this.world.transitioning && this.world.transition) {
             let transition = this.world.transition;
@@ -1057,12 +1075,14 @@ class Game {
                 } else if (transition=="slidedown") {
                     this.ctx.drawImage(snapshot, 0, tick*4+16);
                 }
-                player.draw();
+                player.draw(); // draw player here so it is on top
+                this.applyFilters();
                 this.renderUi(); // render ui again to make sure it is on top
             } else if(transition == "building") { // fade out for a second, then "open" white screen for half
                 let snapshot = this.world.snapshot;
                 let tick = this.gametick - this.world.transitionStart;
-                player.draw();
+                player.draw(); // draw player here so it is on top
+                this.applyFilters();
                 this.renderUi(); // render ui again to make sure it is on top
                 if (tick < 30) {
                     this.ctx.drawImage(snapshot, 0, 16);
@@ -1081,6 +1101,10 @@ class Game {
                     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
                 }
             }
+        } else {
+            this.applyFilters();
+            this.dialog.render();
+            this.renderUi(); 
         }
         if (this.debug) {
             // draw tps in top left
@@ -1096,22 +1120,27 @@ class Game {
         this.map.draw();
     }
 
+    // TODO: MOVE ALL RENDERING CODE TO A RENDERER CLASS
+    screenFilters = [];
+    disableScreenFilters = false;
+    get hasFilters() {
+        return this.screenFilters.length > 0;
+    }
+    clearFilters() {
+        this.screenFilters = [];
+    }
+    applyFilters() {
+        if (!this.disableScreenFilters && this.hasFilters) {
+            // test, use ctx.getImageData to get the image data, and then apply filters to it, and then put it back
+            Graphics.applyFilters(this.ctx, this.screenFilters);
+        }
+    }
+
     async snapshot() {
         // get imagedata of the canvas, excluding the ui
         let data = this.ctx.getImageData(0, 16, this.canvas.width, this.canvas.height-16);
-        // turn this into a b64 image
-        let canvas = document.createElement("canvas");
-        canvas.width = this.canvas.width;
-        canvas.height = this.canvas.height-16;
-        let ctx = canvas.getContext("2d");
-        ctx.imageSmoothingEnabled = false;
-        ctx.putImageData(data, 0, 0);
-        let img = new Image();
-        img.src = canvas.toDataURL();
-        await img.decode();
-        return img;
+        return await createImageBitmap(data)
     }
-
 }
 
 class SpriteSheet {
