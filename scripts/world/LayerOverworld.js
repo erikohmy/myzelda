@@ -328,13 +328,20 @@ function LayerOverworld(game) {
             dyd9LCcwZic6e25hbWU6J2Rvb3J3YXknfSwnMTAnOntuYW1lOidncmFzczIn
             LGVkZ2VzOidyJ30sJzExJzp7bmFtZTonb2JzdGFjbGUnLHZhcmlhbnQ6J3Bv
             bGVzMid9LCcxMic6e25hbWU6J3JvYWQnLHZhcmlhbnQ6J2JyaWdodCd9LCcx
-            Myc6e25hbWU6J2JyaWRnZScsdmFyaWFudDondG9wJ30sJzE0Jzp7bmFtZTon
-            YnJpZGdlJyx2YXJpYW50Oidib3R0b20nfSx9LFsnMDAwMTAyMDIwMjAyMDIw
-            MzA0MDUnLCcwNjA2MDYwNjA2MDcwODA5MGEwYicsJzBjMGMwZDA2MDYwNzA4
-            MGUwZjBlJywnMDgwODEwMDYwNjA3MDgxMTEyMTEnLCcwODA4MTAxMzEzMDcx
-            MjEyMTIxMicsJzA4MDgxMDE0MTQwNzEyMTIwODA4JywnMDgwODEwMDYwNjA3
-            MDgxMjA4MDgnLCcwODA4MTAwNjA2MDcwODEyMDgwOCcsXSk7`
+            Myc6e25hbWU6J2dyYXNzJyxlZGdlczondCd9LCcxNCc6e25hbWU6J2dyYXNz
+            JyxlZGdlczondHInfSwnMTUnOntuYW1lOidicmlkZ2UnLHZhcmlhbnQ6J3Rv
+            cCd9LCcxNic6e25hbWU6J2Zsb3dlcnMnfSwnMTcnOntuYW1lOidncmFzcycs
+            ZWRnZXM6J3JiJ30sJzE4Jzp7bmFtZTonYnJpZGdlJyx2YXJpYW50Oidib3R0
+            b20nfSwnMTknOntuYW1lOidncmFzcycsdmFyaWFudDonZ3JlZW4nfSwnMWEn
+            OntuYW1lOidncmFzcycsZWRnZXM6J3InfSwnMWInOntuYW1lOidncmFzcyd9
+            LH0sWycwMDAxMDIwMjAyMDIwMjAzMDQwNScsJzA2MDYwNjA2MDYwNzA4MDkw
+            YTBiJywnMGMwYzBkMDYwNjA3MDgwZTBmMGUnLCcwODA4MTAwNjA2MDcwODEx
+            MTIxMScsJzEzMTQxMDE1MTUwNzEyMTIxMjEyJywnMTYxNzEwMTgxODA3MTIx
+            MjE2MTknLCcxYTA4MTAwNjA2MDcwODEyMTkxOScsJzFhMDgxMDA2MDYwNzA4
+            MTIxOTFiJyxdKTs=`
         );
+        space.setTile(7,0, {name:"roof", variant:"blue", edges:"tl", background:"cliff-33-present"});
+        space.setTile(9,0, {name:"roof", variant:"blue", edges:"tr", background:"cliff-33-present"});
     });
     layer.createSpace(5,6, 10, 8, function(space) {
         space.music = "lynna-city-present";
@@ -351,12 +358,16 @@ function LayerOverworld(game) {
             YW1lOidicmlkZ2UnLHZhcmlhbnQ6J2xlZnQnfSwnMGQnOntuYW1lOidicmlk
             Z2UnLHZhcmlhbnQ6J3JpZ2h0J30sJzBlJzp7bmFtZTonb2JzdGFjbGUnLHZh
             cmlhbnQ6J3BvbGVzMid9LCcwZic6e25hbWU6J2dyYXNzMicsZWRnZXM6J3Qn
-            fSwnMTAnOntuYW1lOid3YWxsUm9vdCcsdmFyaWFudDonb3JiJ30sJzExJzp7
-            bmFtZTonZ3JhdmVsJyxlZGdlczondCd9LH0sWycwMDAxMDIwMjAzMDQwNTA1
-            MDUwNScsJzA2MDYwNzAyMDgwOTAyMDIwMjAyJywnMGEwYTBhMDcwYjBiMGIw
-            YjBiMGInLCcwYTBhMGEwYTBjMGQwYTBhMGEwYScsJzA2MDYwYTBhMGMwZDBh
-            MGEwYTBhJywnMGUwZTBmMGYwZjBmMGYwZjBmMGYnLCcwMjAyMDIwMjAyMDIw
-            MjAyMDIwMicsJzBlMGUxMDEwMTExMTEwMTAxMDEwJyxdKTs=`
+            fSwnMTAnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDon
+            Y3RsJ30sJzExJzp7bmFtZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AnLHZhcmlh
+            bnQ6J2N0cid9LCcxMic6e25hbWU6J2dyYXZlbCcsZWRnZXM6J3QnfSwnMTMn
+            OntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcC10Jyx2YXJpYW50Oidib3R0
+            b20nfSwnMTQnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFu
+            dDonaG0nfSx9LFsnMDAwMTAyMDIwMzA0MDUwNTA1MDUnLCcwNjA2MDcwMjA4
+            MDkwMjAyMDIwMicsJzBhMGEwYTA3MGIwYjBiMGIwYjBiJywnMGEwYTBhMGEw
+            YzBkMGEwYTBhMGEnLCcwNjA2MGEwYTBjMGQwYTBhMGEwYScsJzBlMGUwZjBm
+            MGYwZjBmMGYwZjBmJywnMDIwMjAyMDIwMjAyMDIwMjAyMDInLCcwZTBlMTAx
+            MTEyMTIxMDEzMTQxNCcsXSk7`
         );
     });
     layer.createSpace(6,6, 10, 8, function(space) {
@@ -372,12 +383,110 @@ function LayerOverworld(game) {
             bWU6J2dyYXNzMicsZWRnZXM6J2JsJ30sJzBiJzp7bmFtZTonZ3Jhc3MnfSwn
             MGMnOntuYW1lOidyb29mU2hhY2snLHZhcmlhbnQ6J2JsdWUnfSwnMGQnOntu
             YW1lOidncmFzczInLGVkZ2VzOid0J30sJzBlJzp7bmFtZTond2luZG93J30s
-            JzBmJzp7bmFtZTonZG9vcndheSd9LCcxMCc6e25hbWU6J3dhbGxSb290Jyx2
-            YXJpYW50OidvcmInfSx9LFsnMDAwMTAyMDMwMzA0MDEwNTA2MDcnLCcwMTAx
-            MDIwMzAzMDQwMTA1MDUwNicsJzA4MDgwOTAzMDMwYTA4MDEwNTBiJywnMDMw
-            MzAzMDMwMzAzMDMwNDA1MDUnLCcwMzAzMDMwYzBjMGMwMzBhMDgwOCcsJzBk
-            MGQwZDBlMGYwZTAzMDMwMzAzJywnMDEwMTAxMDEwMTAyMDMwMzAzMDMnLCcx
-            MDEwMTAxMDEwMTAxMDEwMTAxMCcsXSk7`
+            JzBmJzp7bmFtZTonZG9vcndheSd9LCcxMCc6e25hbWU6J3Rvd2Vyd2FsbCcs
+            cGFydDondG9wJyx2YXJpYW50OidobSd9LH0sWycwMDAxMDIwMzAzMDQwMTA1
+            MDYwNycsJzAxMDEwMjAzMDMwNDAxMDUwNTA2JywnMDgwODA5MDMwMzBhMDgw
+            MTA1MGInLCcwMzAzMDMwMzAzMDMwMzA0MDUwNScsJzAzMDMwMzBjMGMwYzAz
+            MGEwODA4JywnMGQwZDBkMGUwZjBlMDMwMzAzMDMnLCcwMTAxMDEwMTAxMDIw
+            MzAzMDMwMycsJzEwMTAxMDEwMTAxMDEwMTAxMDEwJyxdKTs=`
+        );
+    });
+    layer.createSpace(5,7, 10, 8, function(space) { // tower topleft
+        space.music = "none";
+        space.setTilesB64(
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3Rvd2Vyd2FsbCcscGFydDon
+            dG9wJyx2YXJpYW50OidjdGwnfSwnMDEnOntuYW1lOid0b3dlcndhbGwnLHBh
+            cnQ6J3RvcC10Jyx2YXJpYW50Oidib3R0b20nfSwnMDInOntuYW1lOid0b3dl
+            cndhbGwnLHBhcnQ6J3RvcC10Jyx2YXJpYW50Oid0b3AnfSwnMDMnOntuYW1l
+            Oid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDonY2JyJ30sJzA0Jzp7
+            bmFtZTonZ3JhdmVsJyx2YXJpYW50Oidyb3VnaCd9LCcwNSc6e25hbWU6J3Rv
+            d2Vyd2FsbCcscGFydDondG9wJyx2YXJpYW50OidjYmwnfSwnMDYnOntuYW1l
+            Oid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDonY3RyJ30sJzA3Jzp7
+            bmFtZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AnLHZhcmlhbnQ6J3ZtJ30sJzA4
+            Jzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50OidtaWQnfSwnMDknOntuYW1l
+            Oid0b3dlcndhbGwnLHZhcmlhbnQ6J3Ntcid9LCcwYSc6e25hbWU6J2dyYXZl
+            bCd9LCcwYic6e25hbWU6J3Rvd2Vyd2FsbCcsdmFyaWFudDonc21sJ30sJzBj
+            Jzp7bmFtZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AtdCcsdmFyaWFudDoncmln
+            aHQnfSwnMGQnOntuYW1lOid0b3dlcndhbGwnLHZhcmlhbnQ6J2JvdCd9LCcw
+            ZSc6e25hbWU6J3Rvd2Vyd2FsbCcsdmFyaWFudDonc2JyJ30sJzBmJzp7bmFt
+            ZTonc3RhaXJzJ30sJzEwJzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50Oidz
+            YmwnfSwnMTEnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcC10Jyx2YXJp
+            YW50OidsZWZ0J30sJzEyJzp7bmFtZToncm9hZCcsdmFyaWFudDondG93ZXIn
+            fSwnMTMnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDon
+            dmViJ30sJzE0Jzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50OidjbSd9LH0s
+            WycwMDAxMDIwMzA0MDQwNTAyMDEwNicsJzA3MDcwODA5MGEwNDBiMDgwNzA3
+            JywnMGMwMzBkMGUwZjBmMTAwZDA1MTEnLCcwNzA5MTIwNDEyMTIxMjA0MGIw
+            NycsJzA3MGUwZjBmMGYwZjBmMGYxMDA3JywnMDcwNDA0MTIxMjEyMGEwNDEy
+            MGMnLCcwNzBhMTIwYTEyMTIxMjEyMGExMycsJzA3MTIxMjEyMTIxMjEyMTIx
+            MjE0JyxdKTs=`
+        );
+    });
+    layer.createSpace(5,8, 10, 8, function(space) { // tower bottomleft
+        space.music = "none";
+        space.setTilesB64(
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3Rvd2Vyd2FsbCcscGFydDon
+            dG9wJyx2YXJpYW50Oid2bSd9LCcwMSc6e25hbWU6J3JvYWQnLHZhcmlhbnQ6
+            J3Rvd2VyJ30sJzAyJzp7bmFtZTonZ3JhdmVsJyx2YXJpYW50Oidyb3VnaCd9
+            LCcwMyc6e25hbWU6J2dyYXZlbCd9LCcwNCc6e25hbWU6J3Rvd2Vyd2FsbCcs
+            dmFyaWFudDonY2InfSwnMDUnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3Rv
+            cC10Jyx2YXJpYW50OidyaWdodCd9LCcwNic6e25hbWU6J3Rvd2Vyd2FsbCcs
+            cGFydDondG9wJyx2YXJpYW50OidobSd9LCcwNyc6e25hbWU6J3Rvd2Vyd2Fs
+            bCcscGFydDondG9wJyx2YXJpYW50OidjdHInfSwnMDgnOntuYW1lOid0b3dl
+            cndhbGwnLHZhcmlhbnQ6J2JvdCd9LCcwOSc6e25hbWU6J3Rvd2Vyd2FsbCcs
+            cGFydDondG9wJyx2YXJpYW50OidjYmwnfSwnMGEnOntuYW1lOidwdWRkbGUn
+            fSwnMGInOntuYW1lOid0b3dlcndhbGwnLHZhcmlhbnQ6J3NibCd9LCcwYyc6
+            e25hbWU6J3Rvd2Vyd2FsbCcscGFydDondG9wLXQnLHZhcmlhbnQ6J3RvcCd9
+            LH0sWycwMDAxMDEwMTAxMDIwMTAxMDMwNCcsJzAwMDMwMTAxMDEwMTAxMDEw
+            MTAxJywnMDAwMjAzMDEwMTAxMDIwMTAxMDEnLCcwNTA2MDYwNzAyMDMwMTAx
+            MDEwMScsJzAwMDgwODA5MDYwNjA3MDEwMTAzJywnMDAwYTBhMGIwODA4MDAw
+            MjAxMDEnLCcwMDBhMGEwYTBhMGEwMDAyMDIwMScsJzA5MDYwNjA2MDYwNjBj
+            MDYwNjA2JyxdKTs=`
+        );
+    });
+    layer.createSpace(6,8, 10, 8, function(space) { // tower bottomright
+        space.music = "none";
+        space.setTilesB64(
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3Rvd2Vyd2FsbCcsdmFyaWFu
+            dDonc2JsJ30sJzAxJzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50Oidib3Qn
+            fSwnMDInOntuYW1lOid0b3dlcndhbGwnLHZhcmlhbnQ6J3NtbCd9LCcwMyc6
+            e25hbWU6J3Rvd2Vyd2FsbCcscGFydDondG9wJyx2YXJpYW50Oid2ZWInfSwn
+            MDQnOntuYW1lOidyb2FkJyx2YXJpYW50Oid0b3dlcid9LCcwNSc6e25hbWU6
+            J3Rvd2Vyd2FsbCcsdmFyaWFudDonc21yJ30sJzA2Jzp7bmFtZTondG93ZXJ3
+            YWxsJyx2YXJpYW50OidzYnInfSwnMDcnOntuYW1lOid0b3dlcndhbGwnLHZh
+            cmlhbnQ6J2NtJ30sJzA4Jzp7bmFtZTonb2JzdGFjbGUnLHZhcmlhbnQ6J3Rv
+            d2VyYnJpY2tzJ30sJzA5Jzp7bmFtZTonb2JzdGFjbGUnLHZhcmlhbnQ6J3Rv
+            d2VycGxpbnRoJ30sJzBhJzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50Oidj
+            Yid9LCcwYic6e25hbWU6J3Rvd2Vyd2FsbCcscGFydDondG9wJyx2YXJpYW50
+            OidjdGwnfSwnMGMnOntuYW1lOidncmF2ZWwnLHZhcmlhbnQ6J3JvdWdoJ30s
+            JzBkJzp7bmFtZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AnLHZhcmlhbnQ6J3Zt
+            J30sJzBlJzp7bmFtZTonZ3JhdmVsJ30sJzBmJzp7bmFtZTondG93ZXJ3YWxs
+            JyxwYXJ0Oid0b3AnLHZhcmlhbnQ6J2htJ30sJzEwJzp7bmFtZTondG93ZXJ3
+            YWxsJyxwYXJ0Oid0b3AtdCcsdmFyaWFudDondG9wJ30sfSxbJzAwMDEwMjAz
+            MDQwNDAzMDUwMTA2JywnMDQwNDAwMDcwNDA0MDcwNjA4MDgnLCcwNDA0MDkw
+            YTA0MDQwYTA0MDkwYicsJzA0MDQwNDA0MDQwNDA4MDQwYzBkJywnMDQwNDBj
+            MDQwNDBjMDQwYzBjMGQnLCcwNDBjMGMwZTBjMDQwYzA0MDgwZCcsJzBjMGMw
+            NDA0MGUwNDA0MDgwODBkJywnMGYwZjBmMGYwZjBmMGYwZjBmMTAnLF0pOw==`
+        );
+    });
+    layer.createSpace(6,7, 10, 8, function(space) { // tower
+        space.music = "none";
+        space.setTilesB64(
+            `c3BhY2Uuc2V0VGlsZXMoeycwMCc6e25hbWU6J3NvbGlkJ30sJzAxJzp7bmFt
+            ZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AnLHZhcmlhbnQ6J2N0cid9LCcwMic6
+            e25hbWU6J29ic3RhY2xlJyx2YXJpYW50Oid0b3dlcmJyaWNrcyd9LCcwMyc6
+            e25hbWU6J29ic3RhY2xlJyx2YXJpYW50Oid0b3dlcnBsaW50aCd9LCcwNCc6
+            e25hbWU6J3Rvd2Vyd2FsbCcscGFydDondG9wJyx2YXJpYW50OidjdGwnfSwn
+            MDUnOntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDonY2Js
+            J30sJzA2Jzp7bmFtZTondG93ZXJ3YWxsJyxwYXJ0Oid0b3AnLHZhcmlhbnQ6
+            J2htJ30sJzA3Jzp7bmFtZToncm9hZCcsdmFyaWFudDondG93ZXInfSwnMDgn
+            OntuYW1lOid0b3dlcndhbGwnLHBhcnQ6J3RvcCcsdmFyaWFudDonY2JyJ30s
+            JzA5Jzp7bmFtZTondG93ZXJ3YWxsJyx2YXJpYW50OidzbWwnfSwnMGEnOntu
+            YW1lOid0b3dlcndhbGwnLHZhcmlhbnQ6J21pZCd9LCcwYic6e25hbWU6J3Rv
+            d2Vyd2FsbCcsdmFyaWFudDonc21yJ30sfSxbJzAwMDAwMDAwMDAwMDAwMDAw
+            MDAwJywnMDAwMDAwMDAwMDAwMDAwMDAwMDAnLCcwMDAwMDAwMDAwMDAwMDAw
+            MDAwMCcsJzAwMDAwMDAwMDAwMDAwMDAwMDAwJywnMDAwMDAwMDAwMDAwMDAw
+            MDAwMDAnLCcwMTAyMDIwMzAyMDIwMzAyMDIwNCcsJzA1MDYwMTA3MDcwNzA3
+            MDQwNjA4JywnMDkwYTA1MDEwNzA3MDQwODBhMGInLF0pOw==`
         );
     });
 }

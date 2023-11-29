@@ -196,7 +196,8 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
                 let parts = bg.split("-");
                 let tile = this.game.tiles[parts[0]];
                 if (tile) {
-                    tile.draw(ctx, x, y, {variant: parts.length > 1 ? parts[1]: ""});
+                    let rest = parts.length > 1 ? parts.slice(1).join("-") : "";
+                    tile.draw(ctx, x, y, {variant: rest});
                 }
             }
         }

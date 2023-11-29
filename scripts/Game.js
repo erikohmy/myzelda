@@ -450,7 +450,6 @@ class Game {
         await this.addTile("grass2", "TileGrassVariant");
         await this.addTile("flowers", "TileFlowers");
         await this.addTile("gravel", "TileGravel");
-        await this.addTile("gravelRough", "TileGravelRough");
         await this.addTile("sand", "TileSand");
         await this.addTile("road", "TileRoad");
         await this.addTile("bridge", "TileBridge");
@@ -478,6 +477,9 @@ class Game {
         await this.addTile("wallRoot", "TileWallRoot");
         await this.addTile("floorWood", "TileFloorWood");
         await this.addTile("innerDoorway", "TileInnerDoorway");
+
+        await this.addTile("towerwall", "TileTowerWall");
+
         this.events.trigger('tiles-added');
     }
 

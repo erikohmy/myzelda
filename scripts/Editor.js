@@ -74,7 +74,7 @@ class Editor {
             let y = Math.floor(i/size);
             ctx.drawImage(sprite.image, x*16, y*16);
         });
-        this.spriteImage = Graphics.imgFromCtx(ctx);
+        this.spriteImage = Graphics.imgFromCtx(ctx, false);
         return this.spriteImage;
     }
     downloadSpriteSheet() {
