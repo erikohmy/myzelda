@@ -74,16 +74,13 @@ class Editor {
             let y = Math.floor(i/size);
             ctx.drawImage(sprite.image, x*16, y*16);
         });
-        let img = new Image();
-        img.src = canvas.toDataURL();
-        await img.decode();
-        this.spriteImage = img;
-        return img;
+        this.spriteImage = Graphics.imgFromCtx(ctx);
+        return this.spriteImage;
     }
     downloadSpriteSheet() {
-        this.buildSpriteSheet().then(() => {
+        /*this.buildSpriteSheet().then(() => {
             downloadURI(this.spriteImage.src, "spritesheet.png");
-        });
+        });*/
     }
 
     stop(save=true) {

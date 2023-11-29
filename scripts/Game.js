@@ -365,11 +365,14 @@ class Game {
     }
 
     async load() {
+        let loadstart = Date.now();
         await this.loadSpritesheets();
         await this.addTiles();
         await this.generateTiles();
         await this.addSounds();
         await this.generateWorld();
+        let loadTime = Date.now() - loadstart;
+        console.log("build time", loadTime, "ms");
 
         this.sound.volume = 0.2;
         this.gameReady = true;

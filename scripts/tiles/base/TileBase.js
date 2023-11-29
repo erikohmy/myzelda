@@ -101,7 +101,8 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
         let canvas = document.createElement("canvas");
         canvas.width = 16;
         canvas.height = 16;
-        let ctx = canvas.getContext("2d");
+        let ctx = canvas.getContext("2d", { willReadFrequently: true });
+        ctx.imageSmoothingEnabled = false;
 
         let sheet = this.getSheet();
         
@@ -113,11 +114,9 @@ class TileBase { // TODO: add Palette to options? generates pre-recolored tiles
                 let [x,y] = sprites[sprite];
                 sheet.drawSprite(ctx, x, y, (i%2)*8, Math.floor(i/2)*8);
             }
-            let image = new Image();
-            image.src = canvas.toDataURL();
-            await image.decode();
-            tileImages[tileName] = image; 
+            tileImages[tileName] = await Graphics.imgFromCtx(ctx);
         }
+        canvas.remove();
 
         this.sprites = tileImages;
     }

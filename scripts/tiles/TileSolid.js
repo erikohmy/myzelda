@@ -9,11 +9,9 @@ class TileSolid extends TileBase {
         ctx.imageSmoothingEnabled = false;
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, 16, 16);
-        let image = new Image();
-        image.src = canvas.toDataURL();
-        await image.decode();
-        tileImages[this.name] = image; 
+        tileImages[this.name] = await Graphics.imgFromCtx(ctx);
         this.sprites = tileImages;
+        canvas.remove();
     }
 
     drawTile(ctx, x, y, options={}) {

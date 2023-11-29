@@ -88,6 +88,16 @@ class Graphics {
         }
     }
 
+    static async imgFromCtx(ctx, useBitmap = true) {
+        if (useBitmap) {
+            return await createImageBitmap(ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height));
+        }
+        let img = new Image();
+        img.src = ctx.canvas.toDataURL();
+        await img.decode();
+        return img;
+    }
+
     static async palletChange(image, map) {
         await image.decode();
         map = this.colorMapProcess(map);
@@ -95,7 +105,7 @@ class Graphics {
         let canvas = document.createElement('canvas');
         canvas.width = image.width;
         canvas.height = image.height;
-        let ctx = canvas.getContext('2d');
+        let ctx = canvas.getContext("2d", { willReadFrequently: true });
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(image, 0, 0);
         let imgData = ctx.getImageData(0, 0, image.width, image.height);
@@ -120,10 +130,7 @@ class Graphics {
         const changedData = new ImageData(data, imgData.width, imgData.height)
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.putImageData(changedData, 0, 0);
-        let changedImage = new Image();
-        changedImage.src = canvas.toDataURL();
-        await changedImage.decode();
-        return changedImage;
+        return await Graphics.imgFromCtx(ctx);
     }
     static hex2rgb(hex) {
         // if we dont start with a #, return as is
