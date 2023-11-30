@@ -726,8 +726,11 @@ class Game {
             let c_anydir = !!this.interface.dpad;
             let c_multidir = (c_up || c_down) && (c_left || c_right);
 
+            // slow down if jumping
+            let jumpTicks = player.isJumping ? this.logictick - player.jumpStart : -1; // how long we have been jumping
+
             // direction
-            if (c_anydir && !player.isGrabbing) {
+            if (c_anydir && !player.isGrabbing && (jumpTicks < 0 || jumpTicks > 25)) {
                 player.direction = dirIndex(this.interface.dpad);
             }
             
@@ -736,16 +739,30 @@ class Game {
             let mx = 0;
             let my = 0;
 
-            if (c_up) {
-                my = -player.moveSpeed;
-            } else if (c_down) {
-                my = player.moveSpeed;
+            if (jumpTicks > 0 && jumpTicks <= 25) {
+                // dont allow changing direction while jumping, use jumpDirection instead
+                if (player.jumpDirection === 0) {
+                    my = -player.moveSpeed;
+                } else if (player.jumpDirection === 1) {
+                    mx = player.moveSpeed;
+                } else if (player.jumpDirection === 2) {
+                    my = player.moveSpeed;
+                } else if (player.jumpDirection === 3) {
+                    mx = -player.moveSpeed;
+                }
+            } else { 
+                if (c_up) {
+                    my = -player.moveSpeed;
+                } else if (c_down) {
+                    my = player.moveSpeed;
+                }
+                if (c_left) {
+                    mx = -player.moveSpeed;  
+                } else if (c_right) {
+                    mx = player.moveSpeed;  
+                }
             }
-            if (c_left) {
-                mx = -player.moveSpeed;  
-            } else if (c_right) {
-                mx = player.moveSpeed;  
-            }
+
             if (!player.isGrabbing && (mx !== 0 || my !== 0)) {
                 // overworld 6,5, player 80,64 still crashes
                 player.move(mx, my, false, !c_multidir);

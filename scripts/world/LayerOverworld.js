@@ -290,6 +290,7 @@ function LayerOverworld(game) {
         );
         space.createEntity('sign',{ x:1, y:5, text: "Know-It-All\nBirds' Hut\n First-timers\n welcome!!!" });
         space.setTile(2, 4, {name:"doorway", 'goesTo': "buildings:5,5:entrance"});
+        space.setTile(8, 1, {name:"water", 'divesTo': "buildings:5,5:entrance"});
         //space.addEntity(new EntityTransitionTarget(game, 2*16+8, 4*16+8+4, 2, "knowitall"));
         space.createEntity('transitionTarget', {name:'knowitall', tx:2, y:4*16+8+4, direction: 2});
         space.createEntity('transitionTarget', {name:'warp', tx:3, ty:1});

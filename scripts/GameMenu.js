@@ -243,7 +243,7 @@ class GameMenu {
         });
 
         // draw description box
-        Graphics.drawText(this.game.ctx, this.descriptionRegister, 16, 144-20, "black");
+        Graphics.drawText(this.game.ctx, this.descriptionRegister, 16, 144-19, "black");
     }
 }
 

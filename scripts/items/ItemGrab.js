@@ -35,6 +35,7 @@ class ItemGrab extends ItemBase {
 
     actionPress() {
         if(this.holding) return;
+        if(this.game.player.isJumping) return;
         this.holding = true;
     }
     actionRelease() {

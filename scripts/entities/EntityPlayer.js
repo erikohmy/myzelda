@@ -20,6 +20,7 @@ class EntityPlayer extends EntityPhysical {
     actionStart = 0; // animation start tick, for squishing, falling, drowning, etc
     jumpStart = 0; // animation start tick, for jumping, because we can do stuff while jumping
     jumpTime = 30;
+    jumpDirection = -1; // -1 = jumping standing still, 0 = up, 1 = right, 2 = down, 3 = left
     damageFlash = 0;
 
     canSwim = true;
@@ -30,6 +31,8 @@ class EntityPlayer extends EntityPhysical {
     willFall = false; // indicates the player WILL fall
     onRoughGround = false;
     isSwimming = false;
+    isDiving = false;
+    diveTime = 0;
     isJumping = false;
     isGrabbing = false;
     isPulling = false;
@@ -280,6 +283,8 @@ class EntityPlayer extends EntityPhysical {
         }
         this.isJumping = true;
         this.jumpStart = this.game.logictick;
+        let c_anydir = !!this.game.interface.dpad;
+        this.jumpDirection = c_anydir ? this.direction : -1;
         this.game.sound.play("link_jump");
         this.game.waitTicks(this.jumpTime, "logic").then(() => {
             this.isJumping = false;
@@ -303,6 +308,13 @@ class EntityPlayer extends EntityPhysical {
             return;
         }
         super.tick();
+        if(this.isSwimming && this.isDiving) {
+            this.diveTime++;
+            if (this.diveTime > 90) {
+                this.diveTime = 0;
+                this.isDiving = false;
+            }
+        }
         for (let i=0; i<this.hotbarItems.length; i++) {
             let item = this.inventoryItems[this.hotbarItems[i]];
             if (item) {
@@ -333,14 +345,15 @@ class EntityPlayer extends EntityPhysical {
         let tileX = Math.floor(x/16);
         let tileY = Math.floor(y/16);
 
-        if (beneath && beneath.goesTo) { // are we standing DIRECTLY on a tile that goes somewhere?
+        if (beneath && (beneath.goesTo || (beneath.divesTo&&this.isDiving))) { // are we standing DIRECTLY on a tile that goes somewhere?
             if (this.previousTile !== null && !this.isBusy) {
                 this.previousTile = {x:tileX, y:tileY, tile:beneath};
                 this.setPushingEntity(null);
                 this.willTransition = true;
                 this.game.waitTicks(1).then(() => { // wait a single tick to make sure we arent rendered pushing the door
                     this.willTransition = false;
-                    this.game.world.goToString(beneath.goesTo);
+                    let destination = beneath.goesTo || beneath.divesTo;
+                    this.game.world.goToString(destination);
                 });
             }
         } else if (!this.inAir) { // dont care about ground if we are in the are
@@ -445,6 +458,8 @@ class EntityPlayer extends EntityPhysical {
                     }
                 } else {
                     this.isSwimming = false;
+                    this.isDiving = false;
+                    this.diveTime = 0;
                 }
 
                 // Hole HAS to be last, we have a continue in it, gotta change that if we want to check stuff after holes
@@ -645,7 +660,17 @@ class EntityPlayer extends EntityPhysical {
             }
         } else if (!this.isBusy && this.isSwimming) {
             // play dive sound and put the player in diving state
-            console.log("dive");
+            
+            if (!this.isDiving) {
+                console.log("dive");
+                this.diveTime = 0;
+                this.isDiving = true;
+                this.game.sound.play("link_wade");
+            } else {
+                console.log("surface");
+                this.diveTime = 0;
+                this.isDiving = false;
+            }
         }
     }
     releasedB() {
@@ -719,7 +744,7 @@ class EntityPlayer extends EntityPhysical {
             [tx, ty] = tileSnap(this.x, this.y);
             sheet.drawSprite(this.game.ctx, sox, soy, tx+ox, ty+oy);
             return;
-        } else if (this.drowning) {
+        } else if (this.drowning || this.isDiving) {
             sox = 8 + (this.game.animationtick % 15 > 7 ? 1 : 0);
             soy = 1;
             sheet.drawSprite(this.game.ctx, sox, soy, x-8+ox, y-8+oy);
